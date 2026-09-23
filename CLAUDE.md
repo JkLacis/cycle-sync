@@ -5,10 +5,11 @@ Owner: JekabsL — first-year Start School / Qwasar student, complete beginner.
 
 ## How we work (important)
 - **Teach while building**: plain-language explanations, define jargon on first use, keep it short.
+- **Always say where to run each command**: which app (Konsole) and which folder (e.g. `~/Desktop/Cycle-Sync` or "any folder"). Same for browser steps (which URL).
 - Before writing code for a step, show a short plan and **wait for OK**.
 - **One step at a time.** After each step: explain exactly how to see the result, then stop and wait for feedback.
 - **No unrequested features.** Suggest ideas; the user decides.
-- Commit after each working step with a clear message. Explain new git commands the first time.
+- Commit after each working step with a clear message, then `git push`. Explain new git commands the first time.
 - Keep this file updated whenever a new decision is made.
 
 ## Concept
@@ -85,7 +86,7 @@ Ovulatory = warm gold/coral, Luteal = terracotta/amber, Menstrual = deep berry/p
 8. [ ] Demo mode + polish + run on phone
 
 ## Decisions log
-- Git branch: `main`. Commit author: JekabsL.
+- Git branch: `main`. Commit author: JekabsL. Remote `origin` = https://github.com/JkLacis/cycle-sync (public). `gh` CLI logged in as JkLacis.
 - Screens are `<section class="screen" id="screen-NAME">`, toggled via the `hidden` attribute by `showScreen(name)`.
   Screen names: onboarding, today, calendar, phases, phase-detail, settings.
 - Tabs are `<button class="tab" data-screen="NAME">`; active tab gets class `active`.
