@@ -76,7 +76,7 @@ Ovulatory = warm gold/coral, Luteal = terracotta/amber, Menstrual = deep berry/p
 
 ## Build order / progress
 1. [x] git init + CLAUDE.md
-2. [ ] File structure + phone frame + bottom tab bar (empty screens)
+2. [x] File structure + phone frame + bottom tab bar (empty screens)
 3. [ ] Cycle logic functions + console check
 4. [ ] Onboarding screen
 5. [ ] Today screen
@@ -86,3 +86,9 @@ Ovulatory = warm gold/coral, Luteal = terracotta/amber, Menstrual = deep berry/p
 
 ## Decisions log
 - Git branch: `main`. Commit author: JekabsL.
+- Screens are `<section class="screen" id="screen-NAME">`, toggled via the `hidden` attribute by `showScreen(name)`.
+  Screen names: onboarding, today, calendar, phases, phase-detail, settings.
+- Tabs are `<button class="tab" data-screen="NAME">`; active tab gets class `active`.
+- Phone frame kicks in at `min-width: 600px` (390×844, dark bezel). Below that the app fills the screen.
+- Colours are CSS variables in `:root` of style.css. Current shades: follicular #7f9f7a, ovulatory #e39a5b,
+  luteal #c06a45, menstrual #8a3b5e (accent = menstrual). Awaiting user feedback.

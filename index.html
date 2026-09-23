@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <!-- Makes phones show the page at its real size instead of zoomed out -->
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Cycle Sync</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- The phone-shaped box that holds the whole app -->
+  <div class="app">
+
+    <!-- All screens live here. Only one is visible at a time. -->
+    <main class="screens">
+
+      <section class="screen" id="screen-onboarding" hidden>
+        <h1>Welcome</h1>
+        <p class="placeholder">Onboarding screen: coming in step 4.</p>
+      </section>
+
+      <section class="screen" id="screen-today">
+        <h1>Today</h1>
+        <p class="placeholder">Today screen: coming in step 5.</p>
+      </section>
+
+      <section class="screen" id="screen-calendar" hidden>
+        <h1>Calendar</h1>
+        <p class="placeholder">Calendar: coming in step 6.</p>
+      </section>
+
+      <section class="screen" id="screen-phases" hidden>
+        <h1>Phases</h1>
+        <p class="placeholder">Phases list: coming in step 7.</p>
+      </section>
+
+      <section class="screen" id="screen-phase-detail" hidden>
+        <h1>Phase detail</h1>
+        <p class="placeholder">Phase detail: coming in step 7.</p>
+      </section>
+
+      <section class="screen" id="screen-settings" hidden>
+        <h1>Settings</h1>
+        <p class="placeholder">Settings: coming later.</p>
+      </section>
+
+    </main>
+
+    <!-- Bottom tab bar. data-screen says which screen each button opens. -->
+    <nav class="tabbar">
+      <button class="tab" data-screen="today">Today</button>
+      <button class="tab" data-screen="calendar">Calendar</button>
+      <button class="tab" data-screen="phases">Phases</button>
+    </nav>
+
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

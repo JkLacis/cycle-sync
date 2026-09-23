@@ -1,0 +1,112 @@
+/* ===== Colour palette (CSS variables) =====
+   Define each colour once here, then reuse it everywhere with var(--name). */
+:root {
+  --bg: #faf6f1;          /* warm off-white page background */
+  --surface: #ffffff;     /* cards and the app itself */
+  --text: #2e2a27;        /* main text, soft near-black */
+  --text-muted: #8a817a;  /* secondary text */
+  --border: #ece4db;
+
+  /* One colour per phase */
+  --follicular: #7f9f7a;  /* sage green */
+  --ovulatory: #e39a5b;   /* warm gold / coral */
+  --luteal: #c06a45;      /* terracotta */
+  --menstrual: #8a3b5e;   /* deep berry / plum */
+
+  --accent: var(--menstrual); /* colour for the active tab, buttons, etc. */
+}
+
+/* Make width/height include padding, so sizes are predictable */
+* {
+  box-sizing: border-box;
+}
+
+/* Anything with the "hidden" attribute is never shown */
+[hidden] {
+  display: none !important;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  /* "system-ui" uses the phone's or computer's own font */
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  line-height: 1.5;
+}
+
+/* ===== The app container =====
+   On a phone: fills the whole screen. */
+.app {
+  display: flex;
+  flex-direction: column;   /* screens on top, tab bar underneath */
+  height: 100dvh;           /* dvh = the real visible height on phones */
+  background: var(--surface);
+}
+
+/* On wide screens (laptop): show the app inside a phone-shaped frame */
+@media (min-width: 600px) {
+  body {
+    display: flex;
+    justify-content: center;  /* centre left-right */
+    align-items: center;      /* centre top-bottom */
+    min-height: 100vh;
+  }
+
+  .app {
+    width: 390px;
+    height: 844px;            /* size of a typical modern phone */
+    max-height: 95vh;         /* shrink if the laptop screen is short */
+    border-radius: 44px;
+    overflow: hidden;         /* clip content to the rounded corners */
+    box-shadow:
+      0 0 0 10px #2e2a27,               /* dark "phone bezel" */
+      0 30px 60px rgba(46, 42, 39, 0.25); /* soft shadow underneath */
+  }
+}
+
+/* ===== Screens ===== */
+.screens {
+  flex: 1;              /* take all the space above the tab bar */
+  overflow-y: auto;     /* scroll inside, if content is long */
+}
+
+.screen {
+  padding: 32px 24px;
+}
+
+h1 {
+  margin: 0 0 8px;
+  font-size: 28px;
+  font-weight: 700;
+}
+
+.placeholder {
+  color: var(--text-muted);
+}
+
+/* ===== Bottom tab bar ===== */
+.tabbar {
+  display: flex;
+  border-top: 1px solid var(--border);
+  background: var(--surface);
+  /* extra space at the bottom for phones with a home-bar */
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.tab {
+  flex: 1;              /* three tabs share the width equally */
+  padding: 16px 0;
+  border: none;
+  background: none;
+  font: inherit;
+  font-size: 14px;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+/* The tab for the screen you're on */
+.tab.active {
+  color: var(--accent);
+  font-weight: 600;
+}
