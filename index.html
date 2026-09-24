@@ -35,23 +35,29 @@
           </div>
         </header>
 
-        <div class="hero">
+        <!-- Hero: current phase + score ring on a soft flower card -->
+        <div class="align-hero">
+          <div class="flower flower-hero-right" data-flower></div>
+          <div class="flower flower-hero-left" data-flower></div>
           <!-- Filled by renderPhaseNow() -->
           <div class="phase-now" id="phase-now"></div>
           <!-- Built by buildRing(), updated by updateRing() -->
           <div class="ring" id="ring"></div>
         </div>
 
+        <!-- Filled by renderRecommendation() -->
+        <button class="rec-bar" type="button" id="rec-bar"></button>
+
         <div class="insights">
           <section class="insight insight-good" aria-labelledby="good-title">
-            <button class="insight-head" type="button" data-go="plan">
+            <button class="insight-head" type="button" data-phase-today>
               <h2 id="good-title">Good for you</h2>
               <span data-icon="chevron"></span>
             </button>
             <ul class="insight-list" id="good-list"></ul>
           </section>
           <section class="insight insight-watch" aria-labelledby="watch-title">
-            <button class="insight-head" type="button" data-go="plan">
+            <button class="insight-head" type="button" data-phase-today>
               <h2 id="watch-title">Watch-outs</h2>
               <span data-icon="chevron"></span>
             </button>
@@ -63,7 +69,7 @@
           <div class="week-head">
             <h2 id="week-title">Your Calendar This Week</h2>
             <button class="link-btn" type="button" data-go="plan">
-              Full calendar <span data-icon="arrow"></span>
+              View Full Calendar <span data-icon="arrow"></span>
             </button>
           </div>
           <div class="week-strip" id="week-strip" role="group" aria-label="Choose a day"></div>
@@ -80,28 +86,10 @@
       <!-- ===== Cycle Plan ===== -->
       <section class="screen screen-plan" id="screen-plan" hidden>
 
-        <!-- Soft leaf sprigs behind the hero (decoration only) -->
-        <svg class="leaves" viewBox="0 0 390 320" aria-hidden="true">
-          <defs>
-            <path id="leaf-shape" d="M0 0C16-15 48-16 70 0C48 16 16 15 0 0Z"/>
-            <g id="sprig">
-              <path class="leaves-stem" d="M0 0C28-50 60-100 100-150"/>
-              <use href="#leaf-shape" transform="translate(22 -38) rotate(-150)"/>
-              <use href="#leaf-shape" transform="translate(26 -44) rotate(-25)"/>
-              <use href="#leaf-shape" transform="translate(52 -82) rotate(-155)"/>
-              <use href="#leaf-shape" transform="translate(56 -88) rotate(-30)"/>
-              <use href="#leaf-shape" transform="translate(82 -120) rotate(-150)"/>
-              <use href="#leaf-shape" transform="translate(100 -150) rotate(-65)"/>
-            </g>
-          </defs>
-          <use href="#sprig" transform="translate(20 300) scale(0.95)"/>
-          <use href="#sprig" transform="translate(372 250) scale(-1.05 1.05)"/>
-        </svg>
-
         <header class="topbar">
           <h1 class="brand">Cycle Plan</h1>
           <div class="topbar-actions">
-            <button class="icon-btn" type="button" id="plan-today-btn" aria-label="Back to this week">
+            <button class="icon-btn" type="button" id="plan-today-btn" aria-label="Back to this month">
               <span data-icon="calendar"></span>
             </button>
             <button class="avatar" type="button" data-go="settings" aria-label="Profile and settings">
@@ -110,38 +98,36 @@
           </div>
         </header>
 
-        <!-- Built by renderPhaseWheel() -->
-        <div class="wheel" id="phase-wheel"></div>
+        <!-- Today's phase + where it sits in the cycle -->
+        <div class="plan-hero">
+          <div class="flower flower-plan" data-flower></div>
+          <!-- Filled by renderPlanHero() -->
+          <div class="plan-hero-text" id="plan-hero"></div>
+        </div>
 
-        <!-- Built by renderPhaseCards() -->
-        <div class="phase-cards" id="phase-cards"></div>
-
-        <section class="plan-card plan-week" aria-labelledby="plan-month">
+        <section class="plan-card month-card" aria-labelledby="plan-month">
           <div class="plan-card-head">
             <h2 id="plan-month" aria-live="polite"></h2>
-            <div class="week-nav">
-              <button class="round-btn" type="button" data-week="-1" aria-label="Previous week"><span data-icon="back"></span></button>
-              <button class="round-btn" type="button" data-week="1" aria-label="Next week"><span data-icon="chevron"></span></button>
+            <div class="month-nav">
+              <button class="round-btn" type="button" data-month="-1" aria-label="Previous month"><span data-icon="back"></span></button>
+              <button class="round-btn" type="button" data-month="1" aria-label="Next month"><span data-icon="chevron"></span></button>
             </div>
           </div>
-          <!-- Built by renderPlanWeek() -->
-          <div class="plan-days" id="plan-days"></div>
-          <div class="phase-bar" id="phase-bar" aria-hidden="true"></div>
+          <div class="month-body">
+            <!-- Built by renderMonth() -->
+            <div class="month" id="month"></div>
+            <!-- Built by renderLegend() -->
+            <ul class="legend" id="legend"></ul>
+          </div>
         </section>
 
-        <!-- Logging is wired up in step 9 -->
         <section class="plan-card" aria-labelledby="track-title">
           <div class="plan-card-head">
             <h2 id="track-title">Track Today</h2>
-            <button class="plus-btn" type="button" aria-label="Log today"><span data-icon="plus"></span></button>
+            <button class="plus-btn" type="button" data-log="energy" aria-label="Log today"><span data-icon="plus"></span></button>
           </div>
-          <div class="track-grid">
-            <button class="track track-energy" type="button"><span class="track-tile"><span data-icon="bolt"></span></span>Energy</button>
-            <button class="track track-mood" type="button"><span class="track-tile"><span data-icon="smile"></span></span>Mood</button>
-            <button class="track track-focus" type="button"><span class="track-tile"><span data-icon="focus"></span></span>Focus</button>
-            <button class="track track-sleep" type="button"><span class="track-tile"><span data-icon="bed"></span></span>Sleep</button>
-            <button class="track track-food" type="button"><span class="track-tile"><span data-icon="cutlery"></span></span>Nutrition</button>
-          </div>
+          <!-- Built by renderTrackToday() -->
+          <div class="track-grid" id="track-grid"></div>
         </section>
 
         <section class="plan-card plan-focus" aria-labelledby="focus-title">
@@ -175,23 +161,7 @@
             <p class="coach-hello">Hi there <span aria-hidden="true">👋</span></p>
             <p class="coach-sub">How can I support you today?</p>
           </div>
-          <!-- Soft petals (decoration only) -->
-          <svg class="coach-art" viewBox="0 0 200 160" aria-hidden="true">
-            <defs>
-              <linearGradient id="petal-blue" x1="0" y1="1" x2="1" y2="0">
-                <stop offset="0" stop-color="#94b6e6"/><stop offset="1" stop-color="#eef4fc"/>
-              </linearGradient>
-              <linearGradient id="petal-green" x1="0" y1="1" x2="1" y2="0">
-                <stop offset="0" stop-color="#6f8f76"/><stop offset="1" stop-color="#c3d3bf"/>
-              </linearGradient>
-            </defs>
-            <path d="M140 165C100 140 55 95 62 42C102 58 134 108 140 165Z" fill="url(#petal-blue)"/>
-            <path d="M140 165C126 108 136 38 172 2C198 50 172 120 140 165Z" fill="url(#petal-blue)"/>
-            <path d="M140 165C158 118 190 86 218 78C214 124 178 154 140 165Z" fill="url(#petal-blue)"/>
-            <path d="M140 165C114 146 78 136 48 146C76 118 126 128 140 165Z" fill="url(#petal-green)"/>
-            <path class="coach-art-vein" d="M140 165C118 120 90 80 66 48M140 165C142 100 152 50 170 8M140 165C164 128 188 100 214 82"/>
-            <path d="M0 150C50 128 92 162 142 140S200 128 220 138V170H0Z" fill="#ffffff" opacity="0.55"/>
-          </svg>
+          <div class="flower flower-coach" data-flower></div>
         </div>
 
         <section class="coach-ask" aria-labelledby="ask-title">
@@ -242,18 +212,7 @@
             <span class="profile-title">Your Profile</span>
             <span class="profile-sub">Manage your personal details</span>
           </span>
-          <!-- Soft petals (decoration only) -->
-          <svg class="profile-art" viewBox="0 0 160 80" aria-hidden="true">
-            <defs>
-              <linearGradient id="profile-petal" x1="0" y1="1" x2="1" y2="0">
-                <stop offset="0" stop-color="#9dbbe6"/><stop offset="1" stop-color="#eef4fc"/>
-              </linearGradient>
-            </defs>
-            <path d="M110 84C84 70 56 46 58 16C86 26 106 54 110 84Z" fill="url(#profile-petal)"/>
-            <path d="M110 84C102 52 110 18 134-4C150 26 132 62 110 84Z" fill="url(#profile-petal)"/>
-            <path d="M110 84C94 72 66 66 44 74C62 54 98 58 110 84Z" fill="#8fa991" opacity="0.8"/>
-            <path d="M110 84C122 58 144 40 166 36C162 62 138 80 110 84Z" fill="url(#profile-petal)"/>
-          </svg>
+          <span class="flower flower-profile" data-flower></span>
           <span class="profile-chevron"><span data-icon="chevron"></span></span>
         </button>
 
@@ -464,6 +423,25 @@
       </div>
       <p class="form-error" id="task-error" role="alert"></p>
       <button class="primary-btn" type="submit">Save task</button>
+    </form>
+  </dialog>
+
+  <!-- Track Today sheet (Cycle Plan) -->
+  <dialog class="sheet" id="log-dialog" aria-labelledby="log-title">
+    <form id="log-form">
+      <div class="sheet-head">
+        <h2 id="log-title">Track today</h2>
+        <button class="icon-btn icon-btn-small" type="button" id="log-cancel" aria-label="Close">
+          <span data-icon="close"></span>
+        </button>
+      </div>
+      <label class="field log-energy">
+        <span>Energy <output id="energy-out" for="energy-input"></output>/10</span>
+        <input id="energy-input" name="energy" type="range" min="0" max="10" step="1">
+      </label>
+      <!-- Mood / Focus / Sleep choices built by renderLogChoices() -->
+      <div id="log-choices"></div>
+      <button class="primary-btn" type="submit">Save</button>
     </form>
   </dialog>
 

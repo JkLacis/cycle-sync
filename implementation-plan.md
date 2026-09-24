@@ -13,9 +13,9 @@
 |---|---|
 | Tabs | 4-tab bottom dock: Alignment · Cycle Plan · Coach · Settings |
 | Tasks | User-typed. Each task: title, date, start/end time, type. Saved in localStorage. Sample week only with `?demo=1`. |
-| Score | **Today only.** Each task rated High Sync (100) / Good (65) / Low Sync (0) for today's phase; score = average, 0–100. No tasks → "–". |
-| Good for you / Watch-outs | Exactly 3 short labels each: from today's High / Low Sync task types first, phase defaults fill the rest. |
-| Calendar | Alignment: week strip + tasks. Cycle Plan: week calendar + phase bar (as in mockup), arrows move by week. |
+| Score | **Today only.** Each task rated High Sync (100) / Good (75) / Moderate (60) / Low Sync (0) for today's phase; score = average, 0–100. No tasks → "–". Score < 50 → pink "recovery" look. *(updated 2026-09-24, final design)* |
+| Good for you / Watch-outs | Exactly 3 short labels each: Good = today's High Sync task types first; Watch-outs = Low Sync, then Moderate task types; phase defaults fill the rest. |
+| Calendar | Alignment: week strip + tasks. Cycle Plan: month calendar with a phase bar per week + legend (final design). |
 | Real | Onboarding, tasks, score, calendar, logging (localStorage), phase tips, demo mode. |
 | Mock | AI Coach = scripted replies + working breathing timer. Settings integrations = toggles that do nothing. |
 | Dropped | Energy leak audit, real AI, real calendar sync, wearables, WhatsApp. |
@@ -29,7 +29,8 @@ Phase colours follow the Cycle Plan mockup (2026-09-24): Menstrual `#ec9ea6` sof
 ### POWR labels
 Follicular = Prepare · Ovulatory = Open Up · Luteal = Work · Menstrual = Rest.
 
-### Task types → phases (suits = High Sync, avoid = Low Sync, other = Good)
+### Task types → phases
+High Sync = suits this phase · Low Sync = on its avoid list · Good = suits no particular phase · Moderate = suits another phase.
 | Type | Suits | Avoid |
 |---|---|---|
 | Pitch / presentation | Ovulatory | Menstrual |
@@ -37,7 +38,7 @@ Follicular = Prepare · Ovulatory = Open Up · Luteal = Work · Menstrual = Rest
 | Meeting / check-in | – | Menstrual |
 | Brainstorm / new project | Follicular | Luteal |
 | Planning / research | Follicular | – |
-| Deep work / admin | Luteal | Ovulatory |
+| Deep work / admin | Luteal | – |
 | Wrap-up / finishing | Luteal | Follicular |
 | Review / reflection | Menstrual | Ovulatory |
 | High-intensity workout | Follicular, Ovulatory | Menstrual |
@@ -81,26 +82,29 @@ Follicular = Prepare · Ovulatory = Open Up · Luteal = Work · Menstrual = Rest
 - [x] Task can be deleted (open its details → Delete)
 - [x] Tasks survive a reload
 
-### 7. [x] Alignment dashboard
-- [x] Header: "Cycle Sync" + calendar + avatar; "DAY X" / phase name + phase icon (mockup)
-- [x] Score ring 0–100 (formula above); updates after adding/deleting a task
-- [x] No tasks → "–" and "No tasks today" instead of 0
-- [x] Exactly 3 Good for you + 3 Watch-outs; event details name the better phase for Low Sync tasks
-- [x] Wording = suggestions, no medical claims
+### 7. [x] Alignment dashboard (final design, updated 2026-09-24)
+- [x] Header: "Cycle Sync" + calendar + avatar
+- [x] Hero card with drawn flower: "DAY X" / phase name + icon / "View phase details ›" (→ phase detail); score ring 0–100 on the right
+- [x] Recommendation bar "See recommendations for your current phase" (→ phase detail)
+- [x] Good for you + Watch-outs side by side, exactly 3 icons each in a row
+- [x] Your Calendar This Week + "View Full Calendar →"; events "10:00 – 11:00 · title · badge ›"
+- [x] 4 levels: High Sync / Good / Moderate / Low Sync; demo day (`?demo=1`) scores 78 as in the mockup
+- [x] Score < 50 → pink recovery look (red ring, heart + "See recommendations for recovery", green Good card)
+- [x] No tasks → "–" and "No tasks today" instead of 0; wording = suggestions, no medical claims
 
-### 8. [x] Cycle Plan (matches Cycle Plan mockup, updated 2026-09-24)
-- [x] Header "Cycle Plan" + calendar (back to this week) + avatar
-- [x] Phase wheel: 4 equal arcs (Menstrual top-left → Follicular → Ovulatory → Luteal), white marker in today's phase; centre "Day X / Phase / icon"
-- [x] 4 phase cards; current phase underlined; tap → phase detail
-- [x] Week calendar: month title, prev/next week arrows (work across month/year), today in blue circle, phase dot per day, phase colour bar with today marker
-- [x] Track Today: 5 tiles (Energy, Mood, Focus, Sleep, Nutrition) — look only, wired in step 9
-- [x] Phase Focus: 3 tiles for the current phase → phase detail
+### 8. [x] Cycle Plan (final design, updated 2026-09-24)
+- [x] Header "Cycle Plan" + calendar (back to this month) + avatar
+- [x] Hero card with drawn flower: Day X / phase + icon, cycle bar (segments sized by this user's phase lengths, marker = today), "Next phase: X in N days"
+- [x] Month calendar: phase bar under each week, phase icon on the day each phase starts, today in blue circle; prev/next month work across year boundaries
+- [x] Legend: 4 phases with icon + typical length (3–7 / 7–10 / 3–4 / 10–14 days); tap → phase detail
+- [x] Phase Focus: 3 picture tiles with icon + label for the current phase → phase detail
 - [x] Phase detail: POWR label, day range for this user, Move / Eat / Work tips; back button returns
 
-### 9. [ ] Quick logging (in Cycle Plan)
-- [ ] Today's log: energy 0–10 slider, mood, focus, sleep (<8h / 8h / >8h), phase food check-in
-- [ ] Save → stored per date in localStorage; reopening today shows saved values
-- [ ] Food check-in text matches the current phase
+### 9. [x] Quick logging = Track Today (final design, updated 2026-09-24)
+- [x] 4 tiles: Energy x/10, Mood, Focus, Sleep with today's value ("–" until logged)
+- [x] Tap a tile or + → sheet: energy 0–10 slider, mood (Low/Okay/Good/Great), focus (Low/Medium/High), sleep (<8h / 8h / >8h)
+- [x] Save → stored per date in localStorage (`cyclesync.logs`); reopening today shows saved values
+- [x] Phase food check-in dropped (Nutrition tile not in final design)
 
 ### 10. [x] AI Coach (scripted, matches AI Coach mockup, updated 2026-09-24)
 - [x] Header "AI Coach" + clock (jumps to chat) + avatar; "Hi there 👋" card with drawn leaves

@@ -18,7 +18,7 @@ instructions. Technical language is fine when he is driving; keep it simple for 
 - Keep this file updated whenever a new decision is made.
 
 ## ▶ START HERE (status as of 2026-09-24)
-- Done: steps 1–4, 6, 7, 8, 10, 11 (Alignment, Cycle Plan, AI Coach, Settings pages built to match Praful's mockups).
+- Done: steps 1–4, 6–11. All 4 pages match Praful's **final design** mockups (2026-09-24).
 - `implementation-plan.md` is the build plan — next unticked step first (step 5: onboarding).
   Until onboarding exists, `DEFAULT_SETTINGS` in app.js makes today Day 14 (28/5 cycle).
 - Demo is **Friday 2026-09-25** — keep scope small; steps 9–11 can be cut/simplified if time runs out.
@@ -43,12 +43,13 @@ instructions. Technical language is fine when he is driving; keep it simple for 
 ## Decisions (2026-09-24) — details in `implementation-plan.md`
 1. Tasks: user-typed. Task = title, date, start/end time, type. localStorage.
    Sample week (like the mockup) loads **only with `?demo=1`**. *(updated 2026-09-24)*
-2. Score: **today only** — % of today's tasks whose type suits today's phase (0–100). No tasks today → "–".
-   Good for you / Watch-outs = always exactly 3 short labels each: from today's task types first,
-   phase's own strengths/watch-outs fill the gaps. *(updated 2026-09-24)*
+2. Score: **today only** — average of today's tasks: High Sync 100 · Good 75 · Moderate 60 · Low Sync 0.
+   No tasks today → "–". Score < 50 → pink "recovery" look on Alignment.
+   Good for you / Watch-outs = always exactly 3 short labels each: from today's task types first (Watch-outs:
+   Low Sync then Moderate), phase's own strengths/watch-outs fill the gaps. *(updated 2026-09-24, final design)*
 3. Real: logging, tasks, score, calendar, phase tips. Mock: AI Coach (scripted + real breathing timer),
    Settings integration toggles. **Energy leak audit dropped.**
-4. Calendar on **both**: Alignment = week strip + tasks; Cycle Plan = week calendar + phase bar, like the Cycle Plan mockup (not a month grid).
+4. Calendar on **both**: Alignment = week strip + tasks; Cycle Plan = month calendar with phase bars + legend (final design).
 5. Palette: **match the mockup** `reference/home-mockup.webp` (warm off-white, blue, sage green, soft peach watch-outs). See Style. *(updated 2026-09-24)*
    Phase colours follow the Cycle Plan mockup: Menstrual soft pink, Follicular blue, Ovulatory yellow, Luteal sage green.
 6. Short-cycle overlap: **Menstrual wins**.
@@ -77,13 +78,13 @@ four cycle phases she's in, it suggests how to **move**, what to **eat**, and wh
 - Bottom dock, 4 tabs: **Alignment · Cycle Plan · Coach · Settings** (icons + labels).
 - **Onboarding** (first visit): last period start (no future dates), cycle length (default 28, 21–35),
   period length (default 5, 3–7). Validate. Note: "For general wellness only. Not medical advice, and not for contraception."
-- **Alignment** (follow the mockup image): "Cycle Sync" + calendar icon + avatar; "DAY X / <Phase>" + phase icon;
-  score ring 0–100 ("78 /100 Cycle Alignment", not a phase wheel); Good for you (3) + Watch-outs (3);
-  "Your Calendar This Week" Mon–Sun strip + today's events (time, title, High Sync/Good/Low Sync, chevron) + add task.
-- **Cycle Plan** (match Praful's Cycle Plan mockup exactly): "Cycle Plan" header; phase wheel (4 equal arcs,
-  marker = today, centre Day X / phase / icon); 4 phase cards; week calendar + phase bar (arrows by week);
-  Track Today tiles (Energy, Mood, Focus, Sleep, Nutrition → logging in step 9); Phase Focus tiles.
-  Tap phase card / focus tile → phase detail (Move/Eat/Work).
+- **Alignment** (final design): hero card with drawn flower (DAY X / phase + icon / View phase details, score ring
+  "78 /100 Cycle Alignment"); recommendation bar; Good for you (3) + Watch-outs (3) side by side;
+  "Your Calendar This Week" + View Full Calendar, Mon–Sun strip, today's events (time, title, badge, chevron) + add task.
+  Pink recovery look when score < 50.
+- **Cycle Plan** (final design): hero card (Day X / phase, cycle bar with today marker, next phase in N days);
+  month calendar with phase bars + phase-start icons + legend; Track Today (Energy/Mood/Focus/Sleep, logs per day);
+  Phase Focus (3 tiles from `PHASES[x].focus`). Tap phase → phase detail (Move/Eat/Work).
 - **Coach** (match Praful's AI Coach mockup): "Hi there" card; Ask your coach (question box + 4 chips → scripted
   phase-based replies as chat below, keyword matching for typed text); Suggested for You = 4 cards with drawn scenes
   (no photo files) → guided breathing timer + phase tips. Small note: demo coach, not real AI.
@@ -134,7 +135,7 @@ sage-green "good" card, very soft peach "watch-out" card (no aggressive red, no 
 Exact colour tokens live in `:root` of style.css.
 
 ## Build order / progress
-See `implementation-plan.md` (steps 1–12 with "done when" criteria). Steps 1–4, 6, 7, 8, 10, 11 done.
+See `implementation-plan.md` (steps 1–12 with "done when" criteria). Steps 1–4, 6–11 done.
 
 ## Decisions log
 - `reference/` (gitignored, never push — repo is public): mentor's example files from another project
@@ -149,10 +150,13 @@ See `implementation-plan.md` (steps 1–12 with "done when" criteria). Steps 1�
   storage → `calendarSource` (the one place events come from; swap for Google/Outlook later) →
   `calculateCycleAlignment()` → demo seed → render functions per component → navigation → add-task sheet.
 - `?demo=1` uses its own localStorage key (`cyclesync.demo.tasks`) and always Day 14 Ovulatory.
-- localStorage keys all start with `cyclesync.` (settings, tasks, demo.tasks, prefs). `validateCycleSettings()` is shared
+- localStorage keys all start with `cyclesync.` (settings, tasks, logs, prefs, demo.tasks, demo.logs, demo.version). `validateCycleSettings()` is shared
   by Settings and (later) onboarding.
 - Tabs are `<button class="tab" data-screen="NAME">`; active tab gets class `active`.
 - Phone frame kicks in at `min-width: 600px` (390×844, dark bezel). Below that the app fills the screen.
 - Colours are CSS variables in `:root` of style.css (palette in Style section).
 - `pandoc` not installed; read .docx with `unzip -p file.docx word/document.xml | sed 's/<[^>]*>//g'`.
 - Phase icons (from Cycle Plan mockup): Menstrual drop, Follicular sprout, Ovulatory sun, Luteal leaf.
+- Flower illustration = `flowerSVG()` in app.js, placed via `<div class="flower ..." data-flower>`; colours from CSS vars
+  `--petal-*` / `--leaf-*` (pink in recovery look). Used on Alignment, Cycle Plan, Coach, Settings.
+- Demo data version: bump `DEMO_VERSION` in app.js when sample tasks/logs change (old demo data is replaced).

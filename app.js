@@ -7,6 +7,7 @@ const PHASE_ORDER = ["follicular", "ovulatory", "luteal", "menstrual"];
 
 // Suggestions inspired by In the FLO (own wording, not medical advice).
 // strengths / watchOuts fill the Alignment cards when today's tasks don't.
+// focus = Cycle Plan "Phase Focus" tiles. typical = usual phase length (legend).
 const PHASES = {
   follicular: {
     name: "Follicular",
@@ -26,6 +27,12 @@ const PHASES = {
       { label: "Over-booking", icon: "calendar" },
       { label: "Late nights", icon: "moon" },
     ],
+    focus: [
+      { label: "Start new projects", icon: "spark" },
+      { label: "Brainstorm", icon: "bulb" },
+      { label: "Light cardio", icon: "dumbbell" },
+    ],
+    typical: "7–10 days",
   },
   ovulatory: {
     name: "Ovulatory",
@@ -37,14 +44,20 @@ const PHASES = {
     work: ["Pitch and present", "Negotiate", "Network", "Have the important conversations"],
     strengths: [
       { label: "Networking", icon: "people" },
-      { label: "Presenting", icon: "presentation" },
+      { label: "Big ideas", icon: "bulb" },
       { label: "High energy", icon: "dumbbell" },
     ],
     watchOuts: [
       { label: "Admin work", icon: "doc" },
       { label: "High stress", icon: "bolt" },
-      { label: "Over-booking", icon: "calendar" },
+      { label: "Energy dips", icon: "moon" },
     ],
+    focus: [
+      { label: "Networking", icon: "people" },
+      { label: "Share ideas", icon: "bulb" },
+      { label: "High energy activities", icon: "dumbbell" },
+    ],
+    typical: "3–4 days",
   },
   luteal: {
     name: "Luteal",
@@ -64,6 +77,12 @@ const PHASES = {
       { label: "High stress", icon: "bolt" },
       { label: "Skipping carbs", icon: "leaf" },
     ],
+    focus: [
+      { label: "Deep work", icon: "target" },
+      { label: "Wrap up projects", icon: "check" },
+      { label: "Strength training", icon: "dumbbell" },
+    ],
+    typical: "10–14 days",
   },
   menstrual: {
     name: "Menstrual",
@@ -83,17 +102,23 @@ const PHASES = {
       { label: "Intense workouts", icon: "dumbbell" },
       { label: "Packed days", icon: "calendar" },
     ],
+    focus: [
+      { label: "Reflect and journal", icon: "pen" },
+      { label: "Rest", icon: "moon" },
+      { label: "Gentle walks", icon: "leaf" },
+    ],
+    typical: "3–7 days",
   },
 };
 
-// Task types. suits → High Sync, avoid → Low Sync, any other phase → Good.
+// Task types. See getSyncLevel() for how suits / avoid become a sync level.
 const TASK_TYPES = {
   pitch:      { label: "Pitch / presentation",          short: "Presenting",  icon: "presentation", suits: ["ovulatory"],               avoid: ["menstrual"] },
   networking: { label: "Networking / key conversation", short: "Networking",  icon: "people",       suits: ["ovulatory"],               avoid: ["menstrual"] },
   meeting:    { label: "Meeting / check-in",            short: "Meetings",    icon: "chat",         suits: [],                          avoid: ["menstrual"] },
   brainstorm: { label: "Brainstorm / new project",      short: "Big ideas",   icon: "bulb",         suits: ["follicular"],              avoid: ["luteal"] },
   planning:   { label: "Planning / research",           short: "Planning",    icon: "compass",      suits: ["follicular"],              avoid: [] },
-  deepwork:   { label: "Deep work / admin",             short: "Admin work",  icon: "doc",          suits: ["luteal"],                  avoid: ["ovulatory"] },
+  deepwork:   { label: "Deep work / admin",             short: "Admin work",  icon: "doc",          suits: ["luteal"],                  avoid: [] },
   wrapup:     { label: "Wrap-up / finishing",           short: "Wrapping up", icon: "check",        suits: ["luteal"],                  avoid: ["follicular"] },
   review:     { label: "Review / reflection",           short: "Reflection",  icon: "pen",          suits: ["menstrual"],               avoid: ["ovulatory"] },
   hiit:       { label: "High-intensity workout",        short: "High energy", icon: "dumbbell",     suits: ["follicular", "ovulatory"], avoid: ["menstrual"] },
@@ -103,10 +128,13 @@ const TASK_TYPES = {
 
 // How well one task fits the phase on its day. points feed the 0–100 score.
 const SYNC_LEVELS = {
-  high: { label: "High Sync", points: 100, icon: "target" },
-  good: { label: "Good",      points: 65,  icon: "diamond" },
-  low:  { label: "Low Sync",  points: 0,   icon: "dash-circle" },
+  high:     { label: "High Sync", points: 100, icon: "target" },
+  good:     { label: "Good",      points: 75,  icon: "diamond" },
+  moderate: { label: "Moderate",  points: 60,  icon: "dash-circle" },
+  low:      { label: "Low Sync",  points: 0,   icon: "octagon" },
 };
+// Below this score the Alignment screen switches to the pink "recovery" look.
+const RECOVERY_BELOW = 50;
 
 const INSIGHT_COUNT = 3;
 const DAY_NAMES = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
@@ -152,6 +180,8 @@ const ICONS = {
   sparkle: '<path d="M12 3c.6 4.6 2.4 6.4 7 7-4.6.6-6.4 2.4-7 7-.6-4.6-2.4-6.4-7-7 4.6-.6 6.4-2.4 7-7z"/><path d="M19 3v3M17.5 4.5h3"/>',
   send: '<path d="M21 3 10 14M21 3l-7 18-4-7-7-4z"/>',
   play: '<path d="M8 5.5v13l10.5-6.5z"/>',
+  heart: '<path d="M12 20s-7.5-4.5-7.5-10A4.2 4.2 0 0 1 12 7.3 4.2 4.2 0 0 1 19.5 10c0 5.5-7.5 10-7.5 10z"/>',
+  octagon: '<path d="M8.3 3h7.4L21 8.3v7.4L15.7 21H8.3L3 15.7V8.3z"/><circle cx="12" cy="12" r="2.5"/>',
   bell: '<path d="M6 16v-5a6 6 0 0 1 12 0v5l1.5 2h-15z"/><path d="M10 20.5a2 2 0 0 0 4 0"/>',
   lock: '<rect x="5" y="10.5" width="14" height="10" rx="2"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5M12 14.5v2"/>',
   help: '<circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.6v.6M12 17h.01"/>',
@@ -173,6 +203,57 @@ function escapeHTML(text) {
   const div = document.createElement("div");
   div.textContent = text;
   return div.innerHTML;
+}
+
+// ===== Flower illustration (soft see-through petals + a sage leaf) =====
+// Colours come from CSS variables (--petal-deep, --petal-light, --leaf-deep, --leaf-light),
+// so the same drawing turns pink in the Alignment "recovery" look.
+
+// [angle, length, width, kind] — drawn back to front from one base point,
+// sweeping up and to the right with a sage leaf on the left (as in the mockups).
+const FLOWER_PARTS = [
+  [-28, 150, 40, "petal"],
+  [60, 128, 36, "petal"],
+  [-4, 186, 44, "petal"],
+  [28, 168, 42, "petal"],
+  [-68, 92, 24, "leaf"],
+];
+let flowerCount = 0;
+
+function petalPath(l, w) {
+  return "M0 0C" + -w + " " + -l * 0.3 + " " + -w * 0.75 + " " + -l * 0.82 + " 0 " + -l +
+    "C" + w * 0.75 + " " + -l * 0.82 + " " + w + " " + -l * 0.3 + " 0 0Z";
+}
+
+// Midrib + fine side veins, for the delicate "painted" look.
+function veinPath(l, w) {
+  let d = "M0 -4Q" + w * 0.12 + " " + -l * 0.5 + " 0 " + -l * 0.95;
+  for (const t of [0.22, 0.36, 0.5, 0.64, 0.78]) {
+    const reach = w * 0.62 * (1 - Math.abs(t - 0.42) * 1.3);
+    d += "M0 " + -l * t + "Q" + reach * 0.5 + " " + -l * (t + 0.04) + " " + reach + " " + -l * (t + 0.12);
+    d += "M0 " + -l * t + "Q" + -reach * 0.5 + " " + -l * (t + 0.04) + " " + -reach + " " + -l * (t + 0.12);
+  }
+  return d;
+}
+
+function flowerSVG() {
+  const id = "flower" + flowerCount++;
+  const gradient = (name, deep, light) =>
+    '<linearGradient id="' + id + name + '" x1="0.5" y1="1" x2="0.5" y2="0">' +
+      '<stop offset="0" style="stop-color: var(' + deep + ')"/><stop offset="1" style="stop-color: var(' + light + ')"/>' +
+    "</linearGradient>";
+  const parts = FLOWER_PARTS.map(([angle, l, w, kind]) =>
+    '<g transform="translate(95 206) rotate(' + angle + ')">' +
+      '<path d="' + petalPath(l, w) + '" fill="url(#' + id + kind + ')" fill-opacity="0.88"/>' +
+      '<path class="flower-vein" d="' + veinPath(l, w) + '"/>' +
+    "</g>"
+  ).join("");
+  return (
+    '<svg viewBox="0 0 220 210" preserveAspectRatio="xMidYMax meet" aria-hidden="true">' +
+      "<defs>" + gradient("petal", "--petal-deep", "--petal-light") + gradient("leaf", "--leaf-deep", "--leaf-light") + "</defs>" +
+      parts +
+    "</svg>"
+  );
 }
 
 // ===== Dates: always local calendar days, never UTC =====
@@ -273,7 +354,9 @@ const STORAGE_PREFIX = "cyclesync.";
 const STORAGE_KEYS = {
   settings: STORAGE_PREFIX + "settings",
   tasks: STORAGE_PREFIX + (IS_DEMO ? "demo.tasks" : "tasks"),
+  logs: STORAGE_PREFIX + (IS_DEMO ? "demo.logs" : "logs"),
   prefs: STORAGE_PREFIX + "prefs",
+  demoVersion: STORAGE_PREFIX + "demo.version",
 };
 
 // Allowed ranges for the cycle form (onboarding + Settings).
@@ -344,6 +427,16 @@ function saveTasks(tasks) {
   localStorage.setItem(STORAGE_KEYS.tasks, JSON.stringify(tasks));
 }
 
+// Daily check-ins: { "YYYY-MM-DD": { energy, mood, focus, sleep } }
+function loadLogs() {
+  const saved = localStorage.getItem(STORAGE_KEYS.logs);
+  return saved ? JSON.parse(saved) : {};
+}
+
+function saveLog(isoDate, log) {
+  localStorage.setItem(STORAGE_KEYS.logs, JSON.stringify({ ...loadLogs(), [isoDate]: log }));
+}
+
 // =====================================================================
 // 5. Calendar source
 // Everything reads events through this object. A Google Calendar / Outlook
@@ -370,22 +463,26 @@ const calendarSource = {
 // 6. Alignment engine
 // =====================================================================
 
+// High Sync = suits this phase · Low Sync = best avoided in it ·
+// Good = fine in any phase · Moderate = better in another phase.
 function getSyncLevel(typeId, phaseKey) {
   const type = TASK_TYPES[typeId];
   if (!type) return "good";
   if (type.suits.includes(phaseKey)) return "high";
   if (type.avoid.includes(phaseKey)) return "low";
-  return "good";
+  return type.suits.length ? "moderate" : "good";
 }
 
-// Short labels from matching tasks first, then the phase's own list, max 3, no repeats.
-function pickInsights(events, level, fallback) {
+// Short labels from matching tasks first (in the order of levels), then the phase's own list, max 3, no repeats.
+function pickInsights(events, levels, fallback) {
   const items = [];
   const add = (item) => {
     if (items.length < INSIGHT_COUNT && !items.some((i) => i.label === item.label)) items.push(item);
   };
-  for (const e of events) {
-    if (e.sync === level) add({ label: TASK_TYPES[e.type].short, icon: TASK_TYPES[e.type].icon, fromTask: true });
+  for (const level of levels) {
+    for (const e of events) {
+      if (e.sync === level) add({ label: TASK_TYPES[e.type].short, icon: TASK_TYPES[e.type].icon, fromTask: true });
+    }
   }
   for (const item of fallback) add(item);
   return items;
@@ -400,8 +497,8 @@ function calculateCycleAlignment({ phase, cycleDay, events }) {
   return {
     score,
     cycleDay,
-    goodForYou: pickInsights(rated, "high", PHASES[phase].strengths),
-    watchOuts: pickInsights(rated, "low", PHASES[phase].watchOuts),
+    goodForYou: pickInsights(rated, ["high"], PHASES[phase].strengths),
+    watchOuts: pickInsights(rated, ["low", "moderate"], PHASES[phase].watchOuts),
     events: rated,
   };
 }
@@ -415,24 +512,30 @@ function suitedPhaseNames(typeId) {
 // 7. Demo data (only with ?demo=1)
 // =====================================================================
 
-function seedDemoTasks() {
-  if (localStorage.getItem(STORAGE_KEYS.tasks)) return;
+// Bump DEMO_VERSION when the sample data changes, so old demo data is replaced.
+const DEMO_VERSION = "2";
+
+function seedDemoData() {
+  if (localStorage.getItem(STORAGE_KEYS.demoVersion) === DEMO_VERSION) return;
   const t = today();
   const day = (offset) => toISODate(addDays(t, offset));
+  // Today = the three events from the mockup (score 78 on Day 14).
   const tasks = [
-    { title: "Morning HIIT",        date: day(0),  start: "07:30", end: "08:15", type: "hiit" },
-    { title: "Client Presentation", date: day(0),  start: "10:00", end: "11:00", type: "pitch" },
+    { title: "Client Presentation", date: day(0),  start: "10:00", end: "11:00", type: "networking" },
     { title: "Team Sync",           date: day(0),  start: "13:00", end: "14:00", type: "meeting" },
     { title: "Contract Review",     date: day(0),  start: "16:00", end: "17:00", type: "deepwork" },
     { title: "Quarterly planning",  date: day(-3), start: "09:00", end: "11:00", type: "planning" },
     { title: "Product brainstorm",  date: day(-2), start: "14:00", end: "15:30", type: "brainstorm" },
     { title: "Investor coffee",     date: day(-1), start: "09:30", end: "10:30", type: "networking" },
+    { title: "Morning HIIT",        date: day(1),  start: "07:30", end: "08:15", type: "hiit" },
     { title: "Salary conversation", date: day(1),  start: "11:00", end: "11:30", type: "networking" },
     { title: "Pilates",             date: day(2),  start: "18:00", end: "19:00", type: "strength" },
     { title: "Close out Q3 report", date: day(3),  start: "10:00", end: "12:00", type: "wrapup" },
   ];
   tasks.forEach((task, i) => (task.id = "demo" + i));
   saveTasks(tasks);
+  localStorage.setItem(STORAGE_KEYS.logs, JSON.stringify({ [day(0)]: { energy: 7, mood: "Good", focus: "High", sleep: "8h" } }));
+  localStorage.setItem(STORAGE_KEYS.demoVersion, DEMO_VERSION);
 }
 
 // =====================================================================
@@ -448,10 +551,21 @@ function renderPhaseNow(state) {
     '<p class="phase-name" style="--phase-color: var(--' + state.phaseKey + ')">' +
       state.phase.name +
       '<span class="phase-icon" title="' + state.phase.powr + '">' + icon(state.phase.icon) + "</span>" +
-    "</p>";
+    "</p>" +
+    '<button type="button" class="phase-link" data-phase="' + state.phaseKey + '">View phase details' + icon("chevron") + "</button>";
 }
 
-const RING = { size: 200, stroke: 12, radius: 86 };
+// Bar under the hero: normal = phase tips, recovery = gentler wording.
+function renderRecommendation(state, isRecovery) {
+  const bar = document.getElementById("rec-bar");
+  bar.dataset.phase = state.phaseKey;
+  bar.innerHTML =
+    '<span class="rec-icon">' + icon(isRecovery ? "heart" : "bulb") + "</span>" +
+    '<span class="rec-text">See recommendations for ' + (isRecovery ? "recovery" : "your current phase") + "</span>" +
+    icon("chevron");
+}
+
+const RING = { size: 200, stroke: 14, radius: 86 };
 
 function buildRing() {
   const c = RING.size / 2;
@@ -459,7 +573,7 @@ function buildRing() {
   document.getElementById("ring").innerHTML =
     '<svg viewBox="0 0 ' + RING.size + " " + RING.size + '" aria-hidden="true">' +
       '<defs><linearGradient id="ring-gradient" x1="0" y1="0" x2="1" y2="1">' +
-        '<stop offset="0" style="stop-color: var(--blue-light)"/><stop offset="1" style="stop-color: var(--blue)"/>' +
+        '<stop offset="0" style="stop-color: var(--ring-start)"/><stop offset="1" style="stop-color: var(--ring-end)"/>' +
       "</linearGradient></defs>" +
       '<circle class="ring-track" cx="' + c + '" cy="' + c + '" r="' + RING.radius + '" stroke-width="' + RING.stroke + '"/>' +
       '<circle class="ring-fill" id="ring-fill" cx="' + c + '" cy="' + c + '" r="' + RING.radius + '" stroke-width="' + RING.stroke + '"' +
@@ -527,9 +641,13 @@ function renderWeek(settings) {
 function eventDetailText(event, phaseKey) {
   const phaseName = PHASES[phaseKey].name;
   const typeLabel = TASK_TYPES[event.type].label;
+  const better = suitedPhaseNames(event.type);
   if (event.sync === "high") return typeLabel + ". A great fit for your " + phaseName + " phase.";
-  if (event.sync === "low") return typeLabel + ". Could fit better in your " + suitedPhaseNames(event.type) + " phase.";
-  return typeLabel + ". A fair fit for your " + phaseName + " phase.";
+  if (event.sync === "moderate") return typeLabel + ". Fine today, even better in your " + better + " phase.";
+  if (event.sync === "low") {
+    return typeLabel + (better ? ". Could fit better in your " + better + " phase." : ". Keep it light in your " + phaseName + " phase.");
+  }
+  return typeLabel + ". A fair fit for any phase.";
 }
 
 function renderCalendarEvent(event, phaseKey) {
@@ -539,7 +657,7 @@ function renderCalendarEvent(event, phaseKey) {
     '<li class="event sync-' + event.sync + '">' +
       '<button type="button" class="event-row" data-event="' + event.id + '" aria-expanded="' + isOpen + '" aria-controls="detail-' + event.id + '">' +
         '<span class="event-dot"></span>' +
-        '<span class="event-time"><span>' + event.start + "</span><span>" + event.end + "</span></span>" +
+        '<span class="event-time">' + event.start + " – " + event.end + "</span>" +
         '<span class="event-title">' + escapeHTML(event.title) + "</span>" +
         '<span class="badge">' + icon(sync.icon) + sync.label + "</span>" +
         '<span class="event-chevron">' + icon("chevron") + "</span>" +
@@ -572,8 +690,12 @@ function renderAlignment() {
     cycleDay: now.cycleDay,
     events: calendarSource.getEvents(toISODate(today())),
   });
+  const isRecovery = result.score !== null && result.score < RECOVERY_BELOW;
+  document.getElementById("screen-alignment").classList.toggle("is-recovery", isRecovery);
+  for (const btn of document.querySelectorAll("[data-phase-today]")) btn.dataset.phase = now.phaseKey;
   renderPhaseNow(now);
   updateRing(result.score);
+  renderRecommendation(now, isRecovery);
   renderInsights(result);
   renderWeek(settings);
   renderDayEvents(settings);
@@ -583,26 +705,11 @@ function renderAlignment() {
 // 9. Cycle Plan screen components
 // =====================================================================
 
-// Order around the wheel and in the phase cards: a cycle starts with the period.
+// Order in the phase bar and legend: a cycle starts with the period.
 const CYCLE_ORDER = ["menstrual", "follicular", "ovulatory", "luteal"];
-// Each phase gets an equal quarter of the wheel (as in the mockup), Menstrual top-left.
-// trim leaves a small gap between the rounded arc ends.
-const WHEEL = { size: 200, stroke: 16, radius: 80, trim: 7, marker: 9, startAngle: -90 };
 
-let planWeekStart = startOfWeek(today());
-
-// Point on the wheel. angle 0 = top, clockwise, in degrees.
-function wheelPoint(angle) {
-  const c = WHEEL.size / 2;
-  const rad = (angle * Math.PI) / 180;
-  return { x: c + WHEEL.radius * Math.sin(rad), y: c - WHEEL.radius * Math.cos(rad) };
-}
-
-function wheelArc(from, to) {
-  const a = wheelPoint(from);
-  const b = wheelPoint(to);
-  return "M" + a.x + " " + a.y + " A" + WHEEL.radius + " " + WHEEL.radius + " 0 0 1 " + b.x + " " + b.y;
-}
+// Month shown in the Cycle Plan calendar (always the 1st of that month).
+let planMonth = new Date(today().getFullYear(), today().getMonth(), 1);
 
 // "Days 13–15", "Day 8" or "" for a zero-day phase.
 function phaseRangeText(range) {
@@ -610,83 +717,180 @@ function phaseRangeText(range) {
   return range.start === range.end ? "Day " + range.start : "Days " + range.start + "–" + range.end;
 }
 
-function renderPhaseWheel(state, settings) {
-  const quarter = 360 / CYCLE_ORDER.length;
-  const index = CYCLE_ORDER.indexOf(state.phaseKey);
-  const range = getPhaseRanges(settings)[state.phaseKey];
-  // Marker sits inside today's arc, as far along as today is inside the phase.
-  const progress = (state.cycleDay - range.start + 0.5) / (range.end - range.start + 1);
-  const markerAngle = WHEEL.startAngle + index * quarter + WHEEL.trim + progress * (quarter - 2 * WHEEL.trim);
-  const marker = wheelPoint(markerAngle);
-
-  const arcs = CYCLE_ORDER.map((key, i) =>
-    '<path class="wheel-arc" style="--phase-color: var(--' + key + ')" stroke-width="' + WHEEL.stroke + '"' +
-      ' d="' + wheelArc(WHEEL.startAngle + i * quarter + WHEEL.trim, WHEEL.startAngle + (i + 1) * quarter - WHEEL.trim) + '"/>'
-  ).join("");
-
-  document.getElementById("phase-wheel").innerHTML =
-    '<svg viewBox="0 0 ' + WHEEL.size + " " + WHEEL.size + '" aria-hidden="true">' + arcs +
-      '<circle class="wheel-marker" cx="' + marker.x + '" cy="' + marker.y + '" r="' + WHEEL.marker + '"/>' +
-    "</svg>" +
-    '<div class="wheel-center" role="img" aria-label="Day ' + state.cycleDay + ", " + state.phase.name + ' phase">' +
-      '<span class="wheel-day">Day ' + state.cycleDay + "</span>" +
-      '<span class="wheel-phase">' + state.phase.name + "</span>" +
-      '<span class="wheel-icon" style="--phase-color: var(--' + state.phaseKey + ')">' + icon(state.phase.icon) + "</span>" +
-    "</div>";
+function phaseLength(range) {
+  return Math.max(0, range.end - range.start + 1);
 }
 
-function renderPhaseCards(state) {
-  document.getElementById("phase-cards").innerHTML = CYCLE_ORDER.map((key) =>
-    '<button type="button" class="phase-card' + (key === state.phaseKey ? " is-current" : "") + '" data-phase="' + key + '"' +
-      ' style="--phase-color: var(--' + key + ')"' + (key === state.phaseKey ? ' aria-current="true"' : "") + ">" +
-      '<span class="phase-icon">' + icon(PHASES[key].icon) + "</span>" +
-      PHASES[key].name +
-    "</button>"
+// Hero: today's phase, a bar of the whole cycle with a marker for today, and the next phase.
+function renderPlanHero(state, settings) {
+  const ranges = getPhaseRanges(settings);
+  const segments = CYCLE_ORDER.filter((key) => phaseLength(ranges[key]) > 0).map((key) =>
+    '<span class="cycle-seg" style="--phase-color: var(--' + key + "); flex-grow: " + phaseLength(ranges[key]) + '"></span>'
   ).join("");
+  const markerAt = ((state.cycleDay - 0.5) / settings.cycleLength) * 100;
+  const days = daysUntilNextPhase(today(), settings);
+  const next = PHASES[getPhaseForDate(addDays(today(), days), settings)];
+
+  document.getElementById("plan-hero").innerHTML =
+    '<p class="plan-day">Day ' + state.cycleDay + "</p>" +
+    '<p class="plan-phase" style="--phase-color: var(--' + state.phaseKey + ')">' + state.phase.name +
+      '<span class="plan-phase-icon">' + icon(state.phase.icon) + "</span></p>" +
+    '<div class="cycle-line" role="img" aria-label="Day ' + state.cycleDay + " of " + settings.cycleLength + '">' +
+      segments + '<span class="cycle-marker" style="left: ' + markerAt + '%"></span>' +
+    "</div>" +
+    '<p class="plan-next-label">Next phase</p>' +
+    '<p class="plan-next">' + next.name + " in " + days + (days === 1 ? " day" : " days") + "</p>";
 }
 
-function renderPlanWeek(settings) {
+function renderMonth(settings) {
+  const year = planMonth.getFullYear();
+  const month = planMonth.getMonth();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const offset = (planMonth.getDay() + 6) % 7; // empty cells before the 1st (weeks start Monday)
+  const weeks = Math.ceil((offset + daysInMonth) / 7);
   const todayISO = toISODate(today());
-  const days = [];
-  for (let i = 0; i < 7; i++) {
-    const date = addDays(planWeekStart, i);
-    days.push({ date, iso: toISODate(date), phaseKey: getPhaseForDate(date, settings) });
-  }
+  const ranges = getPhaseRanges(settings);
 
-  // Month of the week's Thursday, so a week across two months gets the one with most days.
   document.getElementById("plan-month").textContent =
-    days[3].date.toLocaleDateString(undefined, { month: "long", year: "numeric" });
+    planMonth.toLocaleDateString(undefined, { month: "long", year: "numeric" });
 
-  document.getElementById("plan-days").innerHTML = days.map((d, i) =>
-    '<div class="plan-day' + (d.iso === todayISO ? " is-today" : "") + '" style="--phase-color: var(--' + d.phaseKey + ')"' +
-      ' aria-label="' + d.date.toLocaleDateString(undefined, { weekday: "long", day: "numeric", month: "long" }) +
-      ", " + PHASES[d.phaseKey].name + " phase" + (d.iso === todayISO ? ", today" : "") + '" role="group">' +
-      '<span class="day-name" aria-hidden="true">' + DAY_NAMES[i] + "</span>" +
-      '<span class="day-num" aria-hidden="true">' + d.date.getDate() + "</span>" +
-      '<span class="day-phase-dot"></span>' +
-    "</div>"
+  let html = '<div class="month-row month-names" aria-hidden="true">' +
+    DAY_NAMES.map((d) => "<span>" + d + "</span>").join("") + "</div>";
+
+  for (let w = 0; w < weeks; w++) {
+    const cells = [];
+    for (let i = 0; i < 7; i++) {
+      const dayNum = w * 7 + i - offset + 1;
+      if (dayNum < 1 || dayNum > daysInMonth) {
+        cells.push(null);
+        continue;
+      }
+      const date = new Date(year, month, dayNum);
+      const cycleDay = getCycleDay(date, settings);
+      const phaseKey = getPhase(cycleDay, settings);
+      cells.push({ date, dayNum, phaseKey, isStart: cycleDay === ranges[phaseKey].start, isToday: toISODate(date) === todayISO });
+    }
+
+    // Numbers
+    html += '<div class="month-row">' + cells.map((c) => {
+      if (!c) return "<span></span>";
+      return '<span class="m-day' + (c.isToday ? " is-today" : "") + '">' + c.dayNum +
+        '<span class="sr-only">, ' + PHASES[c.phaseKey].name + (c.isToday ? ", today" : "") + "</span></span>";
+    }).join("") + "</div>";
+
+    // Phase bar: one segment per run of days in the same phase, icon where a phase starts.
+    let bar = "";
+    let runStart = -1;
+    for (let i = 0; i <= 7; i++) {
+      const c = cells[i];
+      const prev = runStart >= 0 ? cells[runStart] : null;
+      if (prev && (!c || c.phaseKey !== prev.phaseKey)) {
+        bar += '<span class="m-seg" style="--phase-color: var(--' + prev.phaseKey + "); grid-column: " +
+          (runStart + 1) + " / span " + (i - runStart) + '"></span>';
+        runStart = -1;
+      }
+      if (c && runStart < 0) runStart = i;
+    }
+    cells.forEach((c, i) => {
+      if (c && c.isStart) {
+        bar += '<span class="m-icon" style="--phase-color: var(--' + c.phaseKey + "); grid-column: " + (i + 1) + '">' +
+          icon(PHASES[c.phaseKey].icon) + "</span>";
+      }
+    });
+    html += '<div class="month-row month-bar" aria-hidden="true">' + bar + "</div>";
+  }
+  document.getElementById("month").innerHTML = html;
+}
+
+function renderLegend() {
+  document.getElementById("legend").innerHTML = CYCLE_ORDER.map((key) =>
+    '<li><button type="button" class="legend-item" data-phase="' + key + '" style="--phase-color: var(--' + key + ')">' +
+      '<span class="legend-icon">' + icon(PHASES[key].icon) + "</span>" +
+      '<span class="legend-text"><span class="legend-name">' + PHASES[key].name + "</span>" +
+      '<span class="legend-days">' + PHASES[key].typical + "</span></span>" +
+    "</button></li>"
   ).join("");
+}
 
-  // Phase bar: one segment per run of days in the same phase.
-  let bar = "";
-  let runStart = 0;
-  for (let i = 1; i <= days.length; i++) {
-    if (i === days.length || days[i].phaseKey !== days[runStart].phaseKey) {
-      bar += '<span class="phase-bar-seg" style="--phase-color: var(--' + days[runStart].phaseKey + "); grid-column: " +
-        (runStart + 1) + " / span " + (i - runStart) + '"></span>';
-      runStart = i;
+// ----- Track Today (daily check-in) -----
+
+const LOG_FIELDS = [
+  { id: "energy", label: "Energy", icon: "bolt",  color: "energy", format: (v) => v + "/10" },
+  { id: "mood",   label: "Mood",   icon: "smile", color: "mood",   options: ["Low", "Okay", "Good", "Great"] },
+  { id: "focus",  label: "Focus",  icon: "focus", color: "focus",  options: ["Low", "Medium", "High"] },
+  { id: "sleep",  label: "Sleep",  icon: "moon",  color: "sleep",  options: ["<8h", "8h", ">8h"] },
+];
+const DEFAULT_ENERGY = 5;
+
+function renderTrackToday() {
+  const log = loadLogs()[toISODate(today())] || {};
+  document.getElementById("track-grid").innerHTML = LOG_FIELDS.map((f) => {
+    const value = log[f.id] === undefined ? "–" : f.format ? f.format(log[f.id]) : log[f.id];
+    return (
+      '<button type="button" class="track track-' + f.color + '" data-log="' + f.id + '" aria-label="' + f.label + ": " + value + '">' +
+        '<span class="track-top"><span class="track-icon">' + icon(f.icon) + "</span>" + f.label + "</span>" +
+        '<span class="track-bottom"><span class="track-value">' + escapeHTML(value) + "</span>" + icon("chevron") + "</span>" +
+      "</button>"
+    );
+  }).join("");
+}
+
+// Mood / Focus / Sleep as rows of pill buttons (radio inputs).
+function renderLogChoices() {
+  document.getElementById("log-choices").innerHTML = LOG_FIELDS.filter((f) => f.options).map((f) =>
+    '<fieldset class="choice" id="log-' + f.id + '"><legend>' + f.label + "</legend>" +
+      f.options.map((opt) =>
+        '<label><input type="radio" name="' + f.id + '" value="' + escapeHTML(opt) + '"><span>' + escapeHTML(opt) + "</span></label>"
+      ).join("") +
+    "</fieldset>"
+  ).join("");
+}
+
+const logDialog = document.getElementById("log-dialog");
+const logForm = document.getElementById("log-form");
+
+function openLogDialog(fieldId) {
+  const log = loadLogs()[toISODate(today())] || {};
+  logForm.reset();
+  logForm.elements.energy.value = log.energy ?? DEFAULT_ENERGY;
+  document.getElementById("energy-out").textContent = logForm.elements.energy.value;
+  for (const f of LOG_FIELDS) {
+    if (f.options && log[f.id]) {
+      const input = logForm.querySelector('input[name="' + f.id + '"][value="' + CSS.escape(log[f.id]) + '"]');
+      if (input) input.checked = true;
     }
   }
-  const todayIndex = days.findIndex((d) => d.iso === todayISO);
-  if (todayIndex >= 0) bar += '<span class="phase-bar-today" style="grid-column: ' + (todayIndex + 1) + '"></span>';
-  document.getElementById("phase-bar").innerHTML = bar;
+  logDialog.showModal();
+  // Put focus on the field that was tapped.
+  const target = fieldId === "energy" ? logForm.elements.energy : logForm.querySelector('input[name="' + fieldId + '"]');
+  if (target) target.focus();
 }
 
-// Three picture tiles with the current phase's strengths.
+logForm.elements.energy.addEventListener("input", function () {
+  document.getElementById("energy-out").textContent = this.value;
+});
+
+logForm.addEventListener("submit", function (e) {
+  e.preventDefault();
+  const log = { energy: Number(this.elements.energy.value) };
+  for (const f of LOG_FIELDS) {
+    const checked = this.querySelector('input[name="' + f.id + '"]:checked');
+    if (f.options && checked) log[f.id] = checked.value;
+  }
+  saveLog(toISODate(today()), log);
+  logDialog.close();
+  renderTrackToday();
+});
+
+document.getElementById("log-cancel").addEventListener("click", () => logDialog.close());
+
+// Three picture tiles for the current phase.
 function renderPhaseFocus(state) {
-  document.getElementById("focus-grid").innerHTML = state.phase.strengths.map((item, i) =>
-    '<button type="button" class="focus-tile focus-tile-' + (i + 1) + '" data-phase="' + state.phaseKey + '"' +
-      ' aria-label="' + item.label + '" title="' + item.label + '">' + icon(item.icon) + "</button>"
+  document.getElementById("focus-grid").innerHTML = state.phase.focus.map((item, i) =>
+    '<button type="button" class="focus-tile focus-tile-' + (i + 1) + '" data-phase="' + state.phaseKey + '">' +
+      '<span class="focus-icon">' + icon(item.icon) + "</span>" +
+      '<span class="focus-label">' + item.label + "</span>" +
+    "</button>"
   ).join("");
   document.getElementById("focus-more").dataset.phase = state.phaseKey;
 }
@@ -694,9 +898,10 @@ function renderPhaseFocus(state) {
 function renderPlan() {
   const settings = loadSettings();
   const now = getCycleState(today(), settings);
-  renderPhaseWheel(now, settings);
-  renderPhaseCards(now);
-  renderPlanWeek(settings);
+  renderPlanHero(now, settings);
+  renderMonth(settings);
+  renderLegend();
+  renderTrackToday();
   renderPhaseFocus(now);
 }
 
@@ -1215,6 +1420,10 @@ for (const el of document.querySelectorAll("[data-icon]")) {
   el.outerHTML = icon(el.dataset.icon);
 }
 
+for (const el of document.querySelectorAll("[data-flower]")) {
+  el.innerHTML = flowerSVG();
+}
+
 document.getElementById("task-type").innerHTML = Object.entries(TASK_TYPES)
   .map(([id, t]) => '<option value="' + id + '">' + t.label + "</option>")
   .join("");
@@ -1228,7 +1437,7 @@ function refocus(selector) {
 // One click handler for the whole app (tabs, links, days, events).
 document.addEventListener("click", function (e) {
   const target = e.target.closest(
-    "[data-screen], [data-go], [data-date], [data-event], [data-delete], [data-phase], [data-week], [data-topic], [data-session], " +
+    "[data-screen], [data-go], [data-date], [data-event], [data-delete], [data-phase], [data-month], [data-log], [data-topic], [data-session], " +
       "[data-soon], [data-integration], #add-task-btn, #plan-today-btn, #see-all-btn, #coach-history-btn, " +
       "#int-see-all-btn, #bell-btn, #report-btn, #reset-btn"
   );
@@ -1267,12 +1476,14 @@ document.addEventListener("click", function (e) {
   } else if (target.dataset.phase) {
     renderPhaseDetail(target.dataset.phase);
     showScreen("phase-detail");
-  } else if (target.dataset.week) {
-    planWeekStart = addDays(planWeekStart, 7 * Number(target.dataset.week));
-    renderPlanWeek(loadSettings());
+  } else if (target.dataset.month) {
+    planMonth = new Date(planMonth.getFullYear(), planMonth.getMonth() + Number(target.dataset.month), 1);
+    renderMonth(loadSettings());
   } else if (target.id === "plan-today-btn") {
-    planWeekStart = startOfWeek(today());
-    renderPlanWeek(loadSettings());
+    planMonth = new Date(today().getFullYear(), today().getMonth(), 1);
+    renderMonth(loadSettings());
+  } else if (target.dataset.log) {
+    openLogDialog(target.dataset.log);
   } else if (target.dataset.screen || target.dataset.go) {
     showScreen(target.dataset.screen || target.dataset.go);
   } else if (target.dataset.date) {
@@ -1293,9 +1504,10 @@ document.addEventListener("click", function (e) {
   }
 });
 
-if (IS_DEMO) seedDemoTasks();
+if (IS_DEMO) seedDemoData();
 buildRing();
 renderAlignment();
+renderLogChoices();
 renderPlan();
 renderCoachChips();
 renderSessions();
