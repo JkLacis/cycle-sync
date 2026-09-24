@@ -255,6 +255,7 @@ const DEFAULT_SETTINGS = {
 
 // Integration switches + notification toggle (for show only, nothing is sent).
 const NAME_MAX = 30;
+const CHAT_MAX = 50; // messages kept on the device
 
 const DEFAULT_PREFS = {
   integrations: { whatsapp: true, gcal: true },
@@ -343,6 +344,16 @@ const store = {
     },
     save(prefs) {
       return writeJSON("prefs", prefs);
+    },
+  },
+  // Coach chat, newest last, capped at CHAT_MAX: [{ from: "user" | "coach", text, list?, after?, session? }]
+  chat: {
+    load() {
+      const messages = readJSON("chat", []);
+      return Array.isArray(messages) ? messages : [];
+    },
+    save(messages) {
+      return writeJSON("chat", messages.slice(-CHAT_MAX));
     },
   },
   // { name } — optional first name, only used for greetings and the avatar initial.
@@ -1016,13 +1027,35 @@ function fillTemplate(template, phaseKey, extra = {}) {
   return template.replace(/\{(\w+)\}/g, (match, name) => (name in vars ? vars[name] : match));
 }
 
-// Content reply spec → message for today's phase: { text, list?, after?, session? }
-function coachReply(reply, phaseKey) {
+// Named lists a reply can point to (besides the phase's own work / move / eat).
+function namedList(name, phaseKey) {
+  return name === "planSteps" ? CONTENT.phaseDetail.planSteps : PHASES[phaseKey][name];
+}
+
+// Today's numbers for coach templates: {day}, {nextPhase}, {nextIn}, {scoreText}, {levels}.
+function coachVars() {
+  const settings = store.settings.load();
+  const { now, result } = todaysAlignment();
+  const nextIn = daysUntilNextPhase(today(), settings);
+  return {
+    phaseKey: now.phaseKey,
+    vars: {
+      day: now.cycleDay,
+      nextPhase: PHASES[getPhaseForDate(addDays(today(), nextIn), settings)].name,
+      nextIn: nextIn + (nextIn === 1 ? " day" : " days"),
+      scoreText: result.score === null ? "no tasks yet" : result.score + "/100",
+      levels: Object.values(SYNC_LEVELS).map((l) => l.label + " " + l.points).join(", "),
+    },
+  };
+}
+
+// Content reply spec → plain-text message: { text, list?, after?, session? }
+function coachReply(reply, phaseKey, vars) {
   const spec = reply.byPhase ? reply.byPhase[phaseKey] : reply;
   return {
-    text: fillTemplate(spec.text, phaseKey),
-    list: typeof spec.list === "string" ? PHASES[phaseKey][spec.list] : spec.list,
-    after: spec.after && fillTemplate(spec.after, phaseKey),
+    text: fillTemplate(spec.text, phaseKey, vars),
+    list: typeof spec.list === "string" ? namedList(spec.list, phaseKey) : spec.list,
+    after: spec.after && fillTemplate(spec.after, phaseKey, vars),
     session: spec.session,
   };
 }
@@ -1058,7 +1091,7 @@ const SESSION_ART = {
     '<path d="M0 116 26 98 58 114 84 96 100 104V160H0Z" fill="#50668f"/>',
 };
 
-const chatMessages = [];
+let chatMessages = [];
 
 function findTopic(text) {
   const lower = text.toLowerCase();
@@ -1066,7 +1099,8 @@ function findTopic(text) {
 }
 
 function renderCoachChips() {
-  document.getElementById("coach-chips").innerHTML = COACH.topics.map((t) =>
+  document.getElementById("clear-chat-btn").innerHTML = icon("trash") + COACH.clearLabel;
+  document.getElementById("coach-chips").innerHTML = COACH.topics.filter((t) => t.chip).map((t) =>
     '<button type="button" class="chip" data-topic="' + t.id + '">' + t.question + icon("arrow") + "</button>"
   ).join("");
 }
@@ -1076,9 +1110,9 @@ function renderChatMessage(m) {
   const session = m.session && COACH.sessions.find((s) => s.id === m.session);
   return (
     '<div class="bubble bubble-coach">' +
-      "<p>" + m.text + "</p>" +
-      (m.list ? "<ul>" + m.list.map((item) => "<li>" + item + "</li>").join("") + "</ul>" : "") +
-      (m.after ? "<p>" + m.after + "</p>" : "") +
+      "<p>" + escapeHTML(m.text) + "</p>" +
+      (m.list ? "<ul>" + m.list.map((item) => "<li>" + escapeHTML(item) + "</li>").join("") + "</ul>" : "") +
+      (m.after ? "<p>" + escapeHTML(m.after) + "</p>" : "") +
       (session
         ? '<button type="button" class="bubble-action" data-session="' + session.id + '">' +
             icon("play") + "Start " + session.title + " · " + session.minutes + " min</button>"
@@ -1089,6 +1123,27 @@ function renderChatMessage(m) {
 
 function renderChat() {
   document.getElementById("coach-chat").innerHTML = chatMessages.map(renderChatMessage).join("");
+  document.getElementById("clear-chat-btn").hidden = chatMessages.length === 0;
+}
+
+function loadChat() {
+  chatMessages = store.chat.load();
+  renderChat();
+}
+
+function clearChat() {
+  const previous = chatMessages;
+  chatMessages = [];
+  store.chat.save(chatMessages);
+  renderChat();
+  showToast(COACH.cleared, {
+    label: "Undo",
+    onClick: () => {
+      chatMessages = previous;
+      store.chat.save(chatMessages);
+      renderChat();
+    },
+  });
 }
 
 function scrollToLastMessage() {
@@ -1098,9 +1153,11 @@ function scrollToLastMessage() {
 
 // One question → one scripted reply for today's phase.
 function askCoach(text, topic = findTopic(text)) {
-  const phaseKey = getCycleState(today(), store.settings.load()).phaseKey;
+  const { phaseKey, vars } = coachVars();
   chatMessages.push({ from: "user", text });
-  chatMessages.push({ from: "coach", ...coachReply(topic ? topic.reply : COACH.fallback, phaseKey) });
+  chatMessages.push({ from: "coach", ...coachReply(topic ? topic.reply : COACH.fallback, phaseKey, vars) });
+  chatMessages = chatMessages.slice(-CHAT_MAX);
+  store.chat.save(chatMessages);
   renderChat();
   scrollToLastMessage();
 }
@@ -1549,7 +1606,7 @@ document.addEventListener("click", function (e) {
   const target = e.target.closest(
     "[data-screen], [data-go], [data-back], [data-sheet], [data-edit], [data-day], [data-add-on], #ring, [data-date], [data-event], [data-delete], [data-phase], [data-month], [data-log], [data-topic], [data-session], " +
       "[data-soon], [data-integration], #add-task-btn, #plan-today-btn, #see-all-btn, #coach-history-btn, " +
-      "#int-see-all-btn, #bell-btn, #report-btn, #reset-btn"
+      "#clear-chat-btn, #int-see-all-btn, #bell-btn, #report-btn, #reset-btn"
   );
   if (!target) return;
   // Any action inside an info sheet replaces it.
@@ -1593,9 +1650,15 @@ document.addEventListener("click", function (e) {
     target.setAttribute("aria-expanded", showAll);
     document.getElementById("session-row").classList.toggle("is-grid", showAll);
     document.getElementById("see-all-label").textContent = showAll ? "Show less" : "See All";
+  } else if (target.id === "clear-chat-btn") {
+    clearChat();
   } else if (target.id === "coach-history-btn") {
-    if (chatMessages.length) scrollToLastMessage();
-    else document.getElementById("ask-input").focus();
+    if (chatMessages.length) {
+      scrollToLastMessage();
+    } else {
+      showToast(COACH.noHistory);
+      document.getElementById("ask-input").focus();
+    }
   } else if (target.dataset.phase) {
     openPhaseDetail(target.dataset.phase, target.dataset.section);
   } else if (target.dataset.month) {
@@ -1647,6 +1710,7 @@ renderAlignment();
 renderLogChoices();
 renderPlan();
 renderCoachChips();
+loadChat();
 renderSessions();
 renderSettings();
 renderProfile();

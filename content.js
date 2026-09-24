@@ -200,17 +200,62 @@ const CONTENT = {
   },
 
   coach: {
-    // Chips + keyword matching for typed questions.
-    // reply: { text, list? (a phase field: "work" | "eat" | "move"), after?, session? } or byPhase.
+    // Typed questions are matched to the FIRST topic with a keyword in the text, so specific
+    // topics come first. chip: true = shown as a question button (in this order).
+    // reply: { text, list?, after?, session? } or { byPhase: { phaseKey: reply } }.
+    //   list = an array, a phase field ("work" | "eat" | "move") or "planSteps".
+    // Extra templates: {day}, {nextPhase}, {nextIn}, {scoreText}, {levels}.
     topics: [
       {
+        id: "phase",
+        question: "What phase am I in?",
+        keywords: ["what phase", "which phase", "my phase", "phase am i", "cycle day", "what day"],
+        reply: {
+          text: "You're on Day {day} of your cycle, in your {phase} phase ({powr}). {tagline}",
+          after: "Next up: {nextPhase} in {nextIn}. Dates are estimates based on your cycle settings.",
+        },
+      },
+      {
+        id: "score",
+        question: "How is my score calculated?",
+        keywords: ["score", "alignment", "calculat"],
+        reply: {
+          text: "Your score is the average fit of today's tasks for your {phase} phase: {levels}.",
+          after: "Today: {scoreText}. Tap the ring on Alignment to see each task.",
+        },
+      },
+      {
+        // Energy leaks, PDF p. 16 (own wording).
+        id: "overwhelm",
+        question: "I feel overwhelmed",
+        keywords: ["overwhelm", "too much", "exhausted", "drained", "burn"],
+        reply: {
+          text: "When everything feels like too much, look at where your energy is leaking. Common ones:",
+          list: ["Not getting enough rest", "Skipping movement", "Skipping meals", "Saying yes when you mean no", "Not asking for help", "Worrying about money"],
+          after: "Pick one to change this week. If you often feel this way, talk to someone you trust or a doctor.",
+          session: "calm",
+        },
+      },
+      {
+        id: "plan",
+        question: "Help me plan my week",
+        keywords: ["plan my", "plan the", "my week", "this week", "schedule"],
+        reply: {
+          text: "A simple way to plan your week with your cycle:",
+          list: "planSteps",
+          after: "Your {phase} phase suits: {firstWork}.",
+        },
+      },
+      {
         id: "focus",
+        chip: true,
         question: "How can I stay focused today?",
         keywords: ["focus", "work", "productive", "concentrat", "task"],
         reply: { text: "You're in your {phase} phase ({powr}). Good fits for today:", list: "work" },
       },
       {
         id: "eat",
+        chip: true,
         question: "What should I eat?",
         keywords: ["eat", "food", "meal", "hungry", "snack", "nutrition", "cook"],
         reply: { text: "Some ideas for your {phase} phase:", list: "eat", after: "Suggestions only. Eat what feels good for you." },
@@ -218,8 +263,9 @@ const CONTENT = {
       {
         // Boundaries in Luteal/Menstrual, intentions and outreach in Follicular/Ovulatory (PDF p. 16–18).
         id: "boundaries",
+        chip: true,
         question: "Help me set boundaries",
-        keywords: ["boundar", "say no", "overwhelm", "busy", "stress", "intention"],
+        keywords: ["boundar", "say no", "busy", "stress", "intention"],
         reply: {
           byPhase: {
             follicular: {
@@ -243,6 +289,7 @@ const CONTENT = {
       },
       {
         id: "breathing",
+        chip: true,
         question: "A quick breathing exercise",
         keywords: ["breath", "calm", "anxious", "relax", "reset"],
         reply: { text: "Let's slow down for two minutes. Breathe in for 4, out for 6.", session: "calm" },
@@ -250,10 +297,13 @@ const CONTENT = {
     ],
     fallback: {
       text: "I'm a demo coach, so I can help with a few things:",
-      list: ["Staying focused", "What to eat", "Setting boundaries", "A quick breathing exercise"],
-      after: "Tap a question above to try one.",
+      list: ["Staying focused", "What to eat", "Setting boundaries", "A quick breathing exercise", "What phase you're in", "How your score works", "Planning your week", "Feeling overwhelmed"],
+      after: "Tap a question above, or type one.",
     },
     // Suggested for You. The breathing pattern is not from the PDF; no health claims made.
+    clearLabel: "Clear chat",
+    cleared: "Chat cleared",
+    noHistory: "No chat yet. Ask a question below.",
     sessions: [
       {
         id: "calm", title: "Calm your mind", minutes: 2, art: "water",

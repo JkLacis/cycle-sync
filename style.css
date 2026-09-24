@@ -1689,6 +1689,12 @@ h2 {
   fill: currentColor;
 }
 
+.clear-chat {
+  display: flex;
+  margin: 8px 0 0 auto;
+  color: var(--text-muted);
+}
+
 /* Suggested for You: a white band that runs to the screen edges */
 .suggested {
   margin: 20px -12px 0;
