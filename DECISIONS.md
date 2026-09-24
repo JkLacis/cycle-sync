@@ -363,3 +363,106 @@ Line numbers are for the current `main`. Repeated identical elements are grouped
 - **A)** Keep. **B)** `mailto:` link (needs an address).
 **Recommendation:** B if you give me an address, else A.
 **Decision:** B — `mailto:praphull371@gmail.com` (2026-09-24)
+
+---
+
+# AI Coach (real LLM) — Phase 1 findings + Phase 2 options (2026-09-24)
+
+## Findings
+
+**Coach UI today** (all scripted, no network):
+
+| Element | Location | Now |
+|---|---|---|
+| Clock (history) | `index.html:180`, handler `app.js` click handler | Scrolls to saved chat, or toast "No chat yet" |
+| Greeting | `index.html:191` | "Hi {name}" from profile |
+| Ask form + input + send | `index.html:199–202`, `app.js:1283` | Keyword match → scripted reply (`findTopic` `app.js:1121`, `askCoach` `app.js:1180`) |
+| Question chips (4) | `index.html:205`, `renderCoachChips` `app.js:1126` | Static 4 topics from `content.js` |
+| Demo note | `index.html:206` | "Demo coach: pre-written replies, not real AI." |
+| Chat | `index.html:208`, `renderChat` `app.js:1149` | Bubbles, plain text, saved on device (50 msgs) |
+| Clear chat | `index.html:210`, `clearChat` `app.js:1159` | Clears + Undo |
+| Suggested sessions + timer | `index.html:216–221, 494` | Guided breathing timer (not LLM) — unchanged |
+
+**Backend:** none. Static site (GitHub Pages); all data in the browser (`store`, D1). **Phase/day:** computed client-side
+(`getCycleState`, `getPhaseRanges`, luteal-anchored, D3). **Knowledge:** `reference/CONTENT_NOTES.md` exists (local,
+gitignored — copyrighted source); `content.js` holds our paraphrased phase content.
+
+**Environment:** Python 3.14 available; **Node is not installed**; `python3 -m venv` fails until
+`sudo apt install python3-venv` (no pip/ensurepip). No `ANTHROPIC_API_KEY` set.
+
+**Current models (docs checked 2026-09-24, platform.claude.com):**
+
+| Model | ID | Input / output per MTok | Cache read | Latency | Notes |
+|---|---|---|---|---|---|
+| Claude Opus 5.5 | `claude-opus-5-5` | $4 / $20 | $0.20 | Moderate | Docs' recommended default; thinking always on, effort default `medium` |
+| Claude Sonnet 5 | `claude-sonnet-5` | $2 / $10 | $0.20 | Fast | Knowledge cutoff Jan 2026 |
+| Claude Haiku 4.5 | `claude-haiku-4-5` | $1 / $5 | $0.10 | Fastest | Knowledge cutoff Feb 2025; min cacheable prompt 4,096 tokens |
+
+**Constraint found:** the brief says the client sends only the message + a conversation ID, but all cycle data lives
+on the device (D1), so the server cannot know phase/day unless the client sends a small context object (see C5).
+
+## Decisions
+
+### C1 Where the backend runs
+- **A)** Local Python server on the laptop that serves the app **and** `POST /api/coach` (same origin, no CORS). The GitHub Pages copy shows the coach as offline (C9).
+- **B)** Deploy the backend to a host (Render/Fly/Railway) and point the Pages frontend at it (CORS, secrets on the host, health data passes through that host).
+- **C)** Serverless function (Cloudflare Workers / Vercel) — needs Node tooling, which isn't installed.
+**Trade-offs:** A = zero infra, safe by Friday, only works where the laptop runs (phone blocked on guest Wi-Fi). B = works on any phone, but more setup, a hosting account and a privacy review.
+**Recommendation:** A now; server URL is one config value so B is a contained follow-up.
+**Decision:** A (2026-09-24)
+
+### C2 Server stack
+- **A)** FastAPI + uvicorn + `anthropic` (AsyncAnthropic) + `python-dotenv`: async SSE streaming, typed request validation.
+- **B)** Python stdlib `http.server` + `anthropic` only: fewer deps, hand-rolled validation/streaming/threading.
+**Recommendation:** A — standard, reviewable, fewer hand-rolled parts. One-time `sudo apt install python3-venv`.
+**Decision:** A (2026-09-24)
+
+### C3 Model
+- **A)** Claude Opus 5.5 at effort `low` (tunable). Best quality/safety nuance; ~$0.02/message; moderate latency (streaming hides most of it).
+- **B)** Claude Sonnet 5. Fast, ~$0.01/message, slightly less nuance.
+- **C)** Claude Haiku 4.5. Fastest, ~$0.005/message, older knowledge, prompt too small to cache.
+**Recommendation:** A (docs' recommended default); switchable via `COACH_MODEL` in `.env`.
+**Decision:** A — `claude-opus-5-5`, effort `low` (2026-09-24)
+
+### C4 Knowledge grounding
+- **A)** Condensed knowledge file (~2–3K tokens, our own paraphrase of CONTENT_NOTES + evidence notes + excluded topics) in the system prompt, prompt-cached.
+- **B)** Retrieval over chunks (embeddings + vector store).
+**Recommendation:** A — the corpus is small; retrieval adds infra and misses for no gain. Knowledge file is committed (paraphrase, like `content.js`).
+**Decision:** A (2026-09-24)
+
+### C5 Personal context per turn
+- **A)** Minimal: date, cycle day/length, phase + day range, next phase and when.
+- **B)** A + today's tasks (title, time, type, level) + today's score + last 7 days of check-ins.
+- **C)** B + a "goals" field (new, set in Profile).
+Never sent: name, email, raw chat outside the current conversation. Sent by the client as a small validated JSON object;
+injected as a per-turn system message after the history (keeps the system prompt cache intact).
+**Recommendation:** B — enough to personalise ("your 10:00 client presentation"); goals don't exist yet (C adds scope).
+**Decision:** B (2026-09-24)
+
+### C6 Conversation history
+- **A)** Session only (server memory; lost on restart while the device still shows the chat → mismatch).
+- **B)** Persisted server-side in SQLite by conversation ID; model gets the last 20 messages (plus a token cap); "Clear chat" deletes it server-side and starts a new ID.
+- **C)** Client sends the full history each turn (contradicts the brief; larger payloads).
+**Recommendation:** B.
+**Decision:** B (2026-09-24)
+
+### C7 Streaming
+- **A)** Stream tokens (SSE) with a typing indicator until the first token.
+- **B)** Single response.
+**Recommendation:** A — Opus-tier first-token latency is noticeable on a phone.
+**Decision:** A (2026-09-24)
+
+### C8 Suggestion chips
+- **A)** Keep the 4 static chips. **B)** 4 phase-aware chips from `content.js` (e.g. Ovulatory: "How do I nail today's presentation?"). **C)** B + model-suggested follow-ups after each answer.
+**Recommendation:** B — personal at zero cost; C adds tokens + parsing.
+**Decision:** B (2026-09-24)
+
+### C9 When the server is unreachable (e.g. GitHub Pages)
+- **A)** Error state + Retry only.
+- **B)** Error state + Retry, and fall back to the existing scripted replies, clearly labelled "Offline coach".
+**Recommendation:** B — the public link stays useful; no silent failures.
+**Decision:** B (2026-09-24)
+
+Fixed (no decision needed): API key only in server `.env` (gitignored, `.env.example` committed); input limit 1,000 chars;
+per-IP rate limit (10/min, 200/day, in memory); request timeout 60 s; no message content in logs; in-app note that
+messages are processed by an AI provider (Anthropic).

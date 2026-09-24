@@ -1,1 +1,13 @@
 reference/
+
+# Secrets — the API key lives only here
+.env
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+
+# Server data (conversation history) and eval outputs
+server/data/
+server/evals/results/
