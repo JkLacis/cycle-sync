@@ -1,15 +1,15 @@
 # Cycle Sync — project brief
 
 Phone-style web app prototype. Demo: **Friday 2026-09-25**.
-Owner: JekabsL — first-year Start School / Qwasar student, complete beginner.
+Owner: JekabsL — first-year Start School / Qwasar student.
 
 ## How we work (important)
-- **Teach while building**: plain-language explanations, define jargon on first use, keep it short.
-- **Always say where to run each command**: which app (Konsole) and which folder (e.g. `~/Desktop/Cycle-Sync` or "any folder"). Same for browser steps (which URL).
+- **No teaching.** Goal is to finish the project. Keep replies short; no jargon lessons or in-depth explanations unless asked.
+- Say where to run each command (Konsole + folder, e.g. `~/Desktop/Cycle-Sync`).
 - Before writing code for a step, show a short plan and **wait for OK**.
-- **One step at a time.** After each step: explain exactly how to see the result, then stop and wait for feedback.
+- **One step at a time.** After each step: say how to see the result, then stop and wait for feedback.
 - **No unrequested features.** Suggest ideas; the user decides.
-- Commit after each working step with a clear message, then `git push`. Explain new git commands the first time.
+- Commit after each working step with a succinct message, then `git push`.
 - Keep this file updated whenever a new decision is made.
 
 ## Concept
