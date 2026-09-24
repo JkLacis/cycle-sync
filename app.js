@@ -405,8 +405,20 @@ const calendarSource = {
     const id = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
     store.tasks.save([...store.tasks.load(), { ...event, id }]);
   },
+  getEvent(id) {
+    return store.tasks.load().find((t) => t.id === id) || null;
+  },
+  updateEvent(id, changes) {
+    store.tasks.save(store.tasks.load().map((t) => (t.id === id ? { ...t, ...changes, id } : t)));
+  },
+  // Returns the removed event so it can be restored (Undo).
   deleteEvent(id) {
+    const event = this.getEvent(id);
     store.tasks.save(store.tasks.load().filter((t) => t.id !== id));
+    return event;
+  },
+  restoreEvent(event) {
+    if (!this.getEvent(event.id)) store.tasks.save([...store.tasks.load(), event]);
   },
 };
 
@@ -509,7 +521,14 @@ function renderPhaseNow(state) {
 // Bar under the hero: normal = phase tips, recovery = gentler wording.
 function renderRecommendation(state, isRecovery) {
   const bar = document.getElementById("rec-bar");
-  bar.dataset.phase = state.phaseKey;
+  // Recovery opens the "lighter day" sheet; otherwise the phase detail.
+  if (isRecovery) {
+    delete bar.dataset.phase;
+    bar.dataset.sheet = "lighter-day";
+  } else {
+    delete bar.dataset.sheet;
+    bar.dataset.phase = state.phaseKey;
+  }
   bar.innerHTML =
     '<span class="rec-icon">' + icon(isRecovery ? "heart" : "bulb") + "</span>" +
     '<span class="rec-text">See recommendations for ' + (isRecovery ? "recovery" : "your current phase") + "</span>" +
@@ -531,7 +550,7 @@ function buildRing() {
         ' stroke-dasharray="' + circumference + '" stroke-dashoffset="' + circumference + '"/>' +
       '<g class="ring-knob" id="ring-knob"><circle cx="' + c + '" cy="' + (c - RING.radius) + '" r="' + (RING.stroke / 2 + 2) + '"/></g>' +
     "</svg>" +
-    '<div class="ring-center" id="ring-center" role="img"></div>';
+    '<div class="ring-center" id="ring-center"></div>';
 }
 
 function updateRing(score) {
@@ -544,7 +563,8 @@ function updateRing(score) {
     '<div class="ring-score"><span class="ring-number">' + (score === null ? "–" : score) + '</span><span class="ring-max">/100</span></div>' +
     '<div class="ring-label">' + (score === null ? "No tasks today" : "Cycle Alignment") + "</div>" +
     '<div class="ring-wave">' + icon("wave") + "</div>";
-  center.setAttribute("aria-label", score === null ? "No tasks today to score" : "Cycle alignment " + score + " out of 100");
+  document.getElementById("ring").setAttribute("aria-label",
+    (score === null ? "No tasks today to score" : "Cycle alignment " + score + " out of 100") + ". How your score works");
 
   knob.style.visibility = score === null ? "hidden" : "visible";
   // Next frame, so the first render animates from empty.
@@ -615,7 +635,10 @@ function renderCalendarEvent(event, phaseKey) {
       "</button>" +
       '<div class="event-detail" id="detail-' + event.id + '"' + (isOpen ? "" : " hidden") + ">" +
         "<p>" + eventDetailText(event, phaseKey) + "</p>" +
-        '<button type="button" class="delete-btn" data-delete="' + event.id + '">' + icon("trash") + "Delete</button>" +
+        '<span class="event-actions">' +
+          '<button type="button" class="delete-btn" data-edit="' + event.id + '">' + icon("pen") + "Edit</button>" +
+          '<button type="button" class="delete-btn" data-delete="' + event.id + '">' + icon("trash") + "Delete</button>" +
+        "</span>" +
       "</div>" +
     "</li>"
   );
@@ -650,6 +673,71 @@ function renderAlignment() {
   renderInsights(result);
   renderWeek(settings);
   renderDayEvents(settings);
+}
+
+// ----- Info sheets (score explanation, lighter day) -----
+
+const infoSheet = document.getElementById("info-sheet");
+
+function openSheet(title, bodyHTML) {
+  document.getElementById("info-title").textContent = title;
+  document.getElementById("info-body").innerHTML = bodyHTML;
+  infoSheet.showModal();
+}
+
+document.getElementById("info-close").addEventListener("click", () => infoSheet.close());
+
+// Today's tasks rated for today's phase (shared by the sheets below).
+function todaysAlignment() {
+  const now = getCycleState(today(), store.settings.load());
+  const result = calculateCycleAlignment({ phase: now.phaseKey, cycleDay: now.cycleDay, events: calendarSource.getEvents(toISODate(today())) });
+  return { now, result };
+}
+
+function syncBadge(level) {
+  return '<span class="badge sync-' + level + '">' + icon(SYNC_LEVELS[level].icon) + SYNC_LEVELS[level].label + "</span>";
+}
+
+function openScoreSheet() {
+  const { now, result } = todaysAlignment();
+  const text = CONTENT.score;
+  const levels = Object.keys(SYNC_LEVELS).map((level) =>
+    "<li>" + syncBadge(level) + "<span>" + text.levels[level] + '</span><span class="points">' + SYNC_LEVELS[level].points + "</span></li>"
+  ).join("");
+  const tasks = result.events.length
+    ? "<ul class=\"sheet-list\">" + result.events.map((e) =>
+        "<li><span>" + escapeHTML(e.title) + "</span>" + syncBadge(e.sync) + "</li>").join("") + "</ul>"
+    : "<p>" + text.noTasks + "</p>";
+  openSheet(text.title,
+    "<p>" + fillTemplate(text.intro, now.phaseKey) + "</p>" +
+    '<ul class="sheet-list level-list">' + levels + "</ul>" +
+    "<h3>" + text.todayHeading + (result.score === null ? "" : ": " + result.score + "/100") + "</h3>" + tasks +
+    '<p class="sheet-note">' + text.note + "</p>");
+}
+
+// Lowest-scoring task today (first one on ties), or null.
+function lowestFitTask(events) {
+  return events.reduce((worst, e) => (!worst || SYNC_LEVELS[e.sync].points < SYNC_LEVELS[worst.sync].points ? e : worst), null);
+}
+
+function openLighterDaySheet() {
+  const { now, result } = todaysAlignment();
+  const text = CONTENT.lighterDay;
+  const worst = lowestFitTask(result.events);
+  let taskTip = "";
+  if (worst) {
+    const better = suitedPhaseNames(worst.type);
+    const vars = { task: escapeHTML(worst.title), better };
+    taskTip =
+      "<p>" + fillTemplate(better ? text.moveTask : text.shortenTask, now.phaseKey, vars) + "</p>" +
+      '<button type="button" class="sheet-btn" data-edit="' + worst.id + '">' + icon("pen") + text.editLabel + "</button>";
+  }
+  openSheet(text.title,
+    "<p>" + fillTemplate(text.intro, now.phaseKey) + "</p>" + taskTip +
+    '<ul class="sheet-bullets">' + text.tips.map((t) => "<li>" + t + "</li>").join("") + "</ul>" +
+    '<button type="button" class="sheet-btn" data-session="calm">' + icon("play") + text.breatheLabel + "</button>" +
+    '<button type="button" class="sheet-btn" data-phase="' + now.phaseKey + '">' + icon("chevron") +
+      fillTemplate(text.detailsLabel, now.phaseKey) + "</button>");
 }
 
 // =====================================================================
@@ -888,9 +976,10 @@ function renderPhaseDetail(phaseKey) {
 const COACH = CONTENT.coach;
 
 // Fills "{phase}", "{powr}", ... in a content template for one phase.
-function fillTemplate(template, phaseKey) {
+// extra = more values (already HTML-safe), e.g. { task: escapeHTML(title) }.
+function fillTemplate(template, phaseKey, extra = {}) {
   const phase = PHASES[phaseKey];
-  const vars = { phase: phase.name, powr: phase.powr, tagline: phase.tagline, firstMove: phase.move[0], firstWork: phase.work[0] };
+  const vars = { phase: phase.name, powr: phase.powr, tagline: phase.tagline, firstMove: phase.move[0], firstWork: phase.work[0], ...extra };
   return template.replace(/\{(\w+)\}/g, (match, name) => (name in vars ? vars[name] : match));
 }
 
@@ -1100,16 +1189,31 @@ const INTEGRATION_LOGOS = {
 const INTEGRATIONS = CONTENT.integrations;
 const INTEGRATIONS_SHOWN = 3; // before "See All"
 const TOAST_MS = 2000;
+const TOAST_ACTION_MS = 5000; // longer when there is a button to press
 
 let showAllIntegrations = false;
 let toastTimer = null;
 
-function showToast(text) {
+// action = { label, onClick } adds a button, e.g. Undo.
+function showToast(text, action) {
   const toast = document.getElementById("toast");
+  const hide = () => toast.classList.remove("is-visible", "has-action");
   toast.textContent = text;
+  if (action) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "toast-action";
+    button.textContent = action.label;
+    button.addEventListener("click", () => {
+      hide();
+      action.onClick();
+    });
+    toast.append(" ", button);
+  }
   toast.classList.add("is-visible");
+  toast.classList.toggle("has-action", Boolean(action));
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => toast.classList.remove("is-visible"), TOAST_MS);
+  toastTimer = setTimeout(hide, action ? TOAST_ACTION_MS : TOAST_MS);
 }
 
 function renderIntegrations() {
@@ -1326,14 +1430,42 @@ const taskDialog = document.getElementById("task-dialog");
 const taskForm = document.getElementById("task-form");
 const taskError = document.getElementById("task-error");
 const fields = taskForm.elements; // form.title would be the form's own title attribute
+let editingTaskId = null; // null = adding a new task
 
-function openTaskDialog() {
+// task = existing task to edit; without it the dialog adds a new one on the selected day.
+function openTaskDialog(task) {
   taskForm.reset();
-  fields.date.value = toISODate(selectedDate);
+  editingTaskId = task ? task.id : null;
+  document.getElementById("task-dialog-title").textContent = task ? "Edit task" : "Add task";
+  if (task) {
+    fields.title.value = task.title;
+    fields.type.value = task.type;
+    fields.start.value = task.start;
+    fields.end.value = task.end;
+  }
+  fields.date.value = task ? task.date : toISODate(selectedDate);
   taskError.textContent = "";
+  renderTaskSyncPreview();
   taskDialog.showModal();
   fields.title.focus();
 }
+
+// Shows the level the chosen type would get on the chosen day.
+function renderTaskSyncPreview() {
+  const preview = document.getElementById("task-sync");
+  if (!fields.date.value) {
+    preview.innerHTML = "";
+    return;
+  }
+  const date = parseLocalDate(fields.date.value);
+  const phaseKey = getPhaseForDate(date, store.settings.load());
+  const day = date.toLocaleDateString(undefined, { weekday: "short", day: "numeric", month: "short" });
+  preview.innerHTML = syncBadge(getSyncLevel(fields.type.value, phaseKey)) +
+    '<span>on ' + day + " (" + PHASES[phaseKey].name + ", estimated)</span>";
+}
+
+fields.type.addEventListener("change", renderTaskSyncPreview);
+fields.date.addEventListener("change", renderTaskSyncPreview);
 
 taskForm.addEventListener("submit", function (e) {
   e.preventDefault();
@@ -1344,10 +1476,14 @@ taskForm.addEventListener("submit", function (e) {
   if (!start.value || !end.value || end.value <= start.value) {
     return (taskError.textContent = "End time must be after the start time.");
   }
-  calendarSource.addEvent({ title, date: date.value, start: start.value, end: end.value, type: type.value });
+  const task = { title, date: date.value, start: start.value, end: end.value, type: type.value };
+  if (editingTaskId) calendarSource.updateEvent(editingTaskId, task);
+  else calendarSource.addEvent(task);
   selectedDate = parseLocalDate(date.value);
+  openEventId = editingTaskId;
   taskDialog.close();
   renderAlignment();
+  if (editingTaskId) showToast("Task updated");
 });
 
 document.getElementById("task-cancel").addEventListener("click", () => taskDialog.close());
@@ -1378,12 +1514,21 @@ function refocus(selector) {
 // One click handler for the whole app (tabs, links, days, events).
 document.addEventListener("click", function (e) {
   const target = e.target.closest(
-    "[data-screen], [data-go], [data-back], [data-date], [data-event], [data-delete], [data-phase], [data-month], [data-log], [data-topic], [data-session], " +
+    "[data-screen], [data-go], [data-back], [data-sheet], [data-edit], #ring, [data-date], [data-event], [data-delete], [data-phase], [data-month], [data-log], [data-topic], [data-session], " +
       "[data-soon], [data-integration], #add-task-btn, #plan-today-btn, #see-all-btn, #coach-history-btn, " +
       "#int-see-all-btn, #bell-btn, #report-btn, #reset-btn"
   );
   if (!target) return;
-  if (target.dataset.soon) {
+  // Any action inside an info sheet replaces it.
+  if (infoSheet.open && infoSheet.contains(target)) infoSheet.close();
+  if (target.id === "ring") {
+    openScoreSheet();
+  } else if (target.dataset.sheet === "lighter-day") {
+    openLighterDaySheet();
+  } else if (target.dataset.edit) {
+    const task = calendarSource.getEvent(target.dataset.edit);
+    if (task) openTaskDialog(task);
+  } else if (target.dataset.soon) {
     showToast(target.dataset.soon + " is coming soon");
   } else if (target.dataset.integration) {
     toggleIntegration(target.dataset.integration);
@@ -1441,9 +1586,19 @@ document.addEventListener("click", function (e) {
     renderDayEvents(store.settings.load());
     refocus('[data-event="' + target.dataset.event + '"]');
   } else if (target.dataset.delete) {
-    calendarSource.deleteEvent(target.dataset.delete);
+    const removed = calendarSource.deleteEvent(target.dataset.delete);
     openEventId = null;
     renderAlignment();
+    if (removed) {
+      showToast("Task deleted", {
+        label: "Undo",
+        onClick: () => {
+          calendarSource.restoreEvent(removed);
+          openEventId = removed.id;
+          renderAlignment();
+        },
+      });
+    }
   } else if (target.id === "add-task-btn") {
     openTaskDialog();
   }

@@ -134,6 +134,39 @@ const CONTENT = {
     rest:       { label: "Rest / gentle walk",            short: "Rest",        icon: "leaf",         suits: ["menstrual"],               avoid: [] },
   },
 
+  // Alignment → tap the score ring. Points per level live in app.js (SYNC_LEVELS).
+  // Honesty note: a 2025 meta-analysis (Jang et al., PLoS One) found no robust cycle-phase
+  // changes in cognitive performance — so the score is a planning guide, not a prediction.
+  score: {
+    title: "How your score works",
+    intro: "Your score shows how well today's tasks fit your {phase} phase. Each task gets a level, and the score is their average.",
+    levels: {
+      high: "Suits this phase",
+      good: "Fine in any phase",
+      moderate: "Better in another phase",
+      low: "Best kept for another phase",
+    },
+    todayHeading: "Today",
+    noTasks: "No tasks today. Add one to get a score.",
+    note: "Research hasn't shown that your cycle changes how well you think or work. Treat the score as a planning guide inspired by <em>In the FLO</em>, not a prediction.",
+  },
+
+  // Alignment → recovery bar (score below 50). Ideas paraphrased from PDF p. 15 and p. 21 (steps 3–4).
+  lighterDay: {
+    title: "A lighter day",
+    intro: "Today's plan is a tough fit for your {phase} phase. A few gentle ideas:",
+    moveTask: "If you can, move “{task}” to your {better} phase.",
+    shortenTask: "If you can, keep “{task}” short or move it to another day.",
+    tips: [
+      "Keep fixed deadlines where they are, and let the rest move.",
+      "Drop one non-essential task today.",
+      "Add one small moment for yourself, like a walk or an early night.",
+    ],
+    editLabel: "Edit this task",
+    breatheLabel: "2-minute breathing break",
+    detailsLabel: "See {phase} phase ideas",
+  },
+
   coach: {
     // Chips + keyword matching for typed questions.
     // reply: { text, list? (a phase field: "work" | "eat" | "move"), after?, session? } or byPhase.

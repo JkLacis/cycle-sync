@@ -72,7 +72,7 @@
           <!-- Filled by renderPhaseNow() -->
           <div class="phase-now" id="phase-now"></div>
           <!-- Built by buildRing(), updated by updateRing() -->
-          <div class="ring" id="ring"></div>
+          <button class="ring" type="button" id="ring"></button>
         </div>
 
         <!-- Filled by renderRecommendation() -->
@@ -435,6 +435,8 @@
         <span>Type</span>
         <select name="type" id="task-type"></select>
       </label>
+      <!-- Live level for the chosen type + date, filled by renderTaskSyncPreview() -->
+      <p class="sync-preview" id="task-sync" aria-live="polite"></p>
       <label class="field">
         <span>Date</span>
         <input name="date" type="date" required>
@@ -452,6 +454,17 @@
       <p class="form-error" id="task-error" role="alert"></p>
       <button class="primary-btn" type="submit">Save task</button>
     </form>
+  </dialog>
+
+  <!-- Reusable info sheet (score explanation, lighter day, ...). Filled by openSheet(). -->
+  <dialog class="sheet" id="info-sheet" aria-labelledby="info-title">
+    <div class="sheet-head">
+      <h2 id="info-title"></h2>
+      <button class="icon-btn icon-btn-small" type="button" id="info-close" aria-label="Close">
+        <span data-icon="close"></span>
+      </button>
+    </div>
+    <div class="info-body" id="info-body"></div>
   </dialog>
 
   <!-- Track Today sheet (Cycle Plan) -->

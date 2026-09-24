@@ -387,6 +387,9 @@ h2 {
 /* Score ring */
 .ring {
   flex: none;
+  padding: 0;
+  border: none;
+  cursor: pointer;
   width: var(--ring-size);
   height: var(--ring-size);
   border-radius: 50%;
@@ -851,6 +854,12 @@ h2 {
   color: var(--text-muted);
   font-size: 12px;
   cursor: pointer;
+}
+
+.event-actions {
+  display: flex;
+  flex: none;
+  gap: 6px;
 }
 
 .delete-btn .icon {
@@ -2290,6 +2299,20 @@ h2 {
   transform: translate(-50%, 0);
 }
 
+.toast.has-action {
+  pointer-events: auto;
+}
+
+.toast-action {
+  margin-left: 10px;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--blue-light);
+  font-weight: 600;
+  cursor: pointer;
+}
+
 /* ===== Bottom dock ===== */
 .dock {
   display: flex;
@@ -2394,6 +2417,101 @@ h2 {
   margin: 0 0 10px;
   font-size: 13px;
   color: var(--sync-low);
+}
+
+/* Live level under the task type */
+.sync-preview {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  min-height: 24px;
+  margin: -4px 0 10px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+/* Info sheet (score explanation, lighter day) */
+.info-body {
+  max-height: 70vh;
+  overflow-y: auto;
+  font-size: 14px;
+}
+
+.info-body p {
+  margin: 0 0 10px;
+}
+
+.info-body h3 {
+  margin: 14px 0 6px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.sheet-list {
+  display: grid;
+  gap: 8px;
+  margin: 0 0 10px;
+  padding: 0;
+  list-style: none;
+}
+
+.sheet-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.level-list li {
+  justify-content: flex-start;
+}
+
+.level-list .badge {
+  flex: none;
+  width: 96px;
+}
+
+.level-list .points {
+  margin-left: auto;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.sheet-note {
+  font-size: 12.5px;
+  color: var(--text-muted);
+}
+
+.sheet-bullets {
+  margin: 0 0 12px;
+  padding-left: 18px;
+}
+
+.sheet-bullets li + li {
+  margin-top: 4px;
+}
+
+.sheet-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  margin-bottom: 8px;
+  padding: 11px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  background: var(--bg);
+  color: var(--blue-deep);
+  font-size: 14px;
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+}
+
+.sheet-btn .icon {
+  width: 16px;
+  height: 16px;
 }
 
 .primary-btn {
