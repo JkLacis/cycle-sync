@@ -235,10 +235,21 @@ const STORAGE_PREFIX = "cyclesync.";
 const STORAGE_NS = STORAGE_PREFIX + (IS_DEMO ? "demo." : "");
 // Bump SCHEMA_VERSION and add a MIGRATIONS entry whenever the saved data shape changes.
 // Data saved before versioning existed counts as version 1.
-const SCHEMA_VERSION = 1;
+const SCHEMA_VERSION = 2;
 const SCHEMA_KEY = STORAGE_PREFIX + "schemaVersion";
 // { n: () => void } upgrades saved data from version n to n + 1.
-const MIGRATIONS = {};
+const MIGRATIONS = {
+  // v2: integration cards no longer store a fake on/off state.
+  1: () => {
+    for (const key of [STORAGE_PREFIX + "prefs", STORAGE_PREFIX + "demo.prefs"]) {
+      const raw = localStorage.getItem(key);
+      if (!raw) continue;
+      const prefs = JSON.parse(raw);
+      delete prefs.integrations;
+      localStorage.setItem(key, JSON.stringify(prefs));
+    }
+  },
+};
 
 // Allowed ranges for the cycle form (onboarding + Settings). NHS: cycles 21–35 days, periods 2–7 days.
 const CYCLE_LIMITS = {
@@ -253,13 +264,13 @@ const DEFAULT_SETTINGS = {
   periodLength: 5,
 };
 
-// Integration switches + notification toggle (for show only, nothing is sent).
 const NAME_MAX = 30;
 const CHAT_MAX = 50; // messages kept on the device
 
+// weeklyInsight = show the weekly insight under the bell. insightSeenWeek = Monday (ISO) of the last week it was opened.
 const DEFAULT_PREFS = {
-  integrations: { whatsapp: true, gcal: true },
   weeklyInsight: true,
+  insightSeenWeek: null,
 };
 
 // Returns an error message, or "" when the settings are fine.
@@ -372,6 +383,20 @@ const store = {
     save(version) {
       return writeJSON("version", version);
     },
+  },
+  // Everything in the current namespace, for "Export my data".
+  exportAll() {
+    return {
+      app: "Cycle Sync",
+      exportedAt: new Date().toISOString(),
+      schemaVersion: SCHEMA_VERSION,
+      settings: IS_DEMO ? DEFAULT_SETTINGS : this.settings.loadSaved(),
+      profile: this.profile.load(),
+      tasks: this.tasks.load(),
+      logs: this.logs.load(),
+      prefs: this.prefs.load(),
+      chat: this.chat.load(),
+    };
   },
   // Removes everything Cycle Sync saved in this browser (real and demo data).
   clearAll() {
@@ -1306,13 +1331,17 @@ function showToast(text, action) {
   toastTimer = setTimeout(hide, action ? TOAST_ACTION_MS : TOAST_MS);
 }
 
+// Nothing is connected in this prototype; ?demo=1 shows the mockup's "Connected" cards.
+function isConnected(item) {
+  return IS_DEMO && Boolean(item.demoConnected);
+}
+
 function renderIntegrations() {
-  const connected = store.prefs.load().integrations;
   const list = showAllIntegrations ? INTEGRATIONS : INTEGRATIONS.slice(0, INTEGRATIONS_SHOWN);
   document.getElementById("int-grid").innerHTML = list.map((item) => {
-    const on = Boolean(connected[item.id]);
+    const on = isConnected(item);
     return (
-      '<button type="button" class="int-card' + (on ? " is-on" : "") + '" data-integration="' + item.id + '" aria-pressed="' + on + '">' +
+      '<button type="button" class="int-card' + (on ? " is-on" : "") + '" data-integration="' + item.id + '">' +
         '<svg class="int-logo" viewBox="0 0 24 24" aria-hidden="true">' + INTEGRATION_LOGOS[item.id] + "</svg>" +
         '<span class="int-chevron">' + icon("chevron") + "</span>" +
         '<span class="int-name">' + item.name + "</span>" +
@@ -1322,13 +1351,74 @@ function renderIntegrations() {
   }).join("");
 }
 
-function toggleIntegration(id) {
+function openIntegrationSheet(id) {
+  const item = INTEGRATIONS.find((i) => i.id === id);
+  const text = CONTENT.integrationSheet;
+  openSheet(item.name,
+    "<p>" + item.description + "</p>" +
+    '<p class="sheet-note">' + text.comingSoon + (isConnected(item) ? " " + text.demoNote : "") + "</p>");
+}
+
+// ----- Bell: weekly insight -----
+
+function weekKey(date) {
+  return toISODate(startOfWeek(date));
+}
+
+function hasUnseenInsight() {
   const prefs = store.prefs.load();
-  prefs.integrations[id] = !prefs.integrations[id];
-  store.prefs.save(prefs);
-  renderIntegrations();
-  const name = INTEGRATIONS.find((i) => i.id === id).name;
-  showToast(name + (prefs.integrations[id] ? " connected (demo)" : " disconnected"));
+  return prefs.weeklyInsight && prefs.insightSeenWeek !== weekKey(today());
+}
+
+function renderBell() {
+  const unseen = hasUnseenInsight();
+  const bell = document.getElementById("bell-btn");
+  bell.classList.toggle("has-dot", unseen);
+  bell.setAttribute("aria-label", unseen ? "Notifications, 1 new" : "Notifications");
+}
+
+// Current phase until it ends, then the next one — from the user's own dates.
+function weeklyInsightHTML() {
+  const settings = store.settings.load();
+  const text = CONTENT.notifications;
+  const now = getCycleState(today(), settings);
+  const nextStart = addDays(today(), daysUntilNextPhase(today(), settings));
+  const nextKey = getPhaseForDate(nextStart, settings);
+  const shortDate = (date) => date.toLocaleDateString(undefined, { weekday: "short", day: "numeric", month: "short" });
+  const goodFor = (key) => PHASES[key].work.slice(0, 2).join(", ").toLowerCase();
+  const vars = {
+    phaseEnds: shortDate(addDays(nextStart, -1)),
+    goodFor: goodFor(now.phaseKey),
+    nextPhase: PHASES[nextKey].name,
+    nextStarts: shortDate(nextStart),
+    nextGoodFor: goodFor(nextKey),
+  };
+  return (
+    "<h3>" + text.insightTitle + "</h3>" +
+    "<p>" + fillTemplate(text.insight, now.phaseKey, vars) + "</p>" +
+    "<p>" + fillTemplate(text.insightNext, now.phaseKey, vars) + "</p>" +
+    '<p class="sheet-note">' + text.estimate + "</p>"
+  );
+}
+
+function openNotifications() {
+  const prefs = store.prefs.load();
+  const text = CONTENT.notifications;
+  openSheet(text.title, prefs.weeklyInsight ? weeklyInsightHTML() : "<p>" + text.empty + "</p>");
+  if (prefs.weeklyInsight) {
+    store.prefs.save({ ...prefs, insightSeenWeek: weekKey(today()) });
+    renderBell();
+  }
+}
+
+// ----- Reset (in-app confirm) -----
+
+function openResetSheet() {
+  const text = CONTENT.resetSheet;
+  openSheet(text.title,
+    "<p>" + text.body + "</p>" +
+    '<button type="button" class="danger-btn" data-confirm-reset>' + icon("trash") + text.confirm + "</button>" +
+    '<button type="button" class="sheet-btn sheet-cancel" data-close-sheet>' + text.cancel + "</button>");
 }
 
 function fillCycleForm() {
@@ -1379,11 +1469,29 @@ document.getElementById("weekly-toggle").addEventListener("change", function () 
   const prefs = store.prefs.load();
   prefs.weeklyInsight = this.checked;
   store.prefs.save(prefs);
-  showToast("Weekly insight " + (this.checked ? "on" : "off") + " (demo)");
+  renderBell();
+  showToast("Weekly insight " + (this.checked ? "on" : "off"));
 });
 
 function formatLongDate(date) {
   return date.toLocaleDateString(undefined, { day: "numeric", month: "long", year: "numeric" });
+}
+
+const REPORT_LOG_DAYS = 30;
+
+// One line per logged day in the last REPORT_LOG_DAYS days, oldest first.
+function reportLogLines() {
+  const logs = store.logs.load();
+  const lines = [];
+  for (let i = REPORT_LOG_DAYS - 1; i >= 0; i--) {
+    const iso = toISODate(addDays(today(), -i));
+    const log = logs[iso];
+    if (!log) continue;
+    const parts = LOG_FIELDS.filter((f) => log[f.id] !== undefined)
+      .map((f) => f.label + " " + (f.format ? f.format(log[f.id]) : log[f.id]));
+    lines.push("  " + iso + "  " + parts.join(" · "));
+  }
+  return lines.length ? lines : ["  None logged."];
 }
 
 // Plain-text summary to share with a doctor.
@@ -1406,24 +1514,40 @@ function buildDoctorReport() {
     "Phase days in this cycle:",
     ...CYCLE_ORDER.map((key) => "  " + PHASES[key].name + ": " + (phaseRangeText(ranges[key]) || "none")),
     "",
+    "Daily check-ins (last " + REPORT_LOG_DAYS + " days):",
+    ...reportLogLines(),
+    "",
     "Predictions are estimates based on the numbers above.",
     "For general wellness only. Not medical advice, and not for contraception.",
   ].join("\n");
 }
 
-function downloadDoctorReport() {
-  const blob = new Blob([buildDoctorReport()], { type: "text/plain" });
+function downloadFile(filename, text, type) {
   const link = document.createElement("a");
-  link.href = URL.createObjectURL(blob);
-  link.download = "cycle-sync-report-" + toISODate(today()) + ".txt";
+  link.href = URL.createObjectURL(new Blob([text], { type }));
+  link.download = filename;
   link.click();
   setTimeout(() => URL.revokeObjectURL(link.href), 1000); // after the download has started
+}
+
+function downloadDoctorReport() {
+  downloadFile("cycle-sync-report-" + toISODate(today()) + ".txt", buildDoctorReport(), "text/plain");
   showToast("Report downloaded");
+}
+
+function exportData() {
+  downloadFile("cycle-sync-data-" + toISODate(today()) + ".json", JSON.stringify(store.exportAll(), null, 2), "application/json");
+  showToast("Data exported");
+}
+
+// "High Sync (100), Good (75), ..." — built from SYNC_LEVELS so text never drifts from the scoring.
+function scoreLevelsText() {
+  return Object.values(SYNC_LEVELS).map((l) => l.label + " (" + l.points + ")").join(", ");
 }
 
 function renderFaq() {
   document.getElementById("faq-list").innerHTML = CONTENT.faq.map((item) =>
-    "<details><summary>" + item.q + icon("chevron") + "</summary><p>" + item.a + "</p></details>"
+    "<details><summary>" + item.q + icon("chevron") + "</summary><p>" + item.a.replace("{levels}", scoreLevelsText()) + "</p></details>"
   ).join("");
 }
 
@@ -1453,6 +1577,9 @@ document.getElementById("profile-form").addEventListener("submit", function (e) 
 function renderSettings() {
   renderIntegrations();
   renderFaq();
+  renderBell();
+  const { email, subject } = CONTENT.contact;
+  document.getElementById("contact-link").href = "mailto:" + email + "?subject=" + encodeURIComponent(subject);
   document.getElementById("weekly-toggle").checked = store.prefs.load().weeklyInsight;
 }
 
@@ -1606,7 +1733,7 @@ document.addEventListener("click", function (e) {
   const target = e.target.closest(
     "[data-screen], [data-go], [data-back], [data-sheet], [data-edit], [data-day], [data-add-on], #ring, [data-date], [data-event], [data-delete], [data-phase], [data-month], [data-log], [data-topic], [data-session], " +
       "[data-soon], [data-integration], #add-task-btn, #plan-today-btn, #see-all-btn, #coach-history-btn, " +
-      "#clear-chat-btn, #int-see-all-btn, #bell-btn, #report-btn, #reset-btn"
+      "[data-confirm-reset], [data-close-sheet], #clear-chat-btn, #int-see-all-btn, #bell-btn, #report-btn, #export-btn, #reset-btn"
   );
   if (!target) return;
   // Any action inside an info sheet replaces it.
@@ -1625,21 +1752,25 @@ document.addEventListener("click", function (e) {
   } else if (target.dataset.soon) {
     showToast(target.dataset.soon + " is coming soon");
   } else if (target.dataset.integration) {
-    toggleIntegration(target.dataset.integration);
+    openIntegrationSheet(target.dataset.integration);
   } else if (target.id === "int-see-all-btn") {
     showAllIntegrations = !showAllIntegrations;
     target.setAttribute("aria-expanded", showAllIntegrations);
     document.getElementById("int-see-all-label").textContent = showAllIntegrations ? "Show less" : "See All";
     renderIntegrations();
   } else if (target.id === "bell-btn") {
-    document.getElementById("notif-card").scrollIntoView({ block: "start", behavior: "smooth" });
+    openNotifications();
   } else if (target.id === "report-btn") {
     downloadDoctorReport();
+  } else if (target.id === "export-btn") {
+    exportData();
   } else if (target.id === "reset-btn") {
-    if (confirm("Delete all your Cycle Sync data on this device? This can't be undone.")) {
-      store.clearAll();
-      location.reload();
-    }
+    openResetSheet();
+  } else if (target.hasAttribute("data-confirm-reset")) {
+    store.clearAll();
+    location.reload();
+  } else if (target.hasAttribute("data-close-sheet")) {
+    // Nothing else to do: the sheet was closed above.
   } else if (target.dataset.topic) {
     const topic = COACH.topics.find((t) => t.id === target.dataset.topic);
     askCoach(topic.question, topic);

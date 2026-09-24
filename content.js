@@ -324,17 +324,43 @@ const CONTENT = {
     ],
   },
 
-  // Settings → Integrations (names only; nothing is connected in this prototype).
+  // Settings → Integrations. Nothing is connected in this prototype: tapping a card explains what it
+  // will do. demoConnected = shown as "Connected" in ?demo=1 only (matches the mockup).
   integrations: [
-    { id: "whatsapp", name: "WhatsApp" },
-    { id: "gcal", name: "Google Calendar" },
-    { id: "apple", name: "Apple Health" },
-    { id: "outlook", name: "Outlook" },
-    { id: "garmin", name: "Garmin" },
-    { id: "oura", name: "Oura" },
+    { id: "whatsapp", name: "WhatsApp", demoConnected: true, description: "A short summary every morning at 8:00: your phase and how today's plan fits it." },
+    { id: "gcal", name: "Google Calendar", demoConnected: true, description: "Bring your Google Calendar events in as tasks, so your score uses your real schedule." },
+    { id: "apple", name: "Apple Health", description: "Use sleep and activity data from Apple Health in Track Today." },
+    { id: "outlook", name: "Outlook", description: "Bring your Outlook calendar events in as tasks." },
+    { id: "garmin", name: "Garmin", description: "Use sleep and activity data from your Garmin watch." },
+    { id: "oura", name: "Oura", description: "Use sleep and readiness data from your Oura ring." },
   ],
+  integrationSheet: {
+    comingSoon: "Coming soon. Nothing is connected or shared in this prototype.",
+    demoNote: "Shown as connected for the demo only.",
+  },
 
-  // Settings → Help & FAQs. Answers may contain simple HTML (<em>).
+  // Settings → bell. Weekly insight is built from the user's own cycle dates.
+  notifications: {
+    title: "Notifications",
+    insightTitle: "This week's insight",
+    insight: "You're in your {phase} phase ({powr}) until {phaseEnds}. Good for: {goodFor}.",
+    insightNext: "Next: {nextPhase} from {nextStarts}, good for {nextGoodFor}.",
+    empty: "No notifications. Turn on Weekly insight to get a short outlook each week.",
+    estimate: "Dates are estimates.",
+  },
+
+  // Settings → Data & privacy → Reset all data.
+  resetSheet: {
+    title: "Delete all your data?",
+    body: "This removes your cycle settings, tasks, check-ins, chat and profile from this device. It can't be undone.",
+    confirm: "Delete everything",
+    cancel: "Cancel",
+  },
+
+  // Settings → Contact us.
+  contact: { email: "praphull371@gmail.com", subject: "Cycle Sync" },
+
+  // Settings → Help & FAQs. Answers may contain simple HTML (<em>) and the {levels} template.
   faq: [
     {
       q: "What is cycle syncing?",
@@ -351,6 +377,19 @@ const CONTENT = {
     {
       q: "Is the AI Coach real AI?",
       a: "Not yet. The coach gives pre-written suggestions based on your phase.",
+    },
+    {
+      q: "How is the score calculated?",
+      a: "Each of today's tasks gets a level for your current phase: {levels}. The score is their average. It's a planning guide, not a prediction.",
+    },
+    {
+      // NHS: ovulation usually 10–16 days before the next period; hard to pinpoint.
+      q: "How accurate are the phase dates?",
+      a: "They are estimates. Cycle Sync assumes ovulation about 14 days before your next period. The NHS notes it usually happens 10 to 16 days before a period and is hard to pinpoint, so don't use this app to prevent or plan a pregnancy.",
+    },
+    {
+      q: "What does the research say?",
+      a: "Evidence for cycle syncing is limited. Reviews of many studies found only a trivial change in exercise performance across the cycle (McNulty et al., 2020), no effect on strength training (Colenso-Semple et al., 2023) and no reliable change in thinking skills (Jang et al., 2025). Use the suggestions as ideas, and go by how you feel.",
     },
     {
       q: "Where do the suggestions come from?",

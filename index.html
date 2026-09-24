@@ -229,7 +229,7 @@
         <header class="topbar">
           <h1 class="brand">Settings</h1>
           <div class="topbar-actions">
-            <button class="icon-btn has-dot" type="button" id="bell-btn" aria-label="Notifications">
+            <button class="icon-btn" type="button" id="bell-btn" aria-label="Notifications">
               <span data-icon="bell"></span>
             </button>
             <button class="avatar" type="button" data-go="profile" aria-label="Your profile">
@@ -260,7 +260,7 @@
           <p class="set-note">Demo: integrations are coming soon. Nothing is shared.</p>
         </section>
 
-        <section class="set-card" id="notif-card" aria-labelledby="notif-title">
+        <section class="set-card" aria-labelledby="notif-title">
           <h2 id="notif-title">Notifications</h2>
           <div class="set-box">
             <span class="set-icon tint-yellow"><span data-icon="sun"></span></span>
@@ -309,11 +309,12 @@
               <span class="set-text"><span class="set-label">Help &amp; FAQs</span></span>
               <span data-icon="chevron"></span>
             </button>
-            <button class="set-row" type="button" data-soon="Contact us">
+            <!-- href (mailto:) set from content.js by renderSettings() -->
+            <a class="set-row" id="contact-link">
               <span class="set-icon tint-blue"><span data-icon="mail"></span></span>
               <span class="set-text"><span class="set-label">Contact us</span></span>
               <span data-icon="chevron"></span>
-            </button>
+            </a>
           </div>
         </section>
 
@@ -379,6 +380,7 @@
           <p><strong>Your data stays on this device.</strong> Cycle Sync has no account and no server. Your cycle settings, tasks and preferences are saved only in this browser.</p>
           <p>Nothing is sent to Google, WhatsApp or anyone else. The integrations are a demo.</p>
         </div>
+        <button class="sheet-btn export-btn" type="button" id="export-btn"><span data-icon="doc"></span>Export my data (JSON)</button>
         <button class="danger-btn" type="button" id="reset-btn"><span data-icon="trash"></span>Reset all data</button>
       </section>
 
