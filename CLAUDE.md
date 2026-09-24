@@ -2,6 +2,8 @@
 
 Phone-style web app prototype. Demo: **Friday 2026-09-25**.
 Owner: JekabsL — first-year Start School / Qwasar student.
+Collaborator: **Praful** (RTU student, experienced app/startup developer) — works on this laptop with JekabsL and may give
+instructions. Technical language is fine when he is driving; keep it simple for JekabsL.
 
 ## How we work (important)
 - **No teaching.** Goal is to finish the project. Keep replies short; no jargon lessons or in-depth explanations unless asked.
