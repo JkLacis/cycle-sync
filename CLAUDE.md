@@ -15,21 +15,12 @@ instructions. Technical language is fine when he is driving; keep it simple for 
 - **Open decisions → ask with AskUserQuestion** (clickable question cards), never guess.
 - **Acceptance criteria**: `implementation-plan.md` lists each step with checkable "done when" criteria.
   After a step, verify each criterion, tick it `[x]`, and tick the step when all pass.
-  (Plan to be written once the user's design doc from Google Drive is in the folder.)
 - Keep this file updated whenever a new decision is made.
 
 ## ▶ START HERE (status as of 2026-09-24)
-- Done: steps 1–2 (git, GitHub, phone frame, 3-tab bar with empty screens). Step 3 not started.
-- **The brief is being revised.** User's new design doc `reference/prototype.docx` changes colours, tabs
-  and the main screen (summary below). Sections "Screens" and "Style" further down are the ORIGINAL brief —
-  partly superseded; don't build from them until the decisions below are made.
-- **Next session, in order:**
-  1. Read `reference/prototype.docx` (`pandoc -t plain reference/prototype.docx`) and skim
-     `reference/in-the-flo.pdf` (`pdftotext`), the theory source.
-  2. Look for any layout picture the user added to the folder.
-  3. Ask the open decisions below with AskUserQuestion.
-  4. Update this file, write `implementation-plan.md` (steps + acceptance criteria), then resume building.
-- Demo is **Friday 2026-09-25** — keep scope small; mock anything that needs a server.
+- Done: steps 1–2. All open decisions answered (see "Decisions" below).
+- `implementation-plan.md` is the build plan — follow it step by step, next unticked step first (step 3: new look + 4-tab dock).
+- Demo is **Friday 2026-09-25** — keep scope small; steps 9–11 can be cut/simplified if time runs out.
 
 ## Prototype doc summary (`reference/prototype.docx`)
 - **Look**: sleek, premium, professional "health intelligence tool", not a period tracker.
@@ -46,16 +37,18 @@ instructions. Technical language is fine when he is driving; keep it simple for 
 - **AI Coach**: chat coach; 2–3 min breathing/grounding resets; phase-specific scripts; "energy leak audit".
 - **Settings**: Google Calendar/Outlook sync, wearables, WhatsApp daily summary, privacy.
 - **Not feasible for real by Friday (static app, no backend)**: Google Calendar sync, real AI chat,
-  wearables, WhatsApp → mock them (sample tasks/events, scripted coach, non-functional toggles) — user to confirm.
+  wearables, WhatsApp → mocked (confirmed): scripted coach, non-functional toggles.
 
-## Open decisions (ask with AskUserQuestion)
-1. Tasks/events for the alignment score: built-in sample data, user-typed tasks, or both?
-2. How the alignment % is calculated (e.g. each task has a type; % = tasks whose type suits today's phase).
-3. Which tabs are real vs mock-up (AI Coach, Settings integrations, logging).
-4. Calendar on the Alignment screen, in Cycle Plan, or both.
-5. New colour palette (blue/green base; 4 phase colours that aren't pink/purple).
-6. Menstrual/Ovulatory overlap on short cycles (e.g. 21-day cycle + 7-day period): which phase wins?
-7. Do the original onboarding + demo mode (`?demo=1`) + Move/Eat/Work content stay? (Probably yes.)
+## Decisions (2026-09-24) — details in `implementation-plan.md`
+1. Tasks: **user-typed only** (no sample data). Task = title, date, type. localStorage.
+2. Score: % of tasks in the next 7 days whose type suits the phase on that task's day
+   (task-type → phase table in the plan). Wins = up to 3 suited, watch-outs = up to 3 unsuited.
+3. Real: logging, tasks, score, calendar, phase tips. Mock: AI Coach (scripted + real breathing timer),
+   Settings integration toggles. **Energy leak audit dropped.**
+4. Calendar on **both**: Alignment = week strip + tasks; Cycle Plan = full month calendar.
+5. Palette "cool spectrum" (see Style).
+6. Short-cycle overlap: **Menstrual wins**.
+7. Keep onboarding, demo mode `?demo=1`, Move/Eat/Work tips (shown in phase detail from Cycle Plan).
 
 ## Sources and content rules
 - `reference/in-the-flo.pdf` = excerpt of *In the FLO* (Alisa Vitti, © HarperCollins, all rights reserved).
@@ -76,16 +69,15 @@ four cycle phases she's in, it suggests how to **move**, what to **eat**, and wh
 - Run: `python3 -m http.server 8000` → http://localhost:8000. On phone (same Wi-Fi):
   `http://<laptop-local-IP>:8000` (find IP with `hostname -I`). User is on Kubuntu 26.04.
 
-## Screens (ORIGINAL brief — being revised, see prototype doc summary)
-1. **Onboarding**: first day of last period (date picker, no future dates), cycle length
-   (default 28, 21–35), period length (default 5, 3–7). Validate inputs. Note:
-   "For general wellness only. Not medical advice, and not for contraception."
-2. **Today** (main): phase name, "Day X of Y", one-line phase summary, days until next phase,
-   then three cards: Move, Eat, Work.
-3. **Calendar**: month view, each day tinted with phase colour **and** a small phase letter
-   (don't rely on colour alone). Prev/next month arrows. Today highlighted.
-4. **Phase detail**: tap a phase (from Today or the Phases list) to see full content.
-- Navigation: bottom tab bar — Today, Calendar, Phases. Settings (edit data / reset) reachable from Today.
+## Screens
+- Bottom dock, 4 tabs: **Alignment · Cycle Plan · Coach · Settings** (icons + labels).
+- **Onboarding** (first visit): last period start (no future dates), cycle length (default 28, 21–35),
+  period length (default 5, 3–7). Validate. Note: "For general wellness only. Not medical advice, and not for contraception."
+- **Alignment**: header "Day X · <Phase> Phase · <POWR>", score ring, 3 wins + 3 watch-outs, week strip + tasks + add task.
+- **Cycle Plan**: month calendar (phase colour **and** letter, today highlighted, prev/next), phase overview,
+  tap phase → phase detail (Move/Eat/Work), quick logging.
+- **Coach**: scripted chat, 2-min breathing reset, phase scripts. Labelled as demo, not real AI.
+- **Settings**: edit cycle data, reset, fake integration toggles, privacy note.
 - **Demo mode**: URL contains `?demo=1` → small panel to pretend it's a different date.
 
 ## Cycle logic (use exactly this)
@@ -94,7 +86,7 @@ Days numbered from 1.
 - `ovulationDay = cycleLength - 14`
 - Menstrual: 1 … periodLength
 - Follicular: periodLength + 1 … ovulationDay - 2
-- Ovulatory: ovulationDay - 1 … ovulationDay + 1
+- Ovulatory: max(periodLength + 1, ovulationDay - 1) … ovulationDay + 1  (Menstrual wins overlaps)
 - Luteal: ovulationDay + 2 … cycleLength
 - Short cycles may make a phase zero days long — must not error.
 - **Compare dates as local calendar days, not UTC.** Never `new Date("YYYY-MM-DD")` (parses as UTC → off-by-one).
@@ -122,30 +114,22 @@ Order: Follicular → Ovulatory → Luteal → Menstrual.
 
 **Tone**: supportive suggestions, never rules. No calorie restriction, fasting, or weight-loss framing anywhere.
 
-## Style (ORIGINAL — superseded: prototype doc wants pale blue + green, no pink/purple)
-Soft, warm, premium. Rounded cards, generous spacing, system font.
-Phase colours (exact shades TBD, user will give feedback): Follicular = sage green,
-Ovulatory = warm gold/coral, Luteal = terracotta/amber, Menstrual = deep berry/plum.
+## Style
+Sleek, premium "health intelligence tool" — not a period tracker. **No pink/purple.** Rounded cards, generous spacing, system font.
+Base bg #eef4fb, text #1f3350, accent green #3fa77a.
+Phases: Follicular #3fa7a0 teal · Ovulatory #6bbf59 green · Luteal #4a6fa5 slate blue · Menstrual #2e3d5c navy.
 
 ## Build order / progress
-1. [x] git init + CLAUDE.md
-2. [x] File structure + phone frame + bottom tab bar (empty screens)
-3. [ ] Cycle logic functions + console check
-4. [ ] Onboarding screen
-5. [ ] Today screen
-6. [ ] Calendar
-7. [ ] Phase detail
-8. [ ] Demo mode + polish + run on phone
+See `implementation-plan.md` (steps 1–12 with "done when" criteria). Steps 1–2 done.
 
 ## Decisions log
 - `reference/` (gitignored, never push — repo is public): mentor's example files from another project
   ("24" build spec, implementation plan, ClAUDEE.md). Used only as a model for spec/plan format.
-- Step 3 on hold until the open decisions above are answered.
 - User on Pro plan; start a fresh session per step to save usage (this file carries the context).
 - Git branch: `main`. Commit author: JekabsL. Remote `origin` = https://github.com/JkLacis/cycle-sync (public). `gh` CLI logged in as JkLacis.
 - Screens are `<section class="screen" id="screen-NAME">`, toggled via the `hidden` attribute by `showScreen(name)`.
   Screen names: onboarding, today, calendar, phases, phase-detail, settings.
 - Tabs are `<button class="tab" data-screen="NAME">`; active tab gets class `active`.
 - Phone frame kicks in at `min-width: 600px` (390×844, dark bezel). Below that the app fills the screen.
-- Colours are CSS variables in `:root` of style.css. Current shades: follicular #7f9f7a, ovulatory #e39a5b,
-  luteal #c06a45, menstrual #8a3b5e (accent = menstrual). Awaiting user feedback.
+- Colours are CSS variables in `:root` of style.css (palette in Style section).
+- `pandoc` not installed; read .docx with `unzip -p file.docx word/document.xml | sed 's/<[^>]*>//g'`.
