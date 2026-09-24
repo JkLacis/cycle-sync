@@ -71,6 +71,8 @@ four cycle phases she's in, it suggests how to **move**, what to **eat**, and wh
 - Single-page app: screens are `<section>`s shown/hidden with JS, no reloads.
 - Data in `localStorage` (no backend, no login).
 - Mobile-first. On wide screens, show the app centred in a ~390px phone frame.
+- **Live (GitHub Pages, from `main`, updates ~1 min after each push):** https://jklacis.github.io/cycle-sync/
+  (demo: add `?demo=1`). Use this for phone testing — the "Startup House Guest" Wi-Fi + ufw block phone → laptop.
 - Run: `python3 -m http.server 8000` → http://localhost:8000. On phone (same Wi-Fi):
   `http://<laptop-local-IP>:8000` (find IP with `hostname -I`). User is on Kubuntu 26.04.
 
