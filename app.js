@@ -254,6 +254,8 @@ const DEFAULT_SETTINGS = {
 };
 
 // Integration switches + notification toggle (for show only, nothing is sent).
+const NAME_MAX = 30;
+
 const DEFAULT_PREFS = {
   integrations: { whatsapp: true, gcal: true },
   weeklyInsight: true,
@@ -341,6 +343,15 @@ const store = {
     },
     save(prefs) {
       return writeJSON("prefs", prefs);
+    },
+  },
+  // { name } — optional first name, only used for greetings and the avatar initial.
+  profile: {
+    load() {
+      return { name: "", ...readJSON("profile", {}) };
+    },
+    save(profile) {
+      return writeJSON("profile", profile);
     },
   },
   demoVersion: {
@@ -1158,13 +1169,16 @@ function submitCycleForm(form, errorId) {
 document.getElementById("cycle-form").addEventListener("submit", function (e) {
   e.preventDefault();
   if (!submitCycleForm(this, "cycle-error")) return;
-  showScreen("settings");
+  goBack("settings");
   showToast("Cycle settings saved");
 });
 
 document.getElementById("onboard-form").addEventListener("submit", function (e) {
   e.preventDefault();
-  if (submitCycleForm(this, "onboard-error")) showScreen("alignment");
+  if (!submitCycleForm(this, "onboard-error")) return;
+  store.profile.save({ name: cleanName(this.elements.name.value) });
+  renderProfile();
+  openTab("alignment");
 });
 
 document.getElementById("weekly-toggle").addEventListener("change", function () {
@@ -1219,6 +1233,29 @@ function renderFaq() {
   ).join("");
 }
 
+// ----- Profile (name shown in avatars and the Coach greeting) -----
+
+function renderProfile() {
+  const name = store.profile.load().name;
+  const avatar = name ? '<span class="avatar-initial">' + escapeHTML(name[0].toUpperCase()) + "</span>" : icon("user");
+  for (const el of document.querySelectorAll(".avatar, .profile-avatar")) el.innerHTML = avatar;
+  document.getElementById("coach-hello-name").textContent = name ? "Hi " + name : "Hi there";
+  document.getElementById("profile-form").elements.name.value = name;
+}
+
+// Trims and length-checks a first name. Empty is allowed (the name is optional).
+function cleanName(value) {
+  return value.trim().replace(/\s+/g, " ").slice(0, NAME_MAX);
+}
+
+document.getElementById("profile-form").addEventListener("submit", function (e) {
+  e.preventDefault();
+  if (!store.profile.save({ name: cleanName(this.elements.name.value) })) return;
+  renderProfile();
+  goBack("settings");
+  showToast("Profile saved");
+});
+
 function renderSettings() {
   renderIntegrations();
   renderFaq();
@@ -1229,17 +1266,42 @@ function renderSettings() {
 // 12. Navigation
 // =====================================================================
 
+const TABS = ["alignment", "plan", "coach", "settings"];
+
 // Sub-screens and the tab they belong to.
 const SCREEN_TAB = {
   "phase-detail": "plan",
   "cycle-settings": "settings",
+  profile: "settings",
   privacy: "settings",
   help: "settings",
 };
 
+// Screens opened on top of a tab, so Back returns to where you came from.
+const screenHistory = [];
+let currentScreen = null;
+
+// A tab starts a fresh history.
+function openTab(name) {
+  screenHistory.length = 0;
+  showScreen(name);
+}
+
+// Opens a tab, or a sub-screen on top of the current one.
+function openScreen(name) {
+  if (TABS.includes(name)) return openTab(name);
+  if (currentScreen && currentScreen !== name) screenHistory.push(currentScreen);
+  showScreen(name);
+}
+
+function goBack(fallback) {
+  showScreen(screenHistory.pop() || fallback);
+}
+
 // Show one screen and hide all the others.
 // name is e.g. "alignment", which matches the section id "screen-alignment".
 function showScreen(name) {
+  currentScreen = name;
   for (const screen of document.querySelectorAll(".screen")) {
     screen.hidden = screen.id !== "screen-" + name;
   }
@@ -1316,7 +1378,7 @@ function refocus(selector) {
 // One click handler for the whole app (tabs, links, days, events).
 document.addEventListener("click", function (e) {
   const target = e.target.closest(
-    "[data-screen], [data-go], [data-date], [data-event], [data-delete], [data-phase], [data-month], [data-log], [data-topic], [data-session], " +
+    "[data-screen], [data-go], [data-back], [data-date], [data-event], [data-delete], [data-phase], [data-month], [data-log], [data-topic], [data-session], " +
       "[data-soon], [data-integration], #add-task-btn, #plan-today-btn, #see-all-btn, #coach-history-btn, " +
       "#int-see-all-btn, #bell-btn, #report-btn, #reset-btn"
   );
@@ -1354,7 +1416,7 @@ document.addEventListener("click", function (e) {
     else document.getElementById("ask-input").focus();
   } else if (target.dataset.phase) {
     renderPhaseDetail(target.dataset.phase);
-    showScreen("phase-detail");
+    openScreen("phase-detail");
   } else if (target.dataset.month) {
     planMonth = new Date(planMonth.getFullYear(), planMonth.getMonth() + Number(target.dataset.month), 1);
     renderMonth(store.settings.load());
@@ -1363,8 +1425,12 @@ document.addEventListener("click", function (e) {
     renderMonth(store.settings.load());
   } else if (target.dataset.log) {
     openLogDialog(target.dataset.log);
-  } else if (target.dataset.screen || target.dataset.go) {
-    showScreen(target.dataset.screen || target.dataset.go);
+  } else if (target.dataset.back) {
+    goBack(target.dataset.back);
+  } else if (target.dataset.screen) {
+    openTab(target.dataset.screen);
+  } else if (target.dataset.go) {
+    openScreen(target.dataset.go);
   } else if (target.dataset.date) {
     selectedDate = parseLocalDate(target.dataset.date);
     openEventId = null;
@@ -1392,5 +1458,6 @@ renderPlan();
 renderCoachChips();
 renderSessions();
 renderSettings();
+renderProfile();
 document.getElementById("onboard-form").elements.lastPeriodStart.max = toISODate(today());
-showScreen(store.settings.exists() ? "alignment" : "onboarding");
+openTab(store.settings.exists() ? "alignment" : "onboarding");

@@ -26,6 +26,10 @@
         </div>
         <form class="set-card cycle-form" id="onboard-form" novalidate>
           <label class="field">
+            <span>First name (optional)</span>
+            <input name="name" type="text" maxlength="30" autocomplete="given-name">
+          </label>
+          <label class="field">
             <span>First day of your last period</span>
             <input name="lastPeriodStart" type="date" required>
           </label>
@@ -39,6 +43,7 @@
               <input name="periodLength" type="number" min="2" max="7" value="5" inputmode="numeric" required>
             </label>
           </div>
+          <p class="field-hint">Not sure? Keep 28 and 5. You can change them later in Settings.</p>
           <p class="form-error" id="onboard-error" role="alert"></p>
           <button class="primary-btn" type="submit">Get started</button>
         </form>
@@ -54,7 +59,7 @@
             <button class="icon-btn" type="button" data-go="plan" aria-label="Open cycle calendar">
               <span data-icon="calendar"></span>
             </button>
-            <button class="avatar" type="button" data-go="settings" aria-label="Profile and settings">
+            <button class="avatar" type="button" data-go="profile" aria-label="Your profile">
               <span data-icon="user"></span>
             </button>
           </div>
@@ -117,7 +122,7 @@
             <button class="icon-btn" type="button" id="plan-today-btn" aria-label="Back to this month">
               <span data-icon="calendar"></span>
             </button>
-            <button class="avatar" type="button" data-go="settings" aria-label="Profile and settings">
+            <button class="avatar" type="button" data-go="profile" aria-label="Your profile">
               <span data-icon="user"></span>
             </button>
           </div>
@@ -175,7 +180,7 @@
             <button class="icon-btn" type="button" id="coach-history-btn" aria-label="Go to your chat">
               <span data-icon="clock"></span>
             </button>
-            <button class="avatar" type="button" data-go="settings" aria-label="Profile and settings">
+            <button class="avatar" type="button" data-go="profile" aria-label="Your profile">
               <span data-icon="user"></span>
             </button>
           </div>
@@ -183,7 +188,7 @@
 
         <div class="coach-hero">
           <div class="coach-hero-text">
-            <p class="coach-hello">Hi there <span aria-hidden="true">👋</span></p>
+            <p class="coach-hello"><span id="coach-hello-name">Hi there</span> <span aria-hidden="true">👋</span></p>
             <p class="coach-sub">How can I support you today?</p>
           </div>
           <div class="flower flower-coach" data-flower></div>
@@ -225,13 +230,13 @@
             <button class="icon-btn has-dot" type="button" id="bell-btn" aria-label="Notifications">
               <span data-icon="bell"></span>
             </button>
-            <button class="avatar" type="button" data-soon="Your profile" aria-label="Your profile">
+            <button class="avatar" type="button" data-go="profile" aria-label="Your profile">
               <span data-icon="user"></span>
             </button>
           </div>
         </header>
 
-        <button class="profile-card" type="button" data-soon="Your profile">
+        <button class="profile-card" type="button" data-go="profile">
           <span class="profile-avatar"><span data-icon="user"></span></span>
           <span class="profile-text">
             <span class="profile-title">Your Profile</span>
@@ -315,7 +320,7 @@
       <!-- ===== Settings → Cycle settings ===== -->
       <section class="screen screen-settings" id="screen-cycle-settings" hidden>
         <header class="topbar">
-          <button class="icon-btn" type="button" data-go="settings" aria-label="Back to Settings">
+          <button class="icon-btn" type="button" data-back="settings" aria-label="Back">
             <span data-icon="back"></span>
           </button>
         </header>
@@ -342,10 +347,28 @@
         <p class="detail-note">For general wellness only. Not medical advice, and not for contraception.</p>
       </section>
 
+      <!-- ===== Settings → Your profile ===== -->
+      <section class="screen screen-settings" id="screen-profile" hidden>
+        <header class="topbar">
+          <button class="icon-btn" type="button" data-back="settings" aria-label="Back">
+            <span data-icon="back"></span>
+          </button>
+        </header>
+        <h1 class="sub-title">Your profile</h1>
+        <form class="set-card cycle-form" id="profile-form" novalidate>
+          <label class="field">
+            <span>First name (optional)</span>
+            <input name="name" type="text" maxlength="30" autocomplete="given-name">
+          </label>
+          <button class="primary-btn" type="submit">Save</button>
+        </form>
+        <p class="detail-note">Used only to greet you in the app. Stored on this device only.</p>
+      </section>
+
       <!-- ===== Settings → Data & privacy ===== -->
       <section class="screen screen-settings" id="screen-privacy" hidden>
         <header class="topbar">
-          <button class="icon-btn" type="button" data-go="settings" aria-label="Back to Settings">
+          <button class="icon-btn" type="button" data-back="settings" aria-label="Back">
             <span data-icon="back"></span>
           </button>
         </header>
@@ -360,7 +383,7 @@
       <!-- ===== Settings → Help & FAQs ===== -->
       <section class="screen screen-settings" id="screen-help" hidden>
         <header class="topbar">
-          <button class="icon-btn" type="button" data-go="settings" aria-label="Back to Settings">
+          <button class="icon-btn" type="button" data-back="settings" aria-label="Back">
             <span data-icon="back"></span>
           </button>
         </header>
@@ -372,7 +395,7 @@
       <!-- ===== Phase detail (opened from Cycle Plan) ===== -->
       <section class="screen screen-plan" id="screen-phase-detail" hidden>
         <header class="topbar">
-          <button class="icon-btn" type="button" data-go="plan" aria-label="Back to Cycle Plan">
+          <button class="icon-btn" type="button" data-back="plan" aria-label="Back">
             <span data-icon="back"></span>
           </button>
         </header>
