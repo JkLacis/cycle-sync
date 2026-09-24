@@ -1,0 +1,79 @@
+// Click-through test: every element in DECISIONS.md, run inside the real app (?demo=1).
+// Only demo data (cyclesync.demo.*) is reset and changed; real data is never touched.
+// Open tests/click-through.html from the local server (see README).
+
+function harness() {
+  const R = [];
+  const ok = (id, name, cond, extra) => R.push((cond ? "PASS " : "FAIL ") + id + " " + name + (extra ? "  [" + extra + "]" : ""));
+  const q = (s) => document.querySelector(s);
+  const qa = (s) => [...document.querySelectorAll(s)];
+  const click = (s) => { const el = typeof s === "string" ? q(s) : s; if (!el) throw new Error("missing " + s); el.click(); };
+  const closeDialogs = () => qa("dialog[open]").forEach((d) => d.close());
+  const t = (id, name, fn) => { try { fn(); } catch (e) { ok(id, name, false, "error: " + e.message); } closeDialogs(); };
+  const todayISO = toISODate(today());
+
+  t("#2", "dock tabs", () => { for (const n of ["plan","coach","settings","alignment"]) { click('.tab[data-screen="'+n+'"]'); ok("#2", "tab " + n, currentScreen === n && q(".tab.active").dataset.screen === n); } });
+  t("#3", "avatars open profile", () => { for (const tab of ["alignment","plan","coach","settings"]) { openTab(tab); click("#screen-" + tab + " .avatar"); ok("#3", "avatar on " + tab, currentScreen === "profile"); } });
+  t("#4", "back returns to previous", () => { openTab("alignment"); click("#phase-now [data-phase]"); click("#screen-phase-detail [data-back]"); ok("#4", "phase detail → Alignment", currentScreen === "alignment"); openTab("plan"); click(".legend-item"); click("#screen-phase-detail [data-back]"); ok("#4", "phase detail → Cycle Plan", currentScreen === "plan"); });
+  t("#5", "calendar icon", () => { openTab("alignment"); click('#screen-alignment .icon-btn[data-go="plan"]'); ok("#5", "→ Cycle Plan", currentScreen === "plan"); });
+  t("#6", "view phase details", () => { openTab("alignment"); click(".phase-link"); ok("#6", "→ phase detail Ovulatory", currentScreen === "phase-detail" && q("#phase-detail h1").textContent === "Ovulatory"); });
+  t("#7", "score ring sheet", () => { openTab("alignment"); click("#ring"); ok("#7", "sheet open with 4 levels + 3 tasks", q("#info-sheet").open && qa(".level-list li").length === 4 && q("#info-title").textContent === CONTENT.score.title, q(".info-body h3").textContent); });
+  t("#8", "rec bar (normal)", () => { openTab("alignment"); click("#rec-bar"); ok("#8", "normal → phase detail", currentScreen === "phase-detail"); });
+  t("#9/#10", "insight headers", () => { for (const i of [0,1]) { openTab("alignment"); click(qa(".insight-head")[i]); ok("#9/#10", "header " + i + " → phase detail", currentScreen === "phase-detail"); } });
+  t("#11", "insight icons static", () => ok("#11", "3+3 items", qa("#good-list li").length === 3 && qa("#watch-list li").length === 3));
+  t("#12", "view full calendar", () => { openTab("alignment"); click('.week-head [data-go="plan"]'); ok("#12", "→ Cycle Plan", currentScreen === "plan"); });
+  t("#13", "week day select", () => { openTab("alignment"); const d = qa(".day")[0]; click(d); ok("#13", "Monday selected", q('.day[aria-pressed="true"]').dataset.date === d.dataset.date); click('.day[data-date="' + todayISO + '"]'); });
+  t("#14", "event expand + edit", () => { openTab("alignment"); click('[data-event="demo1"]'); ok("#14", "expanded", q('[data-event="demo1"]').getAttribute("aria-expanded") === "true"); click('[data-edit="demo1"]'); ok("#14", "edit dialog prefilled", q("#task-dialog").open && q("#task-form").elements.title.value === "Team Sync" && q("#task-dialog-title").textContent === "Edit task"); const f = q("#task-form"); f.elements.title.value = "Team Sync (edited)"; f.requestSubmit(); ok("#14", "saved", calendarSource.getEvent("demo1").title === "Team Sync (edited)"); });
+  t("#15", "delete + undo", () => { openTab("alignment"); const n = calendarSource.getEvents(todayISO).length; click('[data-event="demo1"]'); click('[data-delete="demo1"]'); const after = calendarSource.getEvents(todayISO).length; click(".toast-action"); ok("#15", "deleted then restored", after === n - 1 && calendarSource.getEvents(todayISO).length === n, n + "→" + after + "→" + calendarSource.getEvents(todayISO).length); });
+  t("#16/#17", "add task", () => { openTab("alignment"); click("#add-task-btn"); const f = q("#task-form"); ok("#16", "dialog opens with preview", q("#task-dialog").open && q("#task-sync .badge") !== null); f.elements.title.value = ""; f.requestSubmit(); ok("#17", "empty title rejected", q("#task-error").textContent.includes("title")); f.elements.title.value = "Test"; f.elements.start.value = "11:00"; f.elements.end.value = "10:00"; f.requestSubmit(); ok("#17", "end before start rejected", q("#task-error").textContent.includes("after")); f.elements.end.value = "12:00"; f.elements.type.value = "review"; f.elements.type.dispatchEvent(new Event("change")); ok("#16", "preview updates to Low Sync", q("#task-sync").textContent.includes("Low Sync")); const n = store.tasks.load().length; f.requestSubmit(); ok("#17", "saved", store.tasks.load().length === n + 1); });
+  t("#18/#19", "month nav", () => { openTab("plan"); const start = q("#plan-month").textContent; for (let i = 0; i < 4; i++) click('[data-month="1"]'); const later = q("#plan-month").textContent; click("#plan-today-btn"); ok("#19", "4 months ahead crosses year", /2027/.test(later), later); ok("#18", "back to this month", q("#plan-month").textContent === start); });
+  t("#20", "day sheet", () => { openTab("plan"); click(".m-day.is-today"); ok("#20", "sheet with tasks", q("#info-sheet").open && qa("#info-body .sheet-list li").length >= 3); click("[data-add-on]"); ok("#20", "add task prefilled date", q("#task-dialog").open && q("#task-form").elements.date.value === todayISO); });
+  t("#21", "legend", () => { for (const k of CYCLE_ORDER) { openTab("plan"); click('.legend-item[data-phase="' + k + '"]'); ok("#21", "legend " + k, q("#phase-detail h1").textContent === PHASES[k].name); } });
+  t("#22-#24", "track today", () => { openTab("plan"); click('.plus-btn[data-log]'); ok("#22", "+ opens log", q("#log-dialog").open); closeDialogs(); click('.track[data-log="mood"]'); ok("#23", "tile opens with saved mood", q("#log-dialog").open && q('input[name="mood"]:checked').value === "Good"); q('input[name="mood"][value="Great"]').checked = true; q("#log-form").elements.energy.value = 9; q("#log-form").requestSubmit(); ok("#24", "saved + tile updated", store.logs.load()[todayISO].mood === "Great" && q('.track[data-log="energy"] .track-value').textContent === "9/10"); });
+  t("#25/#26", "phase focus", () => { openTab("plan"); click("#focus-more"); ok("#25", "› → phase detail", currentScreen === "phase-detail"); openTab("plan"); click(qa(".focus-tile")[2]); ok("#26", "tile → detail + section", currentScreen === "phase-detail" && q("#phase-section-move") !== null); });
+  t("#27", "phase detail content", () => { openPhaseDetail("luteal"); ok("#27", "3 lists + plan steps + notes", qa("#phase-detail .tip-card").length === 4 && q("#phase-detail ol").children.length === 6 && qa("#phase-detail .detail-note").length === 2); });
+  t("#28-#31", "coach", () => { openTab("coach"); click("#clear-chat-btn") ; chatMessages = []; store.chat.save([]); renderChat(); click("#coach-history-btn"); ok("#28", "clock with no history → toast", q("#toast").textContent.includes("No chat")); for (const c of qa(".chip")) click(c); ok("#30", "4 chips → 8 messages", chatMessages.length === 8); click(".bubble-action[data-session]"); ok("#31", "reply button opens timer", q("#timer-dialog").open); closeDialogs(); const ask = (x) => { q("#ask-input").value = x; q("#ask-form").requestSubmit(); return chatMessages[chatMessages.length - 1].text; }; ok("#29", "phase topic", ask("what phase am I in?").includes("Day 14")); ok("#29", "score topic", ask("how is my score calculated").includes("High Sync 100")); ok("#29", "overwhelm topic", ask("I feel overwhelmed").includes("energy")); ok("#29", "plan topic", ask("plan my week").includes("plan your week")); ok("#29", "fallback", ask("xyz").includes("demo coach")); ok("#29", "empty ignored", (() => { const n = chatMessages.length; q("#ask-input").value = "   "; q("#ask-form").requestSubmit(); return chatMessages.length === n; })()); ok("#28", "saved", store.chat.load().length === chatMessages.length); click("#clear-chat-btn"); ok("#28", "clear", chatMessages.length === 0 && q("#clear-chat-btn").hidden); });
+  t("#32-#34", "sessions + timer", () => { openTab("coach"); click("#see-all-btn"); ok("#32", "see all grid", q("#session-row").classList.contains("is-grid")); click("#see-all-btn"); for (const c of qa(".session-card")) { click(c); ok("#33", "card " + c.dataset.session, q("#timer-dialog").open && q("#timer-title").textContent.length > 0 && !q("#timer-tips").textContent.includes("{")); closeDialogs(); } click('.session-card[data-session="calm"]'); click("#timer-toggle"); ok("#34", "start → Pause + breathe cue", q("#timer-toggle").textContent === "Pause" && q("#breath-cue").textContent === "Breathe in"); click("#timer-toggle"); ok("#34", "pause → Resume", q("#timer-toggle").textContent === "Resume"); click("#timer-close"); ok("#34", "close stops timer", !q("#timer-dialog").open && timer.intervalId === null); });
+  t("#35/#39", "bell + weekly toggle", () => { openTab("settings"); store.prefs.save({ ...store.prefs.load(), insightSeenWeek: null, weeklyInsight: true }); renderBell(); ok("#35", "dot when unseen", q("#bell-btn").classList.contains("has-dot")); click("#bell-btn"); ok("#35", "insight sheet + dot cleared", q("#info-body").textContent.includes("This week") && !q("#bell-btn").classList.contains("has-dot")); closeDialogs(); const tg = q("#weekly-toggle"); tg.checked = false; tg.dispatchEvent(new Event("change")); click("#bell-btn"); ok("#39", "off → empty state", q("#info-body").textContent.includes("No notifications")); closeDialogs(); tg.checked = true; tg.dispatchEvent(new Event("change")); });
+  t("#36", "profile", () => { openTab("settings"); click(".profile-card"); const f = q("#profile-form"); f.elements.name.value = "  Maya  "; f.requestSubmit(); ok("#36", "saved + back + initial", store.profile.load().name === "Maya" && currentScreen === "settings" && q(".avatar").textContent === "M"); });
+  t("#37/#38", "integrations", () => { openTab("settings"); click("#int-see-all-btn"); ok("#37", "see all → 6", qa(".int-card").length === 6); click('[data-integration="oura"]'); ok("#38", "sheet", q("#info-sheet").open && q("#info-title").textContent === "Oura"); closeDialogs(); click("#int-see-all-btn"); ok("#37", "show less → 3", qa(".int-card").length === 3); });
+  t("#40/#41", "cycle settings (demo view-only)", () => { openTab("settings"); click('[data-go="cycle-settings"]'); ok("#40", "opens", currentScreen === "cycle-settings"); ok("#41", "demo: disabled + note", q("#cycle-form").elements.cycleLength.disabled && !q("#cycle-demo-note").hidden); click("#screen-cycle-settings [data-back]"); });
+  t("#42", "privacy", () => { openTab("settings"); click('[data-go="privacy"]'); ok("#42", "opens", currentScreen === "privacy"); const d = store.exportAll(); ok("#42", "export has all data", d.tasks.length > 0 && "logs" in d && "chat" in d && "profile" in d); click("#reset-btn"); ok("#42", "reset asks first", q("#info-sheet").open && q("[data-confirm-reset]") !== null); click("[data-close-sheet]"); ok("#42", "cancel keeps data", !q("#info-sheet").open && store.tasks.load().length > 0); });
+  t("#43", "appearance", () => { openTab("settings"); click('[data-soon="Appearance"]'); ok("#43", "coming soon toast", q("#toast").textContent.includes("coming soon")); });
+  t("#44", "doctor report", () => { const r = buildDoctorReport(); ok("#44", "has phases + check-ins + disclaimer", r.includes("Luteal: Days 16–28") && r.includes("Energy 9/10") && r.includes("Not medical advice")); });
+  t("#45/#46", "faq", () => { openScreen("help"); ok("#45", "8 FAQs, levels filled", qa("#faq-list details").length === 8 && !q("#faq-list").textContent.includes("{")); });
+  t("#47", "contact", () => ok("#47", "mailto", q("#contact-link").href.startsWith("mailto:praphull371@gmail.com")));
+
+  // Dead-click scan: every button/link must be handled somewhere.
+  const HANDLED = "[data-screen], [data-go], [data-back], [data-sheet], [data-edit], [data-day], [data-add-on], #ring, [data-date], [data-event], [data-delete], [data-phase], [data-month], [data-log], [data-topic], [data-session], [data-soon], [data-integration], [data-confirm-reset], [data-close-sheet], #clear-chat-btn, #add-task-btn, #plan-today-btn, #see-all-btn, #coach-history-btn, #int-see-all-btn, #bell-btn, #report-btn, #export-btn, #reset-btn";
+  const OWN = ["task-cancel", "log-cancel", "timer-close", "timer-toggle", "info-close"];
+  openTab("alignment"); click("#ring"); const sheetButtons = qa("#info-sheet button"); closeDialogs();
+  const dead = [...qa("button, a"), ...sheetButtons].filter((el) => !(el.matches(HANDLED) || el.type === "submit" || OWN.includes(el.id) || (el.tagName === "A" && el.getAttribute("href")) || el.classList.contains("toast-action")));
+  ok("scan", "no dead clicks (" + qa("button, a").length + " buttons/links)", dead.length === 0, dead.map((d) => d.outerHTML.slice(0, 60)).join(" | "));
+
+  const fails = R.filter((r) => r.startsWith("FAIL")).length;
+  window.__report = "RESULT: " + (R.length - fails) + "/" + R.length + " passed, errors=" + JSON.stringify(window.__e) + "\n" + R.join("\n");
+}
+
+const frame = document.getElementById("app");
+const out = document.getElementById("out");
+
+// Fresh demo data on every run, so results don't depend on earlier runs.
+Object.keys(localStorage)
+  .filter((key) => key.startsWith("cyclesync.demo."))
+  .forEach((key) => localStorage.removeItem(key));
+
+frame.addEventListener("load", () => {
+  const app = frame.contentWindow;
+  app.__e = [];
+  app.addEventListener("error", (e) => app.__e.push(e.message));
+  try {
+    app.eval("(" + harness.toString() + ")()");
+    out.textContent = app.__report;
+    out.className = /RESULT: (\d+)\/\1 /.test(app.__report) ? "pass" : "fail";
+  } catch (err) {
+    out.textContent = "Test run crashed: " + err.message;
+    out.className = "fail";
+  }
+});
+frame.src = "../index.html?demo=1";

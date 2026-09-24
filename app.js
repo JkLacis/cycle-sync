@@ -1202,7 +1202,7 @@ function renderSessions() {
 
 const BREATH = { in: 4, out: 6 }; // seconds
 const timerDialog = document.getElementById("timer-dialog");
-let timer = null; // { session, remaining, elapsed, intervalId }
+let timer = null; // { session, remaining, elapsed, started, intervalId }
 
 function formatTime(seconds) {
   return Math.floor(seconds / 60) + ":" + String(seconds % 60).padStart(2, "0");
@@ -1224,7 +1224,7 @@ function renderTimer() {
   let label = "Start";
   if (timer.intervalId) label = "Pause";
   else if (timer.remaining === 0) label = "Start again";
-  else if (timer.elapsed > 0) label = "Resume";
+  else if (timer.started) label = "Resume";
   document.getElementById("timer-time").textContent = formatTime(timer.remaining);
   document.getElementById("timer-toggle").textContent = label;
 }
@@ -1240,6 +1240,7 @@ function startTimer() {
     timer.remaining = timer.session.minutes * 60;
     timer.elapsed = 0;
   }
+  timer.started = true;
   breathTick();
   timer.intervalId = setInterval(() => {
     timer.elapsed++;
@@ -1258,7 +1259,7 @@ function startTimer() {
 function openSession(id) {
   const session = COACH.sessions.find((s) => s.id === id);
   const phaseKey = getCycleState(today(), store.settings.load()).phaseKey;
-  timer = { session, remaining: session.minutes * 60, elapsed: 0, intervalId: null };
+  timer = { session, remaining: session.minutes * 60, elapsed: 0, started: false, intervalId: null };
   document.getElementById("timer-title").textContent = session.title;
   document.getElementById("timer-tips").innerHTML = session.tips.map((t) => "<li>" + fillTemplate(t, phaseKey) + "</li>").join("");
   setBreath("", "Ready when you are");

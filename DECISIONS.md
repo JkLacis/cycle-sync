@@ -4,6 +4,12 @@ Phase 1 findings + Phase 2 options. **No feature code changes until each "Decisi
 Content notes with page refs live in `reference/CONTENT_NOTES.md` (local, gitignored — the source book is copyrighted
 and this repo is public).
 
+## Status (2026-09-24)
+
+All decisions below are built (commits `4443eb6` → `4f4bc4d`) and verified: **94/94 automated checks pass**
+(79 in `tests/click-through.html` on demo data incl. a dead-click scan of all 122 buttons/links, plus 15 real-data
+checks for onboarding validation, short-cycle edge cases, recovery look, cycle-settings edit and reset). No console errors.
+
 ## 1. Repo inspection
 
 | | |

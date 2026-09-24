@@ -18,7 +18,8 @@ instructions. Technical language is fine when he is driving; keep it simple for 
 - Keep this file updated whenever a new decision is made.
 
 ## ▶ START HERE (status as of 2026-09-24)
-- Done: steps 1–11. All 4 pages match Praful's **final design** mockups (2026-09-24); onboarding = one screen.
+- Done: steps 1–11 + every element in `DECISIONS.md` (built + verified 2026-09-24, 94/94 checks).
+  Test: http://localhost:8000/tests/click-through.html (demo data only). README = how to run.
 - `implementation-plan.md` is the build plan — next unticked step: 12 (demo date panel, polish, phone test).
   `DEFAULT_SETTINGS` (Day 14, 28/5) is used in demo mode and behind onboarding; `hasSettings()` decides onboarding.
 - Demo is **Friday 2026-09-25** — keep scope small; steps 9–11 can be cut/simplified if time runs out.
