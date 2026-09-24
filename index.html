@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <!-- Makes phones show the page at its real size instead of zoomed out -->
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
   <title>Cycle Sync</title>
   <link rel="stylesheet" href="style.css">
 </head>
@@ -198,12 +198,13 @@
           <h2 id="ask-title">Ask your coach</h2>
           <form class="ask-form" id="ask-form">
             <span class="ask-spark"><span data-icon="sparkle"></span></span>
-            <input id="ask-input" type="text" placeholder="Type your question..." aria-label="Your question" autocomplete="off" maxlength="120">
+            <input id="ask-input" type="text" placeholder="Type your question..." aria-label="Your question" autocomplete="off" maxlength="1000" enterkeyhint="send">
             <button class="send-btn" type="submit" aria-label="Send"><span data-icon="send"></span></button>
           </form>
           <!-- Built by renderCoachChips() -->
           <div class="chips" id="coach-chips"></div>
-          <p class="coach-note">Demo coach: pre-written replies, not real AI.</p>
+          <!-- Text set by renderCoachNote(): AI provider note, or offline notice -->
+          <p class="coach-note" id="coach-note"></p>
           <!-- Messages added by askCoach() -->
           <div class="chat" id="coach-chat" aria-live="polite"></div>
           <!-- Label from content.js, set by renderCoachChips() -->
@@ -377,7 +378,8 @@
         </header>
         <h1 class="sub-title">Data &amp; privacy</h1>
         <div class="set-card prose">
-          <p><strong>Your data stays on this device.</strong> Cycle Sync has no account and no server. Your cycle settings, tasks and preferences are saved only in this browser.</p>
+          <p><strong>Your data stays on this device.</strong> Cycle Sync has no account. Your cycle settings, tasks, check-ins and preferences are saved only in this browser.</p>
+          <p><strong>AI Coach:</strong> when you send the coach a message, that message and a short summary of today (cycle day, phase, today's tasks, recent check-ins) go to the Cycle Sync server and to Anthropic, the AI provider, to write the answer. Your name and email are never sent. The conversation is kept on the server so the coach can follow it; "Clear chat" deletes it.</p>
           <p>Nothing is sent to Google, WhatsApp or anyone else. The integrations are a demo.</p>
         </div>
         <button class="sheet-btn export-btn" type="button" id="export-btn"><span data-icon="doc"></span>Export my data (JSON)</button>

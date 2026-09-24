@@ -367,6 +367,15 @@ const store = {
       return writeJSON("chat", messages.slice(-CHAT_MAX));
     },
   },
+  // Server-side conversation id for the AI coach (random UUID; "Clear chat" starts a new one).
+  coachConversation: {
+    load() {
+      return readJSON("coach.conversation", null);
+    },
+    save(id) {
+      return writeJSON("coach.conversation", id);
+    },
+  },
   // { name } — optional first name, only used for greetings and the avatar initial.
   profile: {
     load() {
@@ -1118,29 +1127,188 @@ const SESSION_ART = {
 
 let chatMessages = [];
 
+// Keywords match from the start of a word ("eat" matches "eating", not "breathing").
 function findTopic(text) {
   const lower = text.toLowerCase();
-  return COACH.topics.find((t) => t.keywords.some((k) => lower.includes(k)));
+  const matches = (keyword) => new RegExp("\\b" + keyword.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).test(lower);
+  return COACH.topics.find((t) => t.keywords.some(matches));
 }
 
+// Four starter questions for today's phase (C8).
 function renderCoachChips() {
+  const phaseKey = getCycleState(today(), store.settings.load()).phaseKey;
   document.getElementById("clear-chat-btn").innerHTML = icon("trash") + COACH.clearLabel;
-  document.getElementById("coach-chips").innerHTML = COACH.topics.filter((t) => t.chip).map((t) =>
-    '<button type="button" class="chip" data-topic="' + t.id + '">' + t.question + icon("arrow") + "</button>"
+  document.getElementById("coach-chips").innerHTML = COACH.chipsByPhase[phaseKey].map((question) =>
+    '<button type="button" class="chip" data-ask="' + escapeHTML(question) + '">' + escapeHTML(question) + icon("arrow") + "</button>"
   ).join("");
 }
 
-function renderChatMessage(m) {
+// ----- AI coach connection -----
+
+const COACH_API = "/api/coach";
+const COACH_HEALTH = "/api/health";
+const COACH_TIMEOUT_MS = 100000; // a little above the server's own timeout
+const HEALTH_TIMEOUT_MS = 4000;
+const CHECKIN_DAYS = 7;
+
+// "ai" = server + key ready · "offline" = no server (e.g. GitHub Pages) · "not_configured" = server without API key
+let coachMode = "offline";
+let coachRequest = null; // AbortController of the reply being streamed
+
+async function checkCoachServer() {
+  try {
+    const res = await fetch(COACH_HEALTH, { signal: AbortSignal.timeout(HEALTH_TIMEOUT_MS) });
+    const health = res.ok ? await res.json() : null;
+    coachMode = health && health.coach === "ready" ? "ai" : health ? "not_configured" : "offline";
+  } catch {
+    coachMode = "offline";
+  }
+  renderCoachNote();
+}
+
+function renderCoachNote() {
+  document.getElementById("coach-note").textContent = coachMode === "ai" ? COACH.aiNote : COACH.offlineNote;
+}
+
+// The conversation id ties this device's chat to its history on the server.
+function coachConversationId() {
+  let id = store.coachConversation.load();
+  if (!id) {
+    id = crypto.randomUUID();
+    store.coachConversation.save(id);
+  }
+  return id;
+}
+
+// What the coach needs to know about today (C5). Computed here; never includes name or email.
+function coachContext() {
+  const settings = store.settings.load();
+  const now = getCycleState(today(), settings);
+  const nextIn = daysUntilNextPhase(today(), settings);
+  const { result } = todaysAlignment();
+  const logs = store.logs.load();
+  const checkins = [];
+  for (let i = CHECKIN_DAYS - 1; i >= 0; i--) {
+    const iso = toISODate(addDays(today(), -i));
+    if (logs[iso]) checkins.push({ date: iso, ...logs[iso] });
+  }
+  return {
+    date: toISODate(today()),
+    cycle_day: now.cycleDay,
+    cycle_length: settings.cycleLength,
+    period_length: settings.periodLength,
+    phase: now.phaseKey,
+    phase_days: phaseRangeText(getPhaseRanges(settings)[now.phaseKey]),
+    next_phase: getPhaseForDate(addDays(today(), nextIn), settings),
+    next_phase_in_days: nextIn,
+    score: result.score,
+    tasks: result.events.slice(0, 12).map((e) => ({
+      title: e.title.slice(0, 60),
+      start: e.start,
+      end: e.end,
+      type: TASK_TYPES[e.type] ? TASK_TYPES[e.type].label : e.type,
+      level: e.sync,
+    })),
+    checkins,
+  };
+}
+
+// Reads "event: x\ndata: {...}\n\n" blocks from a fetch body and calls onEvent for each.
+async function readEventStream(body, onEvent) {
+  const reader = body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+  for (;;) {
+    const { value, done } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+    let end;
+    while ((end = buffer.indexOf("\n\n")) >= 0) {
+      const block = buffer.slice(0, end);
+      buffer = buffer.slice(end + 2);
+      const data = block.split("\n").find((line) => line.startsWith("data: "));
+      if (data) onEvent(JSON.parse(data.slice(6)));
+    }
+  }
+}
+
+// ----- Safe Markdown (escape first, then only **bold**, *italic*, lists, paragraphs) -----
+
+function inlineMarkdown(line) {
+  return escapeHTML(line.replace(/^#{1,6}\s+/, ""))
+    .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
+    .replace(/(^|[\s(])\*(?!\s)([^*]+?)\*(?=[\s).,!?:;]|$)/g, "$1<em>$2</em>");
+}
+
+function renderMarkdown(text) {
+  const html = [];
+  let paragraph = [];
+  let list = null; // { tag, items }
+  const flushParagraph = () => {
+    if (paragraph.length) html.push("<p>" + paragraph.map(inlineMarkdown).join("<br>") + "</p>");
+    paragraph = [];
+  };
+  const flushList = () => {
+    if (list) html.push("<" + list.tag + ">" + list.items.map((i) => "<li>" + inlineMarkdown(i) + "</li>").join("") + "</" + list.tag + ">");
+    list = null;
+  };
+  for (const line of text.replace(/\r/g, "").split("\n")) {
+    const bullet = line.match(/^\s*[-*•]\s+(.*)$/);
+    const numbered = line.match(/^\s*\d+[.)]\s+(.*)$/);
+    const item = bullet || numbered;
+    if (item) {
+      flushParagraph();
+      const tag = bullet ? "ul" : "ol";
+      if (!list || list.tag !== tag) {
+        flushList();
+        list = { tag, items: [] };
+      }
+      list.items.push(item[1]);
+    } else if (!line.trim()) {
+      flushParagraph();
+      flushList();
+    } else {
+      flushList();
+      paragraph.push(line.trim());
+    }
+  }
+  flushParagraph();
+  flushList();
+  return html.join("");
+}
+
+// ----- Chat rendering -----
+
+function renderChatMessage(m, index) {
   if (m.from === "user") return '<div class="bubble bubble-user">' + escapeHTML(m.text) + "</div>";
+  if (m.pending) {
+    return '<div class="bubble bubble-coach" data-msg="' + index + '">' +
+      (m.text ? renderMarkdown(m.text) : '<span class="typing" aria-label="Coach is typing"><i></i><i></i><i></i></span>') + "</div>";
+  }
+  if (m.error) {
+    return '<div class="bubble bubble-coach bubble-error" role="alert">' +
+      "<p>" + escapeHTML(m.error.message) + "</p>" +
+      (m.error.retryable ? '<button type="button" class="bubble-action" data-retry="' + index + '">' + icon("arrow") + COACH.retryLabel + "</button>" : "") +
+    "</div>";
+  }
+  if (m.source === "ai") {
+    return '<div class="bubble bubble-coach">' + renderMarkdown(m.text) +
+      (m.truncated ? '<p class="bubble-meta">' + COACH.truncated + "</p>" : "") + "</div>";
+  }
+  // Scripted (offline) reply
   const session = m.session && COACH.sessions.find((s) => s.id === m.session);
   return (
     '<div class="bubble bubble-coach">' +
+      (m.source === "offline" ? '<p class="bubble-meta">' + COACH.offlineLabel + "</p>" : "") +
       "<p>" + escapeHTML(m.text) + "</p>" +
       (m.list ? "<ul>" + m.list.map((item) => "<li>" + escapeHTML(item) + "</li>").join("") + "</ul>" : "") +
       (m.after ? "<p>" + escapeHTML(m.after) + "</p>" : "") +
       (session
         ? '<button type="button" class="bubble-action" data-session="' + session.id + '">' +
             icon("play") + "Start " + session.title + " · " + session.minutes + " min</button>"
+        : "") +
+      (m.source === "offline" && index === chatMessages.length - 1
+        ? '<button type="button" class="bubble-action" data-retry="' + index + '">' + icon("sparkle") + COACH.retryAiLabel + "</button>"
         : "") +
     "</div>"
   );
@@ -1151,24 +1319,41 @@ function renderChat() {
   document.getElementById("clear-chat-btn").hidden = chatMessages.length === 0;
 }
 
+// Saved chat never keeps a half-streamed answer.
+function saveChat() {
+  store.chat.save(chatMessages.filter((m) => !m.pending));
+}
+
 function loadChat() {
   chatMessages = store.chat.load();
   renderChat();
 }
 
+// Clears on screen at once; the server copy is deleted only after the Undo window closes.
 function clearChat() {
+  if (coachRequest) coachRequest.abort();
   const previous = chatMessages;
+  const previousId = store.coachConversation.load();
   chatMessages = [];
-  store.chat.save(chatMessages);
+  store.coachConversation.save(crypto.randomUUID());
+  saveChat();
   renderChat();
+  let undone = false;
   showToast(COACH.cleared, {
     label: "Undo",
     onClick: () => {
+      undone = true;
       chatMessages = previous;
-      store.chat.save(chatMessages);
+      store.coachConversation.save(previousId);
+      saveChat();
       renderChat();
     },
   });
+  setTimeout(() => {
+    if (!undone && previousId && coachMode === "ai") {
+      fetch(COACH_API + "/" + previousId, { method: "DELETE" }).catch(() => {}); // best effort
+    }
+  }, TOAST_ACTION_MS + 500);
 }
 
 function scrollToLastMessage() {
@@ -1176,15 +1361,113 @@ function scrollToLastMessage() {
   if (last) last.scrollIntoView({ block: "nearest", behavior: "smooth" });
 }
 
-// One question → one scripted reply for today's phase.
-function askCoach(text, topic = findTopic(text)) {
+function setComposerBusy(busy) {
+  document.querySelector("#ask-form .send-btn").disabled = busy;
+  for (const chip of document.querySelectorAll("#coach-chips .chip")) chip.disabled = busy;
+}
+
+// Scripted answer for the same question, used when the AI server can't be reached (C9).
+function offlineReply(text) {
   const { phaseKey, vars } = coachVars();
+  const topic = findTopic(text);
+  return { from: "coach", source: "offline", ...coachReply(topic ? topic.reply : COACH.fallback, phaseKey, vars) };
+}
+
+// One question → one answer: streamed from the AI coach, or the offline coach if there's no server.
+function askCoach(text) {
+  if (coachRequest) return; // one answer at a time
   chatMessages.push({ from: "user", text });
-  chatMessages.push({ from: "coach", ...coachReply(topic ? topic.reply : COACH.fallback, phaseKey, vars) });
-  chatMessages = chatMessages.slice(-CHAT_MAX);
-  store.chat.save(chatMessages);
+  answerLastQuestion();
+}
+
+function answerLastQuestion() {
+  const question = chatMessages[chatMessages.length - 1].text;
+  if (coachMode !== "ai") {
+    chatMessages.push(offlineReply(question));
+    chatMessages = chatMessages.slice(-CHAT_MAX);
+    saveChat();
+    renderChat();
+    scrollToLastMessage();
+    return;
+  }
+  const reply = { from: "coach", pending: true, text: "" };
+  chatMessages.push(reply);
   renderChat();
   scrollToLastMessage();
+  streamAnswer(question, reply);
+}
+
+async function streamAnswer(question, reply) {
+  const controller = new AbortController();
+  coachRequest = controller;
+  setComposerBusy(true);
+  const timeout = setTimeout(() => controller.abort("timeout"), COACH_TIMEOUT_MS);
+  let result = null; // { done } | { error } | { offline }
+  try {
+    const res = await fetch(COACH_API, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ conversation_id: coachConversationId(), message: question, context: coachContext() }),
+      signal: controller.signal,
+    });
+    if (!res.ok) {
+      const body = await res.json().catch(() => null);
+      if (!body || res.status === 404 || res.status === 405) result = { offline: true };
+      else if (body.code === "not_configured") result = { offline: true, notConfigured: true };
+      else result = { error: { message: body.message, retryable: res.status === 429 || res.status >= 500 } };
+    } else {
+      await readEventStream(res.body, (event) => {
+        if (event.event === "delta") {
+          reply.text += event.text;
+          const bubble = document.querySelector('[data-msg="' + chatMessages.indexOf(reply) + '"]');
+          if (bubble) bubble.innerHTML = renderMarkdown(reply.text);
+        } else if (event.event === "done") {
+          result = { done: true, truncated: event.truncated };
+        } else if (event.event === "error") {
+          result = { error: { message: event.message, retryable: event.retryable } };
+        }
+      });
+      if (!result) result = { error: { message: COACH.interrupted, retryable: true } };
+    }
+  } catch (err) {
+    const aborted = controller.signal.aborted;
+    result = aborted && controller.signal.reason !== "timeout"
+      ? { cancelled: true } // chat was cleared while streaming
+      : aborted
+        ? { error: { message: "The coach took too long to answer. Try again.", retryable: true } }
+        : { offline: true }; // network failure: server unreachable
+  } finally {
+    clearTimeout(timeout);
+    coachRequest = null;
+    setComposerBusy(false);
+  }
+  finishAnswer(reply, result);
+}
+
+function finishAnswer(reply, result) {
+  const index = chatMessages.indexOf(reply);
+  if (index < 0 || result.cancelled) return; // chat was cleared meanwhile
+  if (result.done) {
+    chatMessages[index] = { from: "coach", source: "ai", text: reply.text.trim(), truncated: Boolean(result.truncated) };
+  } else if (result.offline) {
+    coachMode = result.notConfigured ? "not_configured" : "offline";
+    renderCoachNote();
+    chatMessages[index] = offlineReply(chatMessages[index - 1].text);
+  } else {
+    chatMessages[index] = { from: "coach", error: result.error };
+  }
+  chatMessages = chatMessages.slice(-CHAT_MAX);
+  saveChat();
+  renderChat();
+  scrollToLastMessage();
+}
+
+// Retry: drop the failed or offline answer and ask again (re-checking the server first if offline).
+async function retryAnswer(index) {
+  if (coachRequest || !chatMessages[index] || chatMessages[index].from !== "coach") return;
+  chatMessages.splice(index, 1);
+  if (coachMode !== "ai") await checkCoachServer();
+  answerLastQuestion();
 }
 
 function renderSessions() {
@@ -1284,9 +1567,14 @@ document.getElementById("ask-form").addEventListener("submit", function (e) {
   e.preventDefault();
   const input = document.getElementById("ask-input");
   const text = input.value.trim();
-  if (!text) return;
+  if (!text || coachRequest) return; // keep the typed text while an answer is still streaming
   askCoach(text);
   input.value = "";
+});
+
+// Phone keyboards: keep the question box in view when it opens.
+document.getElementById("ask-input").addEventListener("focus", () => {
+  setTimeout(() => document.getElementById("ask-form").scrollIntoView({ block: "center", behavior: "smooth" }), 300);
 });
 
 // =====================================================================
@@ -1448,6 +1736,7 @@ function submitCycleForm(form, errorId) {
   if (error || !store.settings.save(settings)) return false;
   renderAlignment();
   renderPlan();
+  renderCoachChips();
   return true;
 }
 
@@ -1732,7 +2021,7 @@ function refocus(selector) {
 // One click handler for the whole app (tabs, links, days, events).
 document.addEventListener("click", function (e) {
   const target = e.target.closest(
-    "[data-screen], [data-go], [data-back], [data-sheet], [data-edit], [data-day], [data-add-on], #ring, [data-date], [data-event], [data-delete], [data-phase], [data-month], [data-log], [data-topic], [data-session], " +
+    "[data-screen], [data-go], [data-back], [data-sheet], [data-edit], [data-day], [data-add-on], #ring, [data-date], [data-event], [data-delete], [data-phase], [data-month], [data-log], [data-ask], [data-retry], [data-session], " +
       "[data-soon], [data-integration], #add-task-btn, #plan-today-btn, #see-all-btn, #coach-history-btn, " +
       "[data-confirm-reset], [data-close-sheet], #clear-chat-btn, #int-see-all-btn, #bell-btn, #report-btn, #export-btn, #reset-btn"
   );
@@ -1772,9 +2061,10 @@ document.addEventListener("click", function (e) {
     location.reload();
   } else if (target.hasAttribute("data-close-sheet")) {
     // Nothing else to do: the sheet was closed above.
-  } else if (target.dataset.topic) {
-    const topic = COACH.topics.find((t) => t.id === target.dataset.topic);
-    askCoach(topic.question, topic);
+  } else if (target.dataset.ask) {
+    askCoach(target.dataset.ask);
+  } else if (target.dataset.retry) {
+    retryAnswer(Number(target.dataset.retry));
   } else if (target.dataset.session) {
     openSession(target.dataset.session);
   } else if (target.id === "see-all-btn") {
@@ -1843,6 +2133,8 @@ renderLogChoices();
 renderPlan();
 renderCoachChips();
 loadChat();
+renderCoachNote();
+checkCoachServer();
 renderSessions();
 renderSettings();
 renderProfile();

@@ -200,6 +200,21 @@ const CONTENT = {
   },
 
   coach: {
+    // AI coach UI (server + Claude). Chips change with the phase (C8).
+    chipsByPhase: {
+      follicular: ["What should I start this week?", "Help me plan the month ahead", "What workout suits me now?", "What should I eat this week?"],
+      ovulatory: ["How do I nail today's presentation?", "How should I train today?", "What should I eat today?", "Help me plan my week"],
+      luteal: ["How do I protect my focus today?", "What workout suits me now?", "What should I eat to keep my energy steady?", "Help me plan my week"],
+      menstrual: ["How can I make today lighter?", "What gentle movement suits me?", "What should I eat today?", "Help me reflect on last month"],
+    },
+    aiNote: "AI coach. Messages are processed by Anthropic, an AI provider. General information, not medical advice.",
+    offlineNote: "Offline coach: the AI server isn't reachable, so answers are pre-written.",
+    offlineLabel: "Offline coach",
+    retryLabel: "Retry",
+    retryAiLabel: "Try the AI coach again",
+    truncated: "(Answer cut short. Ask me to continue.)",
+    interrupted: "This answer was interrupted.",
+
     // Typed questions are matched to the FIRST topic with a keyword in the text, so specific
     // topics come first. chip: true = shown as a question button (in this order).
     // reply: { text, list?, after?, session? } or { byPhase: { phaseKey: reply } }.
@@ -376,7 +391,7 @@ const CONTENT = {
     },
     {
       q: "Is the AI Coach real AI?",
-      a: "Not yet. The coach gives pre-written suggestions based on your phase.",
+      a: "Yes. When the app runs with its server, answers are written by Claude, an AI model from Anthropic, using your phase and today's plan. If the server can't be reached, an offline coach answers with pre-written suggestions instead. The coach gives general information, not medical advice.",
     },
     {
       q: "How is the score calculated?",
