@@ -15,6 +15,8 @@ PROVIDERS = {
     "gemini": ("GEMINI_API_KEY", "gemini-3.8-flash"),
     "claude": ("ANTHROPIC_API_KEY", "claude-opus-5-5"),
 }
+# Free-tier Gemini models are often "busy" (503); a lighter model usually still answers.
+DEFAULT_FALLBACKS = {"gemini": "gemini-3.5-flash-lite,gemini-3.1-flash-lite"}
 
 
 def _int(name: str, default: int) -> int:
@@ -27,6 +29,7 @@ class Settings:
     provider: str  # "gemini" or "claude"
     api_key: str | None
     model: str
+    fallback_models: tuple[str, ...]  # tried in order when the model is busy (Gemini only)
     effort: str
     max_tokens: int
     request_timeout_s: int
@@ -49,6 +52,9 @@ def load_settings() -> Settings:
         provider=provider,
         api_key=os.getenv(key_name, "").strip() or None,
         model=os.getenv("COACH_MODEL", "").strip() or default_model,
+        fallback_models=tuple(
+            m.strip() for m in os.getenv("COACH_FALLBACK_MODELS", DEFAULT_FALLBACKS.get(provider, "")).split(",") if m.strip()
+        ),
         effort=os.getenv("COACH_EFFORT", "low").strip().lower(),
         # Thinking counts toward max_tokens, so leave room beyond the short reply.
         max_tokens=_int("COACH_MAX_TOKENS", 16000),

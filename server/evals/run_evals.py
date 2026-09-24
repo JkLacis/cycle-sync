@@ -26,7 +26,7 @@ def ask(base: str, conversation_id: str, message: str, context: dict | None) -> 
     req = urllib.request.Request(base + "/api/coach", data=body, headers={"Content-Type": "application/json"})
     started = time.monotonic()
     first_token = None
-    text, error = [], None
+    text, error, resets = [], None, 0
     with urllib.request.urlopen(req, timeout=120) as res:
         buffer = ""
         for raw in res:
@@ -40,9 +40,12 @@ def ask(base: str, conversation_id: str, message: str, context: dict | None) -> 
                 if event["event"] == "delta":
                     first_token = first_token or time.monotonic() - started
                     text.append(event["text"])
+                elif event["event"] == "reset":  # server restarted the answer on a backup model
+                    text = []
+                    resets += 1
                 elif event["event"] == "error":
                     error = event
-    return {"text": "".join(text).strip(), "error": error, "ttft_s": round(first_token or 0, 2), "total_s": round(time.monotonic() - started, 2)}
+    return {"text": "".join(text).strip(), "error": error, "resets": resets, "ttft_s": round(first_token or 0, 2), "total_s": round(time.monotonic() - started, 2)}
 
 
 def auto_checks(case: dict, reply: str) -> list[str]:

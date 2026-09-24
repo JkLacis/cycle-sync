@@ -429,6 +429,9 @@ Gemini's free tier (options considered: Gemini, Groq, local Ollama — laptop ha
 (unchanged code path). Trade-off: on the free tier Google may use prompts to improve its products; the in-app note and
 the privacy screen say so. Gemini has no mid-conversation system message, so the user context is an `<app_context>`
 block at the start of the user turn; caching is Gemini's implicit prefix caching.
+**Busy models (2026-09-24):** free-tier models often return 503 "high demand". Decision: auto fallback — try
+`gemini-3.8-flash`; if it is busy (429/5xx), even mid-answer, restart on `gemini-3.5-flash-lite`, then `gemini-3.1-flash-lite`
+(`COACH_FALLBACK_MODELS`, minimal thinking for speed; the UI clears the partial answer on a `reset` event).
 
 ### C4 Knowledge grounding
 - **A)** Condensed knowledge file (~2–3K tokens, our own paraphrase of CONTENT_NOTES + evidence notes + excluded topics) in the system prompt, prompt-cached.

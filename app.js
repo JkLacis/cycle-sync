@@ -1285,7 +1285,7 @@ function renderChatMessage(m, index) {
   if (m.from === "user") return '<div class="bubble bubble-user">' + escapeHTML(m.text) + "</div>";
   if (m.pending) {
     return '<div class="bubble bubble-coach" data-msg="' + index + '">' +
-      (m.text ? renderMarkdown(m.text) : '<span class="typing" aria-label="Coach is typing"><i></i><i></i><i></i></span>') + "</div>";
+      (m.text ? renderMarkdown(m.text) : TYPING_DOTS) + "</div>";
   }
   if (m.error) {
     return '<div class="bubble bubble-coach bubble-error" role="alert">' +
@@ -1399,6 +1399,8 @@ function answerLastQuestion() {
   streamAnswer(question, reply);
 }
 
+const TYPING_DOTS = '<span class="typing" aria-label="Coach is typing"><i></i><i></i><i></i></span>';
+
 async function streamAnswer(question, reply) {
   const controller = new AbortController();
   coachRequest = controller;
@@ -1419,10 +1421,14 @@ async function streamAnswer(question, reply) {
       else result = { error: { message: body.message, retryable: res.status === 429 || res.status >= 500 } };
     } else {
       await readEventStream(res.body, (event) => {
+        const bubble = () => document.querySelector('[data-msg="' + chatMessages.indexOf(reply) + '"]');
         if (event.event === "delta") {
           reply.text += event.text;
-          const bubble = document.querySelector('[data-msg="' + chatMessages.indexOf(reply) + '"]');
-          if (bubble) bubble.innerHTML = renderMarkdown(reply.text);
+          if (bubble()) bubble().innerHTML = renderMarkdown(reply.text);
+        } else if (event.event === "reset") {
+          // The server switched to a backup model mid-answer: start the answer again.
+          reply.text = "";
+          if (bubble()) bubble().innerHTML = TYPING_DOTS;
         } else if (event.event === "done") {
           result = { done: true, truncated: event.truncated };
         } else if (event.event === "error") {

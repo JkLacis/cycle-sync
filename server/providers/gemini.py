@@ -3,8 +3,10 @@
 
 Gemini has no system message mid-conversation, so the user context is a tagged block at the start of the
 new user turn. Everything before it (system instruction + history) is a stable prefix for implicit caching.
+If the model is busy or out of quota (even mid-answer), the next model in COACH_FALLBACK_MODELS answers from the start.
 """
 
+import logging
 from collections.abc import AsyncIterator
 
 import httpx
@@ -12,13 +14,15 @@ import httpx2
 from google import genai
 from google.genai import errors, types
 
-from ..coach import SYSTEM_PROMPT, TurnOutcome, context_block
+from ..coach import RESTART, SYSTEM_PROMPT, TurnOutcome, context_block
 from ..config import settings
 from ..schemas import CoachContext
 
 name = "gemini"
+log = logging.getLogger("cyclesync.gemini")
 REFUSAL_REASONS = {"SAFETY", "PROHIBITED_CONTENT", "BLOCKLIST", "SPII"}  # finish reasons that mean "blocked"
 THINKING_LEVELS = {"minimal", "low", "medium", "high"}
+BUSY_CODES = {429, 500, 503, 504}  # worth trying the next model
 
 
 def create_client(api_key: str) -> genai.Client:
@@ -26,28 +30,49 @@ def create_client(api_key: str) -> genai.Client:
         api_key=api_key,
         http_options=types.HttpOptions(
             timeout=settings.request_timeout_s * 1000,  # milliseconds
-            retry_options=types.HttpRetryOptions(attempts=2),  # one retry on 408/429/5xx; the UI offers Retry after that
+            retry_options=types.HttpRetryOptions(attempts=1),  # no SDK retry: a busy model falls back to the next one
         ),
     )
 
 
-def build_request(history: list[dict], user_text: str, ctx: CoachContext | None) -> dict:
+def build_request(
+    history: list[dict], user_text: str, ctx: CoachContext | None, model: str | None = None, backup: bool = False
+) -> dict:
     contents = [
         {"role": "model" if m["role"] == "assistant" else "user", "parts": [{"text": m["content"]}]} for m in history
     ]
     contents.append({"role": "user", "parts": [{"text": context_block(ctx)}, {"text": user_text}]})
-    level = settings.effort if settings.effort in THINKING_LEVELS else "low"
+    # Backup models think minimally: they only run when the main model is busy, and Google is slow then too.
+    level = "minimal" if backup else settings.effort if settings.effort in THINKING_LEVELS else "low"
     config = types.GenerateContentConfig(
         system_instruction=SYSTEM_PROMPT,
         max_output_tokens=settings.max_tokens,  # includes thinking tokens
         thinking_config=types.ThinkingConfig(thinking_level=level.upper()),
         automatic_function_calling=types.AutomaticFunctionCallingConfig(disable=True),  # no tools
     )
-    return {"model": settings.model, "contents": contents, "config": config}
+    return {"model": model or settings.model, "contents": contents, "config": config}
 
 
-async def stream_turn(client, history, user_text, ctx, outcome: TurnOutcome) -> AsyncIterator[str]:
-    stream = await client.aio.models.generate_content_stream(**build_request(history, user_text, ctx))
+async def stream_turn(client, history, user_text, ctx, outcome: TurnOutcome) -> AsyncIterator:
+    models = [settings.model, *(m for m in settings.fallback_models if m != settings.model)]
+    for i, model in enumerate(models):
+        sent_text = False
+        try:
+            async for text in stream_model(client, model, i > 0, history, user_text, ctx, outcome):
+                sent_text = True
+                yield text
+            return
+        except errors.APIError as err:
+            # Busy or out of quota (often mid-answer on the free tier): try the next model.
+            if err.code not in BUSY_CODES or i == len(models) - 1:
+                raise
+            log.info("gemini model busy (%s), trying next", err.code)
+            if sent_text:
+                yield RESTART
+
+
+async def stream_model(client, model, backup, history, user_text, ctx, outcome: TurnOutcome) -> AsyncIterator[str]:
+    stream = await client.aio.models.generate_content_stream(**build_request(history, user_text, ctx, model, backup))
     finish, blocked, usage = None, None, None
     async for chunk in stream:
         if chunk.prompt_feedback and chunk.prompt_feedback.block_reason:
@@ -64,9 +89,9 @@ async def stream_turn(client, history, user_text, ctx, outcome: TurnOutcome) -> 
         outcome.stop = "max_tokens"
     u = usage
     outcome.usage = (
-        f"model={settings.model} in={u.prompt_token_count} cached={u.cached_content_token_count} "
+        f"model={model}{' (backup)' if backup else ''} in={u.prompt_token_count} cached={u.cached_content_token_count} "
         f"thinking={u.thoughts_token_count} out={u.candidates_token_count}"
-        if u else f"model={settings.model}"
+        if u else f"model={model}"
     ) + (f" finish={finish}" if finish else "") + (f" blocked={blocked}" if blocked else "")
 
 

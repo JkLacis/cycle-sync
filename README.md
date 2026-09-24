@@ -43,6 +43,7 @@ Open http://localhost:8000. Stop with **Ctrl+C**. Check the coach is ready: http
 | `GEMINI_API_KEY` | — (required with Gemini) | Google AI Studio API key |
 | `ANTHROPIC_API_KEY` | — (required with Claude) | Anthropic API key |
 | `COACH_MODEL` | `gemini-3.8-flash` / `claude-opus-5-5` | Model ID for the chosen provider |
+| `COACH_FALLBACK_MODELS` | `gemini-3.5-flash-lite,gemini-3.1-flash-lite` | Gemini only: models tried in order (minimal thinking, for speed) when the main one is busy (free tier often returns "high demand") |
 | `COACH_EFFORT` | `low` | `low` / `medium` / `high` — thinking depth vs. speed and cost |
 | `HOST` / `PORT` | `127.0.0.1` / `8000` | Where the server listens (`0.0.0.0` to allow other devices on the network) |
 | `RATE_LIMIT_PER_MINUTE` / `RATE_LIMIT_PER_DAY` | `10` / `200` | Coach messages per client IP |

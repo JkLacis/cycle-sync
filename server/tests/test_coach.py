@@ -25,7 +25,9 @@ from server.storage import ConversationStore
 
 # Claude tests run with Claude settings, whatever COACH_PROVIDER is in .env.
 CLAUDE_SETTINGS = dataclasses.replace(coach.settings, provider="claude", model="claude-opus-5-5", effort="low")
-GEMINI_SETTINGS = dataclasses.replace(coach.settings, provider="gemini", model="gemini-3.8-flash", effort="low")
+GEMINI_SETTINGS = dataclasses.replace(
+    coach.settings, provider="gemini", model="gemini-3.8-flash", fallback_models=("gemini-3.5-flash-lite",), effort="low"
+)
 
 CONV = "123e4567-e89b-12d3-a456-426614174000"
 
@@ -79,11 +81,13 @@ def gemini_chunk(text=None, finish=None, block=None):
 
 
 class FakeGemini:
-    def __init__(self, chunks, error=None):
+    def __init__(self, chunks, error=None, busy=()):
         self.calls = []
 
         async def generate_content_stream(**params):
             self.calls.append(params)
+            if params["model"] in busy:
+                raise genai_errors.ServerError(503, {"error": {"message": "high demand", "status": "UNAVAILABLE"}})
 
             async def gen():
                 for chunk in chunks:
@@ -189,6 +193,9 @@ class StreamTests(unittest.TestCase):
 
 class GeminiStreamTests(unittest.TestCase):
     def setUp(self):
+        patcher = mock.patch.object(gemini, "settings", GEMINI_SETTINGS)
+        patcher.start()
+        self.addCleanup(patcher.stop)
         self.dir = tempfile.TemporaryDirectory()
         self.store = ConversationStore(Path(self.dir.name) / "t.db")
         self.req = CoachRequest(conversation_id=CONV, message="How should I train today?", context=CTX)
@@ -205,6 +212,32 @@ class GeminiStreamTests(unittest.TestCase):
         client = FakeGemini([gemini_chunk("Next.", finish="STOP")])
         run(client, self.store, self.req, gemini)
         self.assertEqual([c["role"] for c in client.calls[0]["contents"]], ["user", "model", "user"])
+
+    def test_busy_model_falls_back(self):
+        client = FakeGemini([gemini_chunk("Fine.", finish="STOP")], busy={"gemini-3.8-flash"})
+        events = run(client, self.store, self.req, gemini)
+        self.assertEqual(events[-1]["event"], "done")
+        self.assertEqual([c["model"] for c in client.calls], ["gemini-3.8-flash", "gemini-3.5-flash-lite"])
+        # Busy mid-answer: the client is told to reset, and only the backup model's answer is stored.
+        calls = []
+
+        async def flaky(**params):
+            calls.append(params["model"])
+
+            async def gen():
+                if params["model"] == "gemini-3.8-flash":
+                    yield gemini_chunk("Half an ")
+                    raise genai_errors.ServerError(503, {"error": {"message": "high demand", "status": "UNAVAILABLE"}})
+                yield gemini_chunk("Whole answer.", finish="STOP")
+            return gen()
+
+        client = SimpleNamespace(aio=SimpleNamespace(models=SimpleNamespace(generate_content_stream=flaky)))
+        events = run(client, self.store, self.req, gemini)
+        self.assertEqual([e["event"] for e in events], ["delta", "reset", "delta", "done"])
+        self.assertEqual(self.store.history(CONV)[-1]["content"], "Whole answer.")
+        client = FakeGemini([], busy={"gemini-3.8-flash", "gemini-3.5-flash-lite"})
+        events = run(client, self.store, self.req, gemini)
+        self.assertEqual((events[-1]["code"], events[-1]["retryable"]), ("unavailable", True))
 
     def test_max_tokens_is_truncated(self):
         events = run(FakeGemini([gemini_chunk("Long", finish="MAX_TOKENS")]), self.store, self.req, gemini)

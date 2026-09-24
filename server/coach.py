@@ -111,6 +111,10 @@ def error_event(code: str) -> dict:
     return {"event": "error", "code": code, "message": message, "retryable": retryable}
 
 
+# Yielded by a provider instead of text when it restarts the answer on a backup model.
+RESTART = object()
+
+
 class TurnOutcome:
     """Filled in by a provider once its stream ends."""
 
@@ -131,6 +135,7 @@ class Provider(Protocol):
 
 async def stream_reply(provider: Provider, client, store: ConversationStore, req: CoachRequest) -> AsyncIterator[dict]:
     """Yields {"event": "delta", "text"} ... then {"event": "done"} or {"event": "error", ...}.
+    {"event": "reset"} means: discard the text so far, the answer starts again (backup model).
     After an error the client discards any partial text; nothing is stored for a failed turn."""
     history = trim_history(await asyncio.to_thread(store.history, req.conversation_id))
     outcome = TurnOutcome()
@@ -138,6 +143,10 @@ async def stream_reply(provider: Provider, client, store: ConversationStore, req
     try:
         async with asyncio.timeout(settings.request_timeout_s):
             async for text in provider.stream_turn(client, history, req.message, req.context, outcome):
+                if text is RESTART:
+                    parts.clear()
+                    yield {"event": "reset"}
+                    continue
                 parts.append(text)
                 yield {"event": "delta", "text": text}
     except Exception as err:  # noqa: BLE001 — every failure becomes a typed event for the UI
