@@ -3,7 +3,8 @@
 Phone-style web app prototype: plan work, movement and food around the four phases of the menstrual cycle.
 The home screen scores how well today's tasks fit your current phase.
 
-**Live:** https://jklacis.github.io/cycle-sync/ · **Demo data:** https://jklacis.github.io/cycle-sync/?demo=1
+**Live with AI coach:** https://cycle-sync-3dtv.onrender.com · **Demo data:** https://cycle-sync-3dtv.onrender.com/?demo=1
+(first visit after 15 idle minutes takes ~1 min to wake). Offline-coach copy on GitHub Pages: https://jklacis.github.io/cycle-sync/
 
 > For general wellness only. Not medical advice, and not for contraception.
 

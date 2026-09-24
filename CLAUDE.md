@@ -95,6 +95,9 @@ four cycle phases she's in, it suggests how to **move**, what to **eat**, and wh
 - Single-page app: screens are `<section>`s shown/hidden with JS, no reloads.
 - Data in `localStorage` (no backend, no login).
 - Mobile-first. On wide screens, show the app centred in a ~390px phone frame.
+- **Public link with AI coach (Render, from `main`, auto-deploys on push):** https://cycle-sync-3dtv.onrender.com
+  (demo: `?demo=1`; free plan sleeps after 15 min, ~1 min wake). Verified 2026-09-24: health ready, coach answers,
+  `.env`/`server/` 404. Key lives in Render's dashboard; local `.env` still has the dead key.
 - **Live (GitHub Pages, from `main`, updates ~1 min after each push):** https://jklacis.github.io/cycle-sync/
   (demo: add `?demo=1`). Use this for phone testing — the "Startup House Guest" Wi-Fi + ufw block phone → laptop.
 - Run: `.venv/bin/python -m server` → http://localhost:8000 (with AI coach), or `python3 -m http.server 8000` (offline coach). On phone (same Wi-Fi):
