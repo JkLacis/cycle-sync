@@ -155,9 +155,70 @@
 
       </section>
 
-      <section class="screen" id="screen-coach" hidden>
-        <h1>AI Coach</h1>
-        <p class="placeholder">Coach: coming in step 10.</p>
+      <!-- ===== AI Coach (scripted demo, not real AI) ===== -->
+      <section class="screen screen-coach" id="screen-coach" hidden>
+
+        <header class="topbar">
+          <h1 class="brand">AI Coach</h1>
+          <div class="topbar-actions">
+            <button class="icon-btn" type="button" id="coach-history-btn" aria-label="Go to your chat">
+              <span data-icon="clock"></span>
+            </button>
+            <button class="avatar" type="button" data-go="settings" aria-label="Profile and settings">
+              <span data-icon="user"></span>
+            </button>
+          </div>
+        </header>
+
+        <div class="coach-hero">
+          <div class="coach-hero-text">
+            <p class="coach-hello">Hi there <span aria-hidden="true">👋</span></p>
+            <p class="coach-sub">How can I support you today?</p>
+          </div>
+          <!-- Soft petals (decoration only) -->
+          <svg class="coach-art" viewBox="0 0 200 160" aria-hidden="true">
+            <defs>
+              <linearGradient id="petal-blue" x1="0" y1="1" x2="1" y2="0">
+                <stop offset="0" stop-color="#94b6e6"/><stop offset="1" stop-color="#eef4fc"/>
+              </linearGradient>
+              <linearGradient id="petal-green" x1="0" y1="1" x2="1" y2="0">
+                <stop offset="0" stop-color="#6f8f76"/><stop offset="1" stop-color="#c3d3bf"/>
+              </linearGradient>
+            </defs>
+            <path d="M140 165C100 140 55 95 62 42C102 58 134 108 140 165Z" fill="url(#petal-blue)"/>
+            <path d="M140 165C126 108 136 38 172 2C198 50 172 120 140 165Z" fill="url(#petal-blue)"/>
+            <path d="M140 165C158 118 190 86 218 78C214 124 178 154 140 165Z" fill="url(#petal-blue)"/>
+            <path d="M140 165C114 146 78 136 48 146C76 118 126 128 140 165Z" fill="url(#petal-green)"/>
+            <path class="coach-art-vein" d="M140 165C118 120 90 80 66 48M140 165C142 100 152 50 170 8M140 165C164 128 188 100 214 82"/>
+            <path d="M0 150C50 128 92 162 142 140S200 128 220 138V170H0Z" fill="#ffffff" opacity="0.55"/>
+          </svg>
+        </div>
+
+        <section class="coach-ask" aria-labelledby="ask-title">
+          <h2 id="ask-title">Ask your coach</h2>
+          <form class="ask-form" id="ask-form">
+            <span class="ask-spark"><span data-icon="sparkle"></span></span>
+            <input id="ask-input" type="text" placeholder="Type your question..." aria-label="Your question" autocomplete="off" maxlength="120">
+            <button class="send-btn" type="submit" aria-label="Send"><span data-icon="send"></span></button>
+          </form>
+          <!-- Built by renderCoachChips() -->
+          <div class="chips" id="coach-chips"></div>
+          <p class="coach-note">Demo coach: pre-written replies, not real AI.</p>
+          <!-- Messages added by askCoach() -->
+          <div class="chat" id="coach-chat" aria-live="polite"></div>
+        </section>
+
+        <section class="suggested" aria-labelledby="suggested-title">
+          <div class="suggested-head">
+            <h2 id="suggested-title">Suggested for You</h2>
+            <button class="link-btn" type="button" id="see-all-btn" aria-expanded="false" aria-controls="session-row">
+              <span id="see-all-label">See All</span><span data-icon="chevron"></span>
+            </button>
+          </div>
+          <!-- Built by renderSessions() -->
+          <div class="session-row" id="session-row"></div>
+        </section>
+
       </section>
 
       <section class="screen" id="screen-settings" hidden>
@@ -222,6 +283,22 @@
       <p class="form-error" id="task-error" role="alert"></p>
       <button class="primary-btn" type="submit">Save task</button>
     </form>
+  </dialog>
+
+  <!-- Guided timer (Suggested for You sessions) -->
+  <dialog class="sheet timer-sheet" id="timer-dialog" aria-labelledby="timer-title">
+    <div class="sheet-head">
+      <h2 id="timer-title"></h2>
+      <button class="icon-btn icon-btn-small" type="button" id="timer-close" aria-label="Close">
+        <span data-icon="close"></span>
+      </button>
+    </div>
+    <div class="breath" id="breath">
+      <span class="breath-cue" id="breath-cue" aria-live="polite"></span>
+    </div>
+    <p class="timer-time" id="timer-time"></p>
+    <button class="primary-btn" type="button" id="timer-toggle"></button>
+    <ul class="timer-tips" id="timer-tips"></ul>
   </dialog>
 
   <script src="app.js"></script>

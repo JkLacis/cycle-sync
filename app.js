@@ -148,6 +148,10 @@ const ICONS = {
   focus: '<circle cx="11" cy="13" r="8"/><circle cx="11" cy="13" r="4"/><path d="M11 13l9-9M16 4h4v4"/>',
   bed: '<path d="M3 6v13M3 16h18v3M21 16v-3a3 3 0 0 0-3-3h-8v6"/><circle cx="6.5" cy="12" r="1.8"/>',
   cutlery: '<path d="M6 3v6a2 2 0 0 0 4 0V3M8 3v18M17 21V3c-2 2-3 5-3 8h3"/>',
+  clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+  sparkle: '<path d="M12 3c.6 4.6 2.4 6.4 7 7-4.6.6-6.4 2.4-7 7-.6-4.6-2.4-6.4-7-7 4.6-.6 6.4-2.4 7-7z"/><path d="M19 3v3M17.5 4.5h3"/>',
+  send: '<path d="M21 3 10 14M21 3l-7 18-4-7-7-4z"/>',
+  play: '<path d="M8 5.5v13l10.5-6.5z"/>',
 };
 
 // =====================================================================
@@ -668,7 +672,273 @@ function renderPhaseDetail(phaseKey) {
 }
 
 // =====================================================================
-// 10. Navigation
+// 10. AI Coach screen (scripted demo: pre-written replies, not real AI)
+// =====================================================================
+
+// Phase scripts for "Help me set boundaries": boundaries in Luteal/Menstrual,
+// intentions and outreach in Follicular/Ovulatory.
+const BOUNDARY_SCRIPTS = {
+  follicular: {
+    text: "Your energy is rising, so it's a good time to set intentions. Write down what you'll say yes to this cycle, and what you'll leave out.",
+    after: 'If something doesn\'t fit, try: "I\'d love to help once this project is launched."',
+  },
+  ovulatory: {
+    text: "A great time to reach out. Pick one person to contact today: a mentor, a client or a colleague.",
+    after: 'Try: "I\'d love 20 minutes to share an idea with you." Say yes to the conversations that matter, and no to the rest.',
+  },
+  luteal: {
+    text: "Protect your focus this week. Block time for deep work and keep meetings short.",
+    after: 'Try: "I can\'t take this on this week, but I can look at it on Monday."',
+  },
+  menstrual: {
+    text: "Give yourself room to rest. Keep today light and move what can wait.",
+    after: 'Try: "I\'m keeping today light. Can we move this to next week?"',
+  },
+};
+
+// Question buttons. Typed questions are matched to a topic by keyword.
+// reply(phaseKey) → { text, list?, after?, session? }
+const COACH_TOPICS = [
+  {
+    id: "focus",
+    question: "How can I stay focused today?",
+    keywords: ["focus", "work", "productive", "concentrat", "task"],
+    reply: (key) => ({
+      text: "You're in your " + PHASES[key].name + " phase (" + PHASES[key].powr + "). Good fits for today:",
+      list: PHASES[key].work,
+    }),
+  },
+  {
+    id: "eat",
+    question: "What should I eat?",
+    keywords: ["eat", "food", "meal", "hungry", "snack", "nutrition", "cook"],
+    reply: (key) => ({
+      text: "Some ideas for your " + PHASES[key].name + " phase:",
+      list: PHASES[key].eat,
+      after: "Suggestions only. Eat what feels good for you.",
+    }),
+  },
+  {
+    id: "boundaries",
+    question: "Help me set boundaries",
+    keywords: ["boundar", "say no", "overwhelm", "busy", "stress", "intention"],
+    reply: (key) => BOUNDARY_SCRIPTS[key],
+  },
+  {
+    id: "breathing",
+    question: "A quick breathing exercise",
+    keywords: ["breath", "calm", "anxious", "relax", "reset"],
+    reply: () => ({ text: "Let's slow down for two minutes. Breathe in for 4, out for 6.", session: "calm" }),
+  },
+];
+
+const COACH_FALLBACK = {
+  text: "I'm a demo coach, so I can help with a few things:",
+  list: ["Staying focused", "What to eat", "Setting boundaries", "A quick breathing exercise"],
+  after: "Tap a question above to try one.",
+};
+
+// Suggested for You. tips(phase) → 3 short lines shown in the timer.
+const COACH_SESSIONS = [
+  {
+    id: "calm", title: "Calm your mind", minutes: 2, art: "water",
+    tips: (p) => ["Sit comfortably and relax your shoulders.", "Let each breath out be a little longer.", p.name + " phase: " + p.tagline],
+  },
+  {
+    id: "energy", title: "Boost energy", minutes: 3, art: "sunrise",
+    tips: (p) => ["Stand up and roll your shoulders.", "Take a few brisk steps between breaths.", "Movement idea for your " + p.name + " phase: " + p.move[0] + "."],
+  },
+  {
+    id: "goals", title: "Set clear goals", minutes: 2, art: "notebook",
+    tips: (p) => ["Write down one goal for today.", "Keep it small and specific.", "Good fit for your " + p.name + " phase: " + p.work[0] + "."],
+  },
+  {
+    id: "sleep", title: "Better sleep", minutes: 3, art: "mountains",
+    tips: () => ["Dim the lights and put your phone away.", "Let your breath out be slow and long.", "A warm, caffeine-free drink can help you wind down."],
+  },
+];
+
+// Drawn scenes for the session cards (stand-ins for photos).
+const SESSION_ART = {
+  water:
+    '<defs><linearGradient id="art-water" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#d3deea"/><stop offset="1" stop-color="#5a7ba6"/></linearGradient></defs>' +
+    '<rect width="100" height="160" fill="url(#art-water)"/>' +
+    '<path d="M0 52C20 42 35 62 55 50S85 42 100 52V160H0Z" fill="#9fb6d2" opacity="0.7"/>' +
+    '<path d="M0 72C25 60 40 82 60 68S88 62 100 72V160H0Z" fill="#7d9bc2" opacity="0.8"/>' +
+    '<path d="M0 94C20 84 45 102 65 90S90 86 100 94V160H0Z" fill="#5d7fab"/>',
+  sunrise:
+    '<defs><linearGradient id="art-sunrise" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f7e6cf"/><stop offset="1" stop-color="#c99f7c"/></linearGradient>' +
+    '<radialGradient id="art-glow"><stop offset="0" stop-color="#fffaf0"/><stop offset="1" stop-color="#fffaf0" stop-opacity="0"/></radialGradient></defs>' +
+    '<rect width="100" height="160" fill="url(#art-sunrise)"/>' +
+    '<circle cx="62" cy="62" r="40" fill="url(#art-glow)"/>' +
+    '<path d="M0 110C25 96 55 104 100 92V160H0Z" fill="#a88468"/>' +
+    '<path d="M0 126C30 116 70 124 100 114V160H0Z" fill="#7d6250"/>',
+  notebook:
+    '<defs><linearGradient id="art-desk" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f1ece5"/><stop offset="1" stop-color="#c9b7a2"/></linearGradient></defs>' +
+    '<rect width="100" height="160" fill="url(#art-desk)"/>' +
+    '<ellipse cx="80" cy="20" rx="13" ry="9" fill="#7f9a78"/><rect x="73" y="26" width="14" height="13" rx="2" fill="#ebe5dc"/>' +
+    '<g transform="rotate(-18 50 90)"><rect x="10" y="52" width="82" height="92" rx="3" fill="#fbfaf7"/>' +
+    '<path d="M51 52v92" stroke="#e2dcd2"/><path d="M18 70h26M18 80h26M18 90h26M58 70h26M58 80h26" stroke="#e7e2da"/></g>' +
+    '<path d="M60 64 86 110" stroke="#2d2d30" stroke-width="3" stroke-linecap="round"/>',
+  mountains:
+    '<defs><linearGradient id="art-dusk" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f3d6b8"/><stop offset="1" stop-color="#9eb0cc"/></linearGradient></defs>' +
+    '<rect width="100" height="160" fill="url(#art-dusk)"/>' +
+    '<circle cx="64" cy="44" r="10" fill="#fff4dc" opacity="0.6"/><circle cx="64" cy="44" r="5" fill="#fffaf0"/>' +
+    '<path d="M0 78 22 60 40 74 62 56 100 80V160H0Z" fill="#8c9fc2"/>' +
+    '<path d="M0 96 30 76 52 92 78 72 100 88V160H0Z" fill="#6e84ad"/>' +
+    '<path d="M0 116 26 98 58 114 84 96 100 104V160H0Z" fill="#50668f"/>',
+};
+
+const chatMessages = [];
+
+function findTopic(text) {
+  const lower = text.toLowerCase();
+  return COACH_TOPICS.find((t) => t.keywords.some((k) => lower.includes(k)));
+}
+
+function renderCoachChips() {
+  document.getElementById("coach-chips").innerHTML = COACH_TOPICS.map((t) =>
+    '<button type="button" class="chip" data-topic="' + t.id + '">' + t.question + icon("arrow") + "</button>"
+  ).join("");
+}
+
+function renderChatMessage(m) {
+  if (m.from === "user") return '<div class="bubble bubble-user">' + escapeHTML(m.text) + "</div>";
+  const session = m.session && COACH_SESSIONS.find((s) => s.id === m.session);
+  return (
+    '<div class="bubble bubble-coach">' +
+      "<p>" + m.text + "</p>" +
+      (m.list ? "<ul>" + m.list.map((item) => "<li>" + item + "</li>").join("") + "</ul>" : "") +
+      (m.after ? "<p>" + m.after + "</p>" : "") +
+      (session
+        ? '<button type="button" class="bubble-action" data-session="' + session.id + '">' +
+            icon("play") + "Start " + session.title + " · " + session.minutes + " min</button>"
+        : "") +
+    "</div>"
+  );
+}
+
+function renderChat() {
+  document.getElementById("coach-chat").innerHTML = chatMessages.map(renderChatMessage).join("");
+}
+
+function scrollToLastMessage() {
+  const last = document.querySelector("#coach-chat .bubble:last-child");
+  if (last) last.scrollIntoView({ block: "nearest", behavior: "smooth" });
+}
+
+// One question → one scripted reply for today's phase.
+function askCoach(text, topic = findTopic(text)) {
+  const phaseKey = getCycleState(today(), loadSettings()).phaseKey;
+  chatMessages.push({ from: "user", text });
+  chatMessages.push({ from: "coach", ...(topic ? topic.reply(phaseKey) : COACH_FALLBACK) });
+  renderChat();
+  scrollToLastMessage();
+}
+
+function renderSessions() {
+  document.getElementById("session-row").innerHTML = COACH_SESSIONS.map((s) =>
+    '<button type="button" class="session-card" data-session="' + s.id + '">' +
+      '<svg class="session-art" viewBox="0 0 100 160" preserveAspectRatio="xMidYMid slice" aria-hidden="true">' + SESSION_ART[s.art] + "</svg>" +
+      '<span class="session-play">' + icon("play") + "</span>" +
+      '<span class="session-min">' + s.minutes + " min</span>" +
+      '<span class="session-title">' + s.title + "</span>" +
+    "</button>"
+  ).join("");
+}
+
+// ----- Guided timer -----
+
+const BREATH = { in: 4, out: 6 }; // seconds
+const timerDialog = document.getElementById("timer-dialog");
+let timer = null; // { session, remaining, elapsed, intervalId }
+
+function formatTime(seconds) {
+  return Math.floor(seconds / 60) + ":" + String(seconds % 60).padStart(2, "0");
+}
+
+// state: "in" (circle grows), "out" (circle shrinks) or "" (resting size)
+function setBreath(state, cue) {
+  document.getElementById("breath").className = "breath" + (state ? " is-" + state : "");
+  const cueEl = document.getElementById("breath-cue");
+  if (cueEl.textContent !== cue) cueEl.textContent = cue;
+}
+
+function breathTick() {
+  const inhale = timer.elapsed % (BREATH.in + BREATH.out) < BREATH.in;
+  setBreath(inhale ? "in" : "out", inhale ? "Breathe in" : "Breathe out");
+}
+
+function renderTimer() {
+  let label = "Start";
+  if (timer.intervalId) label = "Pause";
+  else if (timer.remaining === 0) label = "Start again";
+  else if (timer.elapsed > 0) label = "Resume";
+  document.getElementById("timer-time").textContent = formatTime(timer.remaining);
+  document.getElementById("timer-toggle").textContent = label;
+}
+
+function stopTimer() {
+  clearInterval(timer.intervalId);
+  timer.intervalId = null;
+  renderTimer();
+}
+
+function startTimer() {
+  if (timer.remaining === 0) {
+    timer.remaining = timer.session.minutes * 60;
+    timer.elapsed = 0;
+  }
+  breathTick();
+  timer.intervalId = setInterval(() => {
+    timer.elapsed++;
+    timer.remaining--;
+    if (timer.remaining <= 0) {
+      stopTimer();
+      setBreath("", "Well done");
+      return;
+    }
+    breathTick();
+    renderTimer();
+  }, 1000);
+  renderTimer();
+}
+
+function openSession(id) {
+  const session = COACH_SESSIONS.find((s) => s.id === id);
+  const phase = getCycleState(today(), loadSettings()).phase;
+  timer = { session, remaining: session.minutes * 60, elapsed: 0, intervalId: null };
+  document.getElementById("timer-title").textContent = session.title;
+  document.getElementById("timer-tips").innerHTML = session.tips(phase).map((t) => "<li>" + t + "</li>").join("");
+  setBreath("", "Ready when you are");
+  renderTimer();
+  timerDialog.showModal();
+}
+
+document.getElementById("timer-toggle").addEventListener("click", () => {
+  if (timer.intervalId) {
+    stopTimer();
+    setBreath("", "Paused");
+  } else {
+    startTimer();
+  }
+});
+document.getElementById("timer-close").addEventListener("click", () => timerDialog.close());
+timerDialog.addEventListener("close", () => {
+  if (timer) stopTimer();
+});
+
+document.getElementById("ask-form").addEventListener("submit", function (e) {
+  e.preventDefault();
+  const input = document.getElementById("ask-input");
+  const text = input.value.trim();
+  if (!text) return;
+  askCoach(text);
+  input.value = "";
+});
+
+// =====================================================================
+// 11. Navigation
 // =====================================================================
 
 // Show one screen and hide all the others.
@@ -689,7 +959,7 @@ function showScreen(name) {
 }
 
 // =====================================================================
-// 11. Add-task sheet
+// 12. Add-task sheet
 // =====================================================================
 
 const taskDialog = document.getElementById("task-dialog");
@@ -723,7 +993,7 @@ taskForm.addEventListener("submit", function (e) {
 document.getElementById("task-cancel").addEventListener("click", () => taskDialog.close());
 
 // =====================================================================
-// 12. Start
+// 13. Start
 // =====================================================================
 
 // Fill every <span data-icon="name"> placeholder in the HTML.
@@ -744,10 +1014,24 @@ function refocus(selector) {
 // One click handler for the whole app (tabs, links, days, events).
 document.addEventListener("click", function (e) {
   const target = e.target.closest(
-    "[data-screen], [data-go], [data-date], [data-event], [data-delete], [data-phase], [data-week], #add-task-btn, #plan-today-btn"
+    "[data-screen], [data-go], [data-date], [data-event], [data-delete], [data-phase], [data-week], [data-topic], [data-session], " +
+      "#add-task-btn, #plan-today-btn, #see-all-btn, #coach-history-btn"
   );
   if (!target) return;
-  if (target.dataset.phase) {
+  if (target.dataset.topic) {
+    const topic = COACH_TOPICS.find((t) => t.id === target.dataset.topic);
+    askCoach(topic.question, topic);
+  } else if (target.dataset.session) {
+    openSession(target.dataset.session);
+  } else if (target.id === "see-all-btn") {
+    const showAll = target.getAttribute("aria-expanded") !== "true";
+    target.setAttribute("aria-expanded", showAll);
+    document.getElementById("session-row").classList.toggle("is-grid", showAll);
+    document.getElementById("see-all-label").textContent = showAll ? "Show less" : "See All";
+  } else if (target.id === "coach-history-btn") {
+    if (chatMessages.length) scrollToLastMessage();
+    else document.getElementById("ask-input").focus();
+  } else if (target.dataset.phase) {
     renderPhaseDetail(target.dataset.phase);
     showScreen("phase-detail");
   } else if (target.dataset.week) {
@@ -780,4 +1064,6 @@ if (IS_DEMO) seedDemoTasks();
 buildRing();
 renderAlignment();
 renderPlan();
+renderCoachChips();
+renderSessions();
 showScreen("alignment");

@@ -18,7 +18,7 @@ instructions. Technical language is fine when he is driving; keep it simple for 
 - Keep this file updated whenever a new decision is made.
 
 ## ▶ START HERE (status as of 2026-09-24)
-- Done: steps 1–4, 6, 7, 8 (Alignment + Cycle Plan pages built to match Praful's mockups).
+- Done: steps 1–4, 6, 7, 8, 10 (Alignment, Cycle Plan, AI Coach pages built to match Praful's mockups).
 - `implementation-plan.md` is the build plan — next unticked step first (step 5: onboarding).
   Until onboarding exists, `DEFAULT_SETTINGS` in app.js makes today Day 14 (28/5 cycle).
 - Demo is **Friday 2026-09-25** — keep scope small; steps 9–11 can be cut/simplified if time runs out.
@@ -84,7 +84,9 @@ four cycle phases she's in, it suggests how to **move**, what to **eat**, and wh
   marker = today, centre Day X / phase / icon); 4 phase cards; week calendar + phase bar (arrows by week);
   Track Today tiles (Energy, Mood, Focus, Sleep, Nutrition → logging in step 9); Phase Focus tiles.
   Tap phase card / focus tile → phase detail (Move/Eat/Work).
-- **Coach**: scripted chat, 2-min breathing reset, phase scripts. Labelled as demo, not real AI.
+- **Coach** (match Praful's AI Coach mockup): "Hi there" card; Ask your coach (question box + 4 chips → scripted
+  phase-based replies as chat below, keyword matching for typed text); Suggested for You = 4 cards with drawn scenes
+  (no photo files) → guided breathing timer + phase tips. Small note: demo coach, not real AI.
 - **Settings**: edit cycle data, reset, fake integration toggles, privacy note.
 - **Demo mode**: URL contains `?demo=1` → small panel to pretend it's a different date.
 
@@ -129,7 +131,7 @@ sage-green "good" card, very soft peach "watch-out" card (no aggressive red, no 
 Exact colour tokens live in `:root` of style.css.
 
 ## Build order / progress
-See `implementation-plan.md` (steps 1–12 with "done when" criteria). Steps 1–4, 6, 7, 8 done.
+See `implementation-plan.md` (steps 1–12 with "done when" criteria). Steps 1–4, 6, 7, 8, 10 done.
 
 ## Decisions log
 - `reference/` (gitignored, never push — repo is public): mentor's example files from another project

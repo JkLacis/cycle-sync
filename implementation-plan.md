@@ -102,11 +102,13 @@ Follicular = Prepare · Ovulatory = Open Up · Luteal = Work · Menstrual = Rest
 - [ ] Save → stored per date in localStorage; reopening today shows saved values
 - [ ] Food check-in text matches the current phase
 
-### 10. [ ] Coach (scripted)
-- [ ] Chat-style screen: a few suggested prompt buttons → pre-written replies based on current phase
-- [ ] Clear note that it's a demo coach, not real AI
-- [ ] 2-minute breathing reset: start/stop, countdown, "breathe in / out" cue
-- [ ] Phase scripts: boundaries (Luteal/Menstrual), intentions & outreach (Follicular/Ovulatory)
+### 10. [x] AI Coach (scripted, matches AI Coach mockup, updated 2026-09-24)
+- [x] Header "AI Coach" + clock (jumps to chat) + avatar; "Hi there 👋" card with drawn leaves
+- [x] Ask your coach: question box + 4 question chips → pre-written replies based on current phase, shown as chat below; typed questions matched by keyword, else a "here's what I can help with" reply
+- [x] Clear note that it's a demo coach, not real AI
+- [x] Suggested for You: 4 cards with drawn scenes (Calm your mind 2 min, Boost energy 3 min, Set clear goals 2 min, Better sleep 3 min); See All → 2×2 grid
+- [x] Guided timer (any card): start/pause, countdown, "breathe in / out" cue (4 in, 6 out) + 3 phase tips; closing stops it
+- [x] Phase scripts: boundaries (Luteal/Menstrual), intentions & outreach (Follicular/Ovulatory)
 
 ### 11. [ ] Settings
 - [ ] Edit cycle data (same validation as onboarding) and "Reset all data" with confirm
