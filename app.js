@@ -11,7 +11,7 @@ const PHASES = {
   follicular: {
     name: "Follicular",
     powr: "Prepare",
-    icon: "leaf",
+    icon: "sprout",
     tagline: "Creativity and fresh starts. Energy is rising.",
     move: ["Dance class", "Jumping rope", "Indoor cycling", "Hiking"],
     eat: ["Broccoli and zucchini", "Oats and citrus", "Lentils and eggs", "Fermented foods"],
@@ -49,7 +49,7 @@ const PHASES = {
   luteal: {
     name: "Luteal",
     powr: "Work",
-    icon: "sunset",
+    icon: "leaf",
     tagline: "Completion. Energy gradually winds down.",
     move: ["Weight lifting", "Pilates", "Barre", "Yoga"],
     eat: ["Sweet potato and squash", "Brown rice and chickpeas", "Leafy greens", "Apples and walnuts"],
@@ -68,7 +68,7 @@ const PHASES = {
   menstrual: {
     name: "Menstrual",
     powr: "Rest",
-    icon: "moon",
+    icon: "drop",
     tagline: "Rest and reflection. Energy is at its lowest.",
     move: ["Walking", "Yin yoga", "Gentle mat Pilates", "Rest"],
     eat: ["Soups and stews", "Beets and mushrooms", "Kidney beans", "Herbal tea"],
@@ -141,6 +141,13 @@ const ICONS = {
   diamond: '<circle cx="12" cy="12" r="9"/><path d="M12 8l4 4-4 4-4-4z"/>',
   "dash-circle": '<circle cx="12" cy="12" r="9"/><path d="M8 12h8"/>',
   wave: '<path d="M2 17c4 0 5-9 10-9s6 9 10 9"/>',
+  back: '<path d="M15 5l-7 7 7 7"/>',
+  drop: '<path d="M12 3s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11z"/>',
+  sprout: '<path d="M12 21v-9M12 12C12 8 9 5 4 5c0 4 3 7 8 7zM12 10c0-3.5 2.5-6 7-6 0 3.5-2.5 6-7 6z"/>',
+  smile: '<circle cx="12" cy="12" r="9"/><path d="M8.5 14.5a4.5 4.5 0 0 0 7 0M9 9.5h.01M15 9.5h.01"/>',
+  focus: '<circle cx="11" cy="13" r="8"/><circle cx="11" cy="13" r="4"/><path d="M11 13l9-9M16 4h4v4"/>',
+  bed: '<path d="M3 6v13M3 16h18v3M21 16v-3a3 3 0 0 0-3-3h-8v6"/><circle cx="6.5" cy="12" r="1.8"/>',
+  cutlery: '<path d="M6 3v6a2 2 0 0 0 4 0V3M8 3v18M17 21V3c-2 2-3 5-3 8h3"/>',
 };
 
 // =====================================================================
@@ -515,7 +522,153 @@ function renderAlignment() {
 }
 
 // =====================================================================
-// 9. Navigation
+// 9. Cycle Plan screen components
+// =====================================================================
+
+// Order around the wheel and in the phase cards: a cycle starts with the period.
+const CYCLE_ORDER = ["menstrual", "follicular", "ovulatory", "luteal"];
+// Each phase gets an equal quarter of the wheel (as in the mockup), Menstrual top-left.
+// trim leaves a small gap between the rounded arc ends.
+const WHEEL = { size: 200, stroke: 16, radius: 80, trim: 7, marker: 9, startAngle: -90 };
+
+let planWeekStart = startOfWeek(today());
+
+// Point on the wheel. angle 0 = top, clockwise, in degrees.
+function wheelPoint(angle) {
+  const c = WHEEL.size / 2;
+  const rad = (angle * Math.PI) / 180;
+  return { x: c + WHEEL.radius * Math.sin(rad), y: c - WHEEL.radius * Math.cos(rad) };
+}
+
+function wheelArc(from, to) {
+  const a = wheelPoint(from);
+  const b = wheelPoint(to);
+  return "M" + a.x + " " + a.y + " A" + WHEEL.radius + " " + WHEEL.radius + " 0 0 1 " + b.x + " " + b.y;
+}
+
+// "Days 13–15", "Day 8" or "" for a zero-day phase.
+function phaseRangeText(range) {
+  if (range.start > range.end) return "";
+  return range.start === range.end ? "Day " + range.start : "Days " + range.start + "–" + range.end;
+}
+
+function renderPhaseWheel(state, settings) {
+  const quarter = 360 / CYCLE_ORDER.length;
+  const index = CYCLE_ORDER.indexOf(state.phaseKey);
+  const range = getPhaseRanges(settings)[state.phaseKey];
+  // Marker sits inside today's arc, as far along as today is inside the phase.
+  const progress = (state.cycleDay - range.start + 0.5) / (range.end - range.start + 1);
+  const markerAngle = WHEEL.startAngle + index * quarter + WHEEL.trim + progress * (quarter - 2 * WHEEL.trim);
+  const marker = wheelPoint(markerAngle);
+
+  const arcs = CYCLE_ORDER.map((key, i) =>
+    '<path class="wheel-arc" style="--phase-color: var(--' + key + ')" stroke-width="' + WHEEL.stroke + '"' +
+      ' d="' + wheelArc(WHEEL.startAngle + i * quarter + WHEEL.trim, WHEEL.startAngle + (i + 1) * quarter - WHEEL.trim) + '"/>'
+  ).join("");
+
+  document.getElementById("phase-wheel").innerHTML =
+    '<svg viewBox="0 0 ' + WHEEL.size + " " + WHEEL.size + '" aria-hidden="true">' + arcs +
+      '<circle class="wheel-marker" cx="' + marker.x + '" cy="' + marker.y + '" r="' + WHEEL.marker + '"/>' +
+    "</svg>" +
+    '<div class="wheel-center" role="img" aria-label="Day ' + state.cycleDay + ", " + state.phase.name + ' phase">' +
+      '<span class="wheel-day">Day ' + state.cycleDay + "</span>" +
+      '<span class="wheel-phase">' + state.phase.name + "</span>" +
+      '<span class="wheel-icon" style="--phase-color: var(--' + state.phaseKey + ')">' + icon(state.phase.icon) + "</span>" +
+    "</div>";
+}
+
+function renderPhaseCards(state) {
+  document.getElementById("phase-cards").innerHTML = CYCLE_ORDER.map((key) =>
+    '<button type="button" class="phase-card' + (key === state.phaseKey ? " is-current" : "") + '" data-phase="' + key + '"' +
+      ' style="--phase-color: var(--' + key + ')"' + (key === state.phaseKey ? ' aria-current="true"' : "") + ">" +
+      '<span class="phase-icon">' + icon(PHASES[key].icon) + "</span>" +
+      PHASES[key].name +
+    "</button>"
+  ).join("");
+}
+
+function renderPlanWeek(settings) {
+  const todayISO = toISODate(today());
+  const days = [];
+  for (let i = 0; i < 7; i++) {
+    const date = addDays(planWeekStart, i);
+    days.push({ date, iso: toISODate(date), phaseKey: getPhaseForDate(date, settings) });
+  }
+
+  // Month of the week's Thursday, so a week across two months gets the one with most days.
+  document.getElementById("plan-month").textContent =
+    days[3].date.toLocaleDateString(undefined, { month: "long", year: "numeric" });
+
+  document.getElementById("plan-days").innerHTML = days.map((d, i) =>
+    '<div class="plan-day' + (d.iso === todayISO ? " is-today" : "") + '" style="--phase-color: var(--' + d.phaseKey + ')"' +
+      ' aria-label="' + d.date.toLocaleDateString(undefined, { weekday: "long", day: "numeric", month: "long" }) +
+      ", " + PHASES[d.phaseKey].name + " phase" + (d.iso === todayISO ? ", today" : "") + '" role="group">' +
+      '<span class="day-name" aria-hidden="true">' + DAY_NAMES[i] + "</span>" +
+      '<span class="day-num" aria-hidden="true">' + d.date.getDate() + "</span>" +
+      '<span class="day-phase-dot"></span>' +
+    "</div>"
+  ).join("");
+
+  // Phase bar: one segment per run of days in the same phase.
+  let bar = "";
+  let runStart = 0;
+  for (let i = 1; i <= days.length; i++) {
+    if (i === days.length || days[i].phaseKey !== days[runStart].phaseKey) {
+      bar += '<span class="phase-bar-seg" style="--phase-color: var(--' + days[runStart].phaseKey + "); grid-column: " +
+        (runStart + 1) + " / span " + (i - runStart) + '"></span>';
+      runStart = i;
+    }
+  }
+  const todayIndex = days.findIndex((d) => d.iso === todayISO);
+  if (todayIndex >= 0) bar += '<span class="phase-bar-today" style="grid-column: ' + (todayIndex + 1) + '"></span>';
+  document.getElementById("phase-bar").innerHTML = bar;
+}
+
+// Three picture tiles with the current phase's strengths.
+function renderPhaseFocus(state) {
+  document.getElementById("focus-grid").innerHTML = state.phase.strengths.map((item, i) =>
+    '<button type="button" class="focus-tile focus-tile-' + (i + 1) + '" data-phase="' + state.phaseKey + '"' +
+      ' aria-label="' + item.label + '" title="' + item.label + '">' + icon(item.icon) + "</button>"
+  ).join("");
+  document.getElementById("focus-more").dataset.phase = state.phaseKey;
+}
+
+function renderPlan() {
+  const settings = loadSettings();
+  const now = getCycleState(today(), settings);
+  renderPhaseWheel(now, settings);
+  renderPhaseCards(now);
+  renderPlanWeek(settings);
+  renderPhaseFocus(now);
+}
+
+function renderTipCard(title, iconName, items) {
+  return (
+    '<section class="tip-card">' +
+      '<h2><span class="tip-icon">' + icon(iconName) + "</span>" + title + "</h2>" +
+      '<ul>' + items.map((t) => "<li>" + t + "</li>").join("") + "</ul>" +
+    "</section>"
+  );
+}
+
+function renderPhaseDetail(phaseKey) {
+  const phase = PHASES[phaseKey];
+  const days = phaseRangeText(getPhaseRanges(loadSettings())[phaseKey]);
+  document.getElementById("phase-detail").innerHTML =
+    '<div class="detail-head" style="--phase-color: var(--' + phaseKey + ')">' +
+      '<span class="phase-icon">' + icon(phase.icon) + "</span>" +
+      "<h1>" + phase.name + "</h1>" +
+      '<p class="detail-meta">' + phase.powr + (days ? " · " + days : "") + "</p>" +
+      '<p class="detail-tagline">' + phase.tagline + "</p>" +
+    "</div>" +
+    renderTipCard("Work", "target", phase.work) +
+    renderTipCard("Move", "dumbbell", phase.move) +
+    renderTipCard("Eat", "cutlery", phase.eat) +
+    '<p class="detail-note">Suggestions inspired by <em>In the FLO</em>. For general wellness only, not medical advice.</p>';
+}
+
+// =====================================================================
+// 10. Navigation
 // =====================================================================
 
 // Show one screen and hide all the others.
@@ -524,8 +677,11 @@ function showScreen(name) {
   for (const screen of document.querySelectorAll(".screen")) {
     screen.hidden = screen.id !== "screen-" + name;
   }
+  document.querySelector(".screens").scrollTop = 0;
+  // Phase detail belongs to the Cycle Plan tab.
+  const tabName = name === "phase-detail" ? "plan" : name;
   for (const tab of document.querySelectorAll(".tab")) {
-    const active = tab.dataset.screen === name;
+    const active = tab.dataset.screen === tabName;
     tab.classList.toggle("active", active);
     if (active) tab.setAttribute("aria-current", "page");
     else tab.removeAttribute("aria-current");
@@ -533,7 +689,7 @@ function showScreen(name) {
 }
 
 // =====================================================================
-// 10. Add-task sheet
+// 11. Add-task sheet
 // =====================================================================
 
 const taskDialog = document.getElementById("task-dialog");
@@ -567,7 +723,7 @@ taskForm.addEventListener("submit", function (e) {
 document.getElementById("task-cancel").addEventListener("click", () => taskDialog.close());
 
 // =====================================================================
-// 11. Start
+// 12. Start
 // =====================================================================
 
 // Fill every <span data-icon="name"> placeholder in the HTML.
@@ -587,9 +743,20 @@ function refocus(selector) {
 
 // One click handler for the whole app (tabs, links, days, events).
 document.addEventListener("click", function (e) {
-  const target = e.target.closest("[data-screen], [data-go], [data-date], [data-event], [data-delete], #add-task-btn");
+  const target = e.target.closest(
+    "[data-screen], [data-go], [data-date], [data-event], [data-delete], [data-phase], [data-week], #add-task-btn, #plan-today-btn"
+  );
   if (!target) return;
-  if (target.dataset.screen || target.dataset.go) {
+  if (target.dataset.phase) {
+    renderPhaseDetail(target.dataset.phase);
+    showScreen("phase-detail");
+  } else if (target.dataset.week) {
+    planWeekStart = addDays(planWeekStart, 7 * Number(target.dataset.week));
+    renderPlanWeek(loadSettings());
+  } else if (target.id === "plan-today-btn") {
+    planWeekStart = startOfWeek(today());
+    renderPlanWeek(loadSettings());
+  } else if (target.dataset.screen || target.dataset.go) {
     showScreen(target.dataset.screen || target.dataset.go);
   } else if (target.dataset.date) {
     selectedDate = parseLocalDate(target.dataset.date);
@@ -612,4 +779,5 @@ document.addEventListener("click", function (e) {
 if (IS_DEMO) seedDemoTasks();
 buildRing();
 renderAlignment();
+renderPlan();
 showScreen("alignment");

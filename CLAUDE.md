@@ -18,7 +18,7 @@ instructions. Technical language is fine when he is driving; keep it simple for 
 - Keep this file updated whenever a new decision is made.
 
 ## ▶ START HERE (status as of 2026-09-24)
-- Done: steps 1–4, 6, 7 (Alignment page built to match `reference/home-mockup.webp`).
+- Done: steps 1–4, 6, 7, 8 (Alignment + Cycle Plan pages built to match Praful's mockups).
 - `implementation-plan.md` is the build plan — next unticked step first (step 5: onboarding).
   Until onboarding exists, `DEFAULT_SETTINGS` in app.js makes today Day 14 (28/5 cycle).
 - Demo is **Friday 2026-09-25** — keep scope small; steps 9–11 can be cut/simplified if time runs out.
@@ -48,8 +48,9 @@ instructions. Technical language is fine when he is driving; keep it simple for 
    phase's own strengths/watch-outs fill the gaps. *(updated 2026-09-24)*
 3. Real: logging, tasks, score, calendar, phase tips. Mock: AI Coach (scripted + real breathing timer),
    Settings integration toggles. **Energy leak audit dropped.**
-4. Calendar on **both**: Alignment = week strip + tasks; Cycle Plan = full month calendar.
-5. Palette: **match the mockup** `reference/home-mockup.webp` (warm off-white, blue, sage green, soft peach watch-outs, yellow Ovulatory). See Style. *(updated 2026-09-24)*
+4. Calendar on **both**: Alignment = week strip + tasks; Cycle Plan = week calendar + phase bar, like the Cycle Plan mockup (not a month grid).
+5. Palette: **match the mockup** `reference/home-mockup.webp` (warm off-white, blue, sage green, soft peach watch-outs). See Style. *(updated 2026-09-24)*
+   Phase colours follow the Cycle Plan mockup: Menstrual soft pink, Follicular blue, Ovulatory yellow, Luteal sage green.
 6. Short-cycle overlap: **Menstrual wins**.
 7. Keep onboarding, demo mode `?demo=1`, Move/Eat/Work tips (shown in phase detail from Cycle Plan).
 
@@ -79,8 +80,10 @@ four cycle phases she's in, it suggests how to **move**, what to **eat**, and wh
 - **Alignment** (follow the mockup image): "Cycle Sync" + calendar icon + avatar; "DAY X / <Phase>" + phase icon;
   score ring 0–100 ("78 /100 Cycle Alignment", not a phase wheel); Good for you (3) + Watch-outs (3);
   "Your Calendar This Week" Mon–Sun strip + today's events (time, title, High Sync/Good/Low Sync, chevron) + add task.
-- **Cycle Plan**: month calendar (phase colour **and** letter, today highlighted, prev/next), phase overview,
-  tap phase → phase detail (Move/Eat/Work), quick logging.
+- **Cycle Plan** (match Praful's Cycle Plan mockup exactly): "Cycle Plan" header; phase wheel (4 equal arcs,
+  marker = today, centre Day X / phase / icon); 4 phase cards; week calendar + phase bar (arrows by week);
+  Track Today tiles (Energy, Mood, Focus, Sleep, Nutrition → logging in step 9); Phase Focus tiles.
+  Tap phase card / focus tile → phase detail (Move/Eat/Work).
 - **Coach**: scripted chat, 2-min breathing reset, phase scripts. Labelled as demo, not real AI.
 - **Settings**: edit cycle data, reset, fake integration toggles, privacy note.
 - **Demo mode**: URL contains `?demo=1` → small panel to pretend it's a different date.
@@ -126,7 +129,7 @@ sage-green "good" card, very soft peach "watch-out" card (no aggressive red, no 
 Exact colour tokens live in `:root` of style.css.
 
 ## Build order / progress
-See `implementation-plan.md` (steps 1–12 with "done when" criteria). Steps 1–4, 6, 7 done.
+See `implementation-plan.md` (steps 1–12 with "done when" criteria). Steps 1–4, 6, 7, 8 done.
 
 ## Decisions log
 - `reference/` (gitignored, never push — repo is public): mentor's example files from another project
@@ -144,3 +147,4 @@ See `implementation-plan.md` (steps 1–12 with "done when" criteria). Steps 1�
 - Phone frame kicks in at `min-width: 600px` (390×844, dark bezel). Below that the app fills the screen.
 - Colours are CSS variables in `:root` of style.css (palette in Style section).
 - `pandoc` not installed; read .docx with `unzip -p file.docx word/document.xml | sed 's/<[^>]*>//g'`.
+- Phase icons (from Cycle Plan mockup): Menstrual drop, Follicular sprout, Ovulatory sun, Luteal leaf.

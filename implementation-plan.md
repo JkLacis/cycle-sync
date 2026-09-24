@@ -15,7 +15,7 @@
 | Tasks | User-typed. Each task: title, date, start/end time, type. Saved in localStorage. Sample week only with `?demo=1`. |
 | Score | **Today only.** Each task rated High Sync (100) / Good (65) / Low Sync (0) for today's phase; score = average, 0–100. No tasks → "–". |
 | Good for you / Watch-outs | Exactly 3 short labels each: from today's High / Low Sync task types first, phase defaults fill the rest. |
-| Calendar | Alignment: week strip + tasks. Cycle Plan: full month calendar with phase colours. |
+| Calendar | Alignment: week strip + tasks. Cycle Plan: week calendar + phase bar (as in mockup), arrows move by week. |
 | Real | Onboarding, tasks, score, calendar, logging (localStorage), phase tips, demo mode. |
 | Mock | AI Coach = scripted replies + working breathing timer. Settings integrations = toggles that do nothing. |
 | Dropped | Energy leak audit, real AI, real calendar sync, wearables, WhatsApp. |
@@ -24,7 +24,7 @@
 
 ### Palette (updated 2026-09-24, tokens in `style.css` `:root`)
 Warm off-white bg `#f6f6f3`, navy text `#1c2b45`, blue `#4f86d6` (ring, selection), sage "good" card, soft peach "watch-out" card.
-Follicular `#7dbf9b` sage · Ovulatory `#f1b548` yellow · Luteal `#5b8fd6` blue · Menstrual `#e9a393` soft peach.
+Phase colours follow the Cycle Plan mockup (2026-09-24): Menstrual `#ec9ea6` soft pink · Follicular `#6f9fdf` blue · Ovulatory `#f1b548` yellow · Luteal `#6cbf8e` sage green.
 
 ### POWR labels
 Follicular = Prepare · Ovulatory = Open Up · Luteal = Work · Menstrual = Rest.
@@ -88,12 +88,14 @@ Follicular = Prepare · Ovulatory = Open Up · Luteal = Work · Menstrual = Rest
 - [x] Exactly 3 Good for you + 3 Watch-outs; event details name the better phase for Low Sync tasks
 - [x] Wording = suggestions, no medical claims
 
-### 8. [ ] Cycle Plan: calendar + phases
-- [ ] Month calendar: every day tinted with phase colour **and** phase letter; today highlighted
-- [ ] Prev/next month arrows work across year boundaries
-- [ ] Days with tasks show a small dot
-- [ ] Phase overview (wheel or 4 coloured cards) with POWR labels and day ranges for this user
-- [ ] Tap a phase → phase detail with Move / Eat / Work tips; back button returns
+### 8. [x] Cycle Plan (matches Cycle Plan mockup, updated 2026-09-24)
+- [x] Header "Cycle Plan" + calendar (back to this week) + avatar
+- [x] Phase wheel: 4 equal arcs (Menstrual top-left → Follicular → Ovulatory → Luteal), white marker in today's phase; centre "Day X / Phase / icon"
+- [x] 4 phase cards; current phase underlined; tap → phase detail
+- [x] Week calendar: month title, prev/next week arrows (work across month/year), today in blue circle, phase dot per day, phase colour bar with today marker
+- [x] Track Today: 5 tiles (Energy, Mood, Focus, Sleep, Nutrition) — look only, wired in step 9
+- [x] Phase Focus: 3 tiles for the current phase → phase detail
+- [x] Phase detail: POWR label, day range for this user, Move / Eat / Work tips; back button returns
 
 ### 9. [ ] Quick logging (in Cycle Plan)
 - [ ] Today's log: energy 0–10 slider, mood, focus, sleep (<8h / 8h / >8h), phase food check-in
