@@ -67,7 +67,8 @@ instructions. Technical language is fine when he is driving; keep it simple for 
 four cycle phases she's in, it suggests how to **move**, what to **eat**, and what kind of **work** suits her energy.
 
 ## Tech
-- Plain HTML/CSS/JS, three files: `index.html`, `style.css`, `app.js`. No frameworks, npm or build tools.
+- Plain HTML/CSS/JS, four files: `index.html`, `style.css`, `content.js` (all app text, data only), `app.js` (logic).
+  No frameworks, npm or build tools. *(content.js added 2026-09-24, DECISIONS.md D5)*
 - Single-page app: screens are `<section>`s shown/hidden with JS, no reloads.
 - Data in `localStorage` (no backend, no login).
 - Mobile-first. On wide screens, show the app centred in a ~390px phone frame.
@@ -79,7 +80,7 @@ four cycle phases she's in, it suggests how to **move**, what to **eat**, and wh
 ## Screens
 - Bottom dock, 4 tabs: **Alignment · Cycle Plan · Coach · Settings** (icons + labels).
 - **Onboarding** (first visit): last period start (no future dates), cycle length (default 28, 21–35),
-  period length (default 5, 3–7). Validate. Note: "For general wellness only. Not medical advice, and not for contraception."
+  period length (default 5, 2–7 — NHS range). Validate. Note: "For general wellness only. Not medical advice, and not for contraception."
 - **Alignment** (final design): hero card with drawn flower (DAY X / phase + icon / View phase details, score ring
   "78 /100 Cycle Alignment"); recommendation bar; Good for you (3) + Watch-outs (3) side by side;
   "Your Calendar This Week" + View Full Calendar, Mon–Sun strip, today's events (time, title, badge, chevron) + add task.
@@ -139,6 +140,13 @@ Exact colour tokens live in `:root` of style.css.
 ## Build order / progress
 See `implementation-plan.md` (steps 1–12 with "done when" criteria). Steps 1–11 done.
 
+## Feature decisions (Praful's review, 2026-09-24)
+- `DECISIONS.md` (repo root) = every interactive element with options + the chosen decision. Build from it.
+- `reference/CONTENT_NOTES.md` (local only) = PDF content by screen with page refs + web sources + evidence notes.
+- App-wide: on-device storage behind `store` (D1), current data model + `schemaVersion` (D2), luteal-anchored
+  phase calc labelled "estimated" (D3), local profile with optional first name, no login (D4), content in `content.js` (D5).
+- Excluded from content: fasting/calorie restriction/keto (PDF p. 13), PMS/fertility claims (p. 12), "adrenal fatigue" (p. 14).
+
 ## Decisions log
 - `reference/` (gitignored, never push — repo is public): mentor's example files from another project
   ("24" build spec, implementation plan, ClAUDEE.md). Used only as a model for spec/plan format.
@@ -151,9 +159,10 @@ See `implementation-plan.md` (steps 1–12 with "done when" criteria). Steps 1�
 - app.js sections: data (PHASES, TASK_TYPES, SYNC_LEVELS, ICONS) → date helpers → cycle logic →
   storage → `calendarSource` (the one place events come from; swap for Google/Outlook later) →
   `calculateCycleAlignment()` → demo seed → render functions per component → navigation → add-task sheet.
-- `?demo=1` uses its own localStorage key (`cyclesync.demo.tasks`) and always Day 14 Ovulatory.
-- localStorage keys all start with `cyclesync.` (settings, tasks, logs, prefs, demo.tasks, demo.logs, demo.version). `validateCycleSettings()` is shared
-  by Settings and (later) onboarding.
+- Storage: only the `store` object in app.js touches localStorage (JSON read/write never throws; bad saved settings
+  count as missing). Keys `cyclesync.<name>`; in `?demo=1` everything uses `cyclesync.demo.<name>` so demo never touches
+  real data, and settings are fixed to Day 14. `cyclesync.schemaVersion` + `MIGRATIONS` upgrade saved data.
+- `validateCycleSettings()` is shared by onboarding and Settings.
 - Tabs are `<button class="tab" data-screen="NAME">`; active tab gets class `active`.
 - Phone frame kicks in at `min-width: 600px` (390×844, dark bezel). Below that the app fills the screen.
 - Colours are CSS variables in `:root` of style.css (palette in Style section).

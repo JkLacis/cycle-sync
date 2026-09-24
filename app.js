@@ -2,129 +2,9 @@
 // 1. Data
 // =====================================================================
 
-// Phase order through a cycle. Colours come from CSS variables in style.css.
-const PHASE_ORDER = ["follicular", "ovulatory", "luteal", "menstrual"];
-
-// Suggestions inspired by In the FLO (own wording, not medical advice).
-// strengths / watchOuts fill the Alignment cards when today's tasks don't.
-// focus = Cycle Plan "Phase Focus" tiles. typical = usual phase length (legend).
-const PHASES = {
-  follicular: {
-    name: "Follicular",
-    powr: "Prepare",
-    icon: "sprout",
-    tagline: "Creativity and fresh starts. Energy is rising.",
-    move: ["Dance class", "Jumping rope", "Indoor cycling", "Hiking"],
-    eat: ["Broccoli and zucchini", "Oats and citrus", "Lentils and eggs", "Fermented foods"],
-    work: ["Start new projects", "Brainstorm", "Research new ideas", "Plan the month ahead"],
-    strengths: [
-      { label: "Big ideas", icon: "bulb" },
-      { label: "New projects", icon: "spark" },
-      { label: "Planning", icon: "compass" },
-    ],
-    watchOuts: [
-      { label: "Routine admin", icon: "doc" },
-      { label: "Over-booking", icon: "calendar" },
-      { label: "Late nights", icon: "moon" },
-    ],
-    focus: [
-      { label: "Start new projects", icon: "spark" },
-      { label: "Brainstorm", icon: "bulb" },
-      { label: "Light cardio", icon: "dumbbell" },
-    ],
-    typical: "7–10 days",
-  },
-  ovulatory: {
-    name: "Ovulatory",
-    powr: "Open Up",
-    icon: "sun",
-    tagline: "Communication. Energy and confidence are at their peak.",
-    move: ["HIIT", "Kettlebells", "Kickboxing", "Power yoga"],
-    eat: ["Spinach and red peppers", "Quinoa and berries", "Salmon or shrimp", "Plenty of fibre"],
-    work: ["Pitch and present", "Negotiate", "Network", "Have the important conversations"],
-    strengths: [
-      { label: "Networking", icon: "people" },
-      { label: "Big ideas", icon: "bulb" },
-      { label: "High energy", icon: "dumbbell" },
-    ],
-    watchOuts: [
-      { label: "Admin work", icon: "doc" },
-      { label: "High stress", icon: "bolt" },
-      { label: "Energy dips", icon: "moon" },
-    ],
-    focus: [
-      { label: "Networking", icon: "people" },
-      { label: "Share ideas", icon: "bulb" },
-      { label: "High energy activities", icon: "dumbbell" },
-    ],
-    typical: "3–4 days",
-  },
-  luteal: {
-    name: "Luteal",
-    powr: "Work",
-    icon: "leaf",
-    tagline: "Completion. Energy gradually winds down.",
-    move: ["Weight lifting", "Pilates", "Barre", "Yoga"],
-    eat: ["Sweet potato and squash", "Brown rice and chickpeas", "Leafy greens", "Apples and walnuts"],
-    work: ["Deep focused work", "Admin", "Wrap up projects", "Review documents"],
-    strengths: [
-      { label: "Deep work", icon: "target" },
-      { label: "Wrapping up", icon: "check" },
-      { label: "Strength", icon: "dumbbell" },
-    ],
-    watchOuts: [
-      { label: "New pitches", icon: "presentation" },
-      { label: "High stress", icon: "bolt" },
-      { label: "Skipping carbs", icon: "leaf" },
-    ],
-    focus: [
-      { label: "Deep work", icon: "target" },
-      { label: "Wrap up projects", icon: "check" },
-      { label: "Strength training", icon: "dumbbell" },
-    ],
-    typical: "10–14 days",
-  },
-  menstrual: {
-    name: "Menstrual",
-    powr: "Rest",
-    icon: "drop",
-    tagline: "Rest and reflection. Energy is at its lowest.",
-    move: ["Walking", "Yin yoga", "Gentle mat Pilates", "Rest"],
-    eat: ["Soups and stews", "Beets and mushrooms", "Kidney beans", "Herbal tea"],
-    work: ["Review the past month", "Journal", "Set intentions", "Take breaks"],
-    strengths: [
-      { label: "Reflection", icon: "pen" },
-      { label: "Rest", icon: "moon" },
-      { label: "Gentle walks", icon: "leaf" },
-    ],
-    watchOuts: [
-      { label: "Big meetings", icon: "people" },
-      { label: "Intense workouts", icon: "dumbbell" },
-      { label: "Packed days", icon: "calendar" },
-    ],
-    focus: [
-      { label: "Reflect and journal", icon: "pen" },
-      { label: "Rest", icon: "moon" },
-      { label: "Gentle walks", icon: "leaf" },
-    ],
-    typical: "3–7 days",
-  },
-};
-
-// Task types. See getSyncLevel() for how suits / avoid become a sync level.
-const TASK_TYPES = {
-  pitch:      { label: "Pitch / presentation",          short: "Presenting",  icon: "presentation", suits: ["ovulatory"],               avoid: ["menstrual"] },
-  networking: { label: "Networking / key conversation", short: "Networking",  icon: "people",       suits: ["ovulatory"],               avoid: ["menstrual"] },
-  meeting:    { label: "Meeting / check-in",            short: "Meetings",    icon: "chat",         suits: [],                          avoid: ["menstrual"] },
-  brainstorm: { label: "Brainstorm / new project",      short: "Big ideas",   icon: "bulb",         suits: ["follicular"],              avoid: ["luteal"] },
-  planning:   { label: "Planning / research",           short: "Planning",    icon: "compass",      suits: ["follicular"],              avoid: [] },
-  deepwork:   { label: "Deep work / admin",             short: "Admin work",  icon: "doc",          suits: ["luteal"],                  avoid: [] },
-  wrapup:     { label: "Wrap-up / finishing",           short: "Wrapping up", icon: "check",        suits: ["luteal"],                  avoid: ["follicular"] },
-  review:     { label: "Review / reflection",           short: "Reflection",  icon: "pen",          suits: ["menstrual"],               avoid: ["ovulatory"] },
-  hiit:       { label: "High-intensity workout",        short: "High energy", icon: "dumbbell",     suits: ["follicular", "ovulatory"], avoid: ["menstrual"] },
-  strength:   { label: "Strength / Pilates / yoga",     short: "Strength",    icon: "target",       suits: ["luteal"],                  avoid: [] },
-  rest:       { label: "Rest / gentle walk",            short: "Rest",        icon: "leaf",         suits: ["menstrual"],               avoid: [] },
-};
+// Text content lives in content.js (loaded first). Short aliases for the two most used parts.
+const PHASES = CONTENT.phases;
+const TASK_TYPES = CONTENT.taskTypes;
 
 // How well one task fits the phase on its day. points feed the 0–100 score.
 const SYNC_LEVELS = {
@@ -351,18 +231,19 @@ function getCycleState(date, settings) {
 
 const IS_DEMO = new URLSearchParams(location.search).get("demo") === "1";
 const STORAGE_PREFIX = "cyclesync.";
-const STORAGE_KEYS = {
-  settings: STORAGE_PREFIX + "settings",
-  tasks: STORAGE_PREFIX + (IS_DEMO ? "demo.tasks" : "tasks"),
-  logs: STORAGE_PREFIX + (IS_DEMO ? "demo.logs" : "logs"),
-  prefs: STORAGE_PREFIX + "prefs",
-  demoVersion: STORAGE_PREFIX + "demo.version",
-};
+// Demo mode keeps its own copies, so ?demo=1 never touches real data.
+const STORAGE_NS = STORAGE_PREFIX + (IS_DEMO ? "demo." : "");
+// Bump SCHEMA_VERSION and add a MIGRATIONS entry whenever the saved data shape changes.
+// Data saved before versioning existed counts as version 1.
+const SCHEMA_VERSION = 1;
+const SCHEMA_KEY = STORAGE_PREFIX + "schemaVersion";
+// { n: () => void } upgrades saved data from version n to n + 1.
+const MIGRATIONS = {};
 
-// Allowed ranges for the cycle form (onboarding + Settings).
+// Allowed ranges for the cycle form (onboarding + Settings). NHS: cycles 21–35 days, periods 2–7 days.
 const CYCLE_LIMITS = {
   cycleLength: { min: 21, max: 35 },
-  periodLength: { min: 3, max: 7 },
+  periodLength: { min: 2, max: 7 },
 };
 
 // Demo mode (and the screens drawn behind onboarding): 28/5 cycle with today as day 14.
@@ -372,20 +253,11 @@ const DEFAULT_SETTINGS = {
   periodLength: 5,
 };
 
-function loadSettings() {
-  if (IS_DEMO) return DEFAULT_SETTINGS;
-  const saved = localStorage.getItem(STORAGE_KEYS.settings);
-  return saved ? JSON.parse(saved) : DEFAULT_SETTINGS;
-}
-
-// False until onboarding has saved the user's cycle data.
-function hasSettings() {
-  return IS_DEMO || localStorage.getItem(STORAGE_KEYS.settings) !== null;
-}
-
-function saveSettings(settings) {
-  localStorage.setItem(STORAGE_KEYS.settings, JSON.stringify(settings));
-}
+// Integration switches + notification toggle (for show only, nothing is sent).
+const DEFAULT_PREFS = {
+  integrations: { whatsapp: true, gcal: true },
+  weeklyInsight: true,
+};
 
 // Returns an error message, or "" when the settings are fine.
 function validateCycleSettings({ lastPeriodStart, cycleLength, periodLength }) {
@@ -401,45 +273,108 @@ function validateCycleSettings({ lastPeriodStart, cycleLength, periodLength }) {
   return "";
 }
 
-// Integration switches + notification toggle (for show only, nothing is sent).
-const DEFAULT_PREFS = {
-  integrations: { whatsapp: true, gcal: true },
-  weeklyInsight: true,
+// Low-level JSON read/write. Corrupt or blocked storage falls back instead of crashing the app.
+function readJSON(key, fallback) {
+  try {
+    const raw = localStorage.getItem(STORAGE_NS + key);
+    return raw === null ? fallback : JSON.parse(raw);
+  } catch (err) {
+    console.warn("Cycle Sync: could not read " + key, err);
+    return fallback;
+  }
+}
+
+function writeJSON(key, value) {
+  try {
+    localStorage.setItem(STORAGE_NS + key, JSON.stringify(value));
+    return true;
+  } catch (err) {
+    console.warn("Cycle Sync: could not save " + key, err);
+    showToast("Couldn't save. Storage may be full or blocked.");
+    return false;
+  }
+}
+
+// The only code that touches localStorage. Swap this object to move to a server later.
+const store = {
+  settings: {
+    // Invalid saved data (e.g. edited by hand) is treated as missing, so onboarding runs again.
+    loadSaved() {
+      const saved = readJSON("settings", null);
+      return saved && !validateCycleSettings(saved) ? saved : null;
+    },
+    load() {
+      return IS_DEMO ? DEFAULT_SETTINGS : this.loadSaved() ?? DEFAULT_SETTINGS;
+    },
+    // False until onboarding has saved valid cycle data.
+    exists() {
+      return IS_DEMO || this.loadSaved() !== null;
+    },
+    save(settings) {
+      return writeJSON("settings", settings);
+    },
+  },
+  // [{ id, title, date: "YYYY-MM-DD", start: "HH:MM", end: "HH:MM", type }]
+  tasks: {
+    load() {
+      return readJSON("tasks", []);
+    },
+    save(tasks) {
+      return writeJSON("tasks", tasks);
+    },
+  },
+  // Daily check-ins: { "YYYY-MM-DD": { energy, mood, focus, sleep } }
+  logs: {
+    load() {
+      return readJSON("logs", {});
+    },
+    saveDay(isoDate, log) {
+      return writeJSON("logs", { ...this.load(), [isoDate]: log });
+    },
+    replaceAll(logs) {
+      return writeJSON("logs", logs);
+    },
+  },
+  prefs: {
+    load() {
+      return { ...DEFAULT_PREFS, ...readJSON("prefs", {}) };
+    },
+    save(prefs) {
+      return writeJSON("prefs", prefs);
+    },
+  },
+  demoVersion: {
+    load() {
+      return readJSON("version", null);
+    },
+    save(version) {
+      return writeJSON("version", version);
+    },
+  },
+  // Removes everything Cycle Sync saved in this browser (real and demo data).
+  clearAll() {
+    try {
+      Object.keys(localStorage)
+        .filter((key) => key.startsWith(STORAGE_PREFIX))
+        .forEach((key) => localStorage.removeItem(key));
+    } catch (err) {
+      console.warn("Cycle Sync: could not clear storage", err);
+    }
+  },
 };
 
-function loadPrefs() {
-  const saved = localStorage.getItem(STORAGE_KEYS.prefs);
-  return saved ? JSON.parse(saved) : structuredClone(DEFAULT_PREFS);
-}
-
-function savePrefs(prefs) {
-  localStorage.setItem(STORAGE_KEYS.prefs, JSON.stringify(prefs));
-}
-
-// Removes everything Cycle Sync saved in this browser.
-function resetAllData() {
-  Object.keys(localStorage)
-    .filter((key) => key.startsWith(STORAGE_PREFIX))
-    .forEach((key) => localStorage.removeItem(key));
-}
-
-function loadTasks() {
-  const saved = localStorage.getItem(STORAGE_KEYS.tasks);
-  return saved ? JSON.parse(saved) : [];
-}
-
-function saveTasks(tasks) {
-  localStorage.setItem(STORAGE_KEYS.tasks, JSON.stringify(tasks));
-}
-
-// Daily check-ins: { "YYYY-MM-DD": { energy, mood, focus, sleep } }
-function loadLogs() {
-  const saved = localStorage.getItem(STORAGE_KEYS.logs);
-  return saved ? JSON.parse(saved) : {};
-}
-
-function saveLog(isoDate, log) {
-  localStorage.setItem(STORAGE_KEYS.logs, JSON.stringify({ ...loadLogs(), [isoDate]: log }));
+// Brings saved data up to SCHEMA_VERSION, one step at a time.
+function migrateStorage() {
+  try {
+    let version = Number(localStorage.getItem(SCHEMA_KEY)) || 1;
+    while (version < SCHEMA_VERSION) {
+      MIGRATIONS[version]();
+      version++;
+    }
+    localStorage.setItem(SCHEMA_KEY, String(SCHEMA_VERSION));
+  } catch (err) {
+    console.warn("Cycle Sync: storage migration failed", err);
+  }
 }
 
 // =====================================================================
@@ -451,16 +386,16 @@ function saveLog(isoDate, log) {
 
 const calendarSource = {
   getEvents(isoDate) {
-    return loadTasks()
+    return store.tasks.load()
       .filter((t) => t.date === isoDate)
       .sort((a, b) => a.start.localeCompare(b.start));
   },
   addEvent(event) {
     const id = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
-    saveTasks([...loadTasks(), { ...event, id }]);
+    store.tasks.save([...store.tasks.load(), { ...event, id }]);
   },
   deleteEvent(id) {
-    saveTasks(loadTasks().filter((t) => t.id !== id));
+    store.tasks.save(store.tasks.load().filter((t) => t.id !== id));
   },
 };
 
@@ -521,7 +456,7 @@ function suitedPhaseNames(typeId) {
 const DEMO_VERSION = "2";
 
 function seedDemoData() {
-  if (localStorage.getItem(STORAGE_KEYS.demoVersion) === DEMO_VERSION) return;
+  if (store.demoVersion.load() === DEMO_VERSION) return;
   const t = today();
   const day = (offset) => toISODate(addDays(t, offset));
   // Today = the three events from the mockup (score 78 on Day 14).
@@ -538,9 +473,9 @@ function seedDemoData() {
     { title: "Close out Q3 report", date: day(3),  start: "10:00", end: "12:00", type: "wrapup" },
   ];
   tasks.forEach((task, i) => (task.id = "demo" + i));
-  saveTasks(tasks);
-  localStorage.setItem(STORAGE_KEYS.logs, JSON.stringify({ [day(0)]: { energy: 7, mood: "Good", focus: "High", sleep: "8h" } }));
-  localStorage.setItem(STORAGE_KEYS.demoVersion, DEMO_VERSION);
+  store.tasks.save(tasks);
+  store.logs.replaceAll({ [day(0)]: { energy: 7, mood: "Good", focus: "High", sleep: "8h" } });
+  store.demoVersion.save(DEMO_VERSION);
 }
 
 // =====================================================================
@@ -688,7 +623,7 @@ function renderDayEvents(settings) {
 
 // Draws the whole Alignment screen from current data.
 function renderAlignment() {
-  const settings = loadSettings();
+  const settings = store.settings.load();
   const now = getCycleState(today(), settings);
   const result = calculateCycleAlignment({
     phase: now.phaseKey,
@@ -828,7 +763,7 @@ const LOG_FIELDS = [
 const DEFAULT_ENERGY = 5;
 
 function renderTrackToday() {
-  const log = loadLogs()[toISODate(today())] || {};
+  const log = store.logs.load()[toISODate(today())] || {};
   document.getElementById("track-grid").innerHTML = LOG_FIELDS.map((f) => {
     const value = log[f.id] === undefined ? "–" : f.format ? f.format(log[f.id]) : log[f.id];
     return (
@@ -855,7 +790,7 @@ const logDialog = document.getElementById("log-dialog");
 const logForm = document.getElementById("log-form");
 
 function openLogDialog(fieldId) {
-  const log = loadLogs()[toISODate(today())] || {};
+  const log = store.logs.load()[toISODate(today())] || {};
   logForm.reset();
   logForm.elements.energy.value = log.energy ?? DEFAULT_ENERGY;
   document.getElementById("energy-out").textContent = logForm.elements.energy.value;
@@ -882,7 +817,7 @@ logForm.addEventListener("submit", function (e) {
     const checked = this.querySelector('input[name="' + f.id + '"]:checked');
     if (f.options && checked) log[f.id] = checked.value;
   }
-  saveLog(toISODate(today()), log);
+  store.logs.saveDay(toISODate(today()), log);
   logDialog.close();
   renderTrackToday();
 });
@@ -901,7 +836,7 @@ function renderPhaseFocus(state) {
 }
 
 function renderPlan() {
-  const settings = loadSettings();
+  const settings = store.settings.load();
   const now = getCycleState(today(), settings);
   renderPlanHero(now, settings);
   renderMonth(settings);
@@ -921,7 +856,7 @@ function renderTipCard(title, iconName, items) {
 
 function renderPhaseDetail(phaseKey) {
   const phase = PHASES[phaseKey];
-  const days = phaseRangeText(getPhaseRanges(loadSettings())[phaseKey]);
+  const days = phaseRangeText(getPhaseRanges(store.settings.load())[phaseKey]);
   document.getElementById("phase-detail").innerHTML =
     '<div class="detail-head" style="--phase-color: var(--' + phaseKey + ')">' +
       '<span class="phase-icon">' + icon(phase.icon) + "</span>" +
@@ -939,88 +874,25 @@ function renderPhaseDetail(phaseKey) {
 // 10. AI Coach screen (scripted demo: pre-written replies, not real AI)
 // =====================================================================
 
-// Phase scripts for "Help me set boundaries": boundaries in Luteal/Menstrual,
-// intentions and outreach in Follicular/Ovulatory.
-const BOUNDARY_SCRIPTS = {
-  follicular: {
-    text: "Your energy is rising, so it's a good time to set intentions. Write down what you'll say yes to this cycle, and what you'll leave out.",
-    after: 'If something doesn\'t fit, try: "I\'d love to help once this project is launched."',
-  },
-  ovulatory: {
-    text: "A great time to reach out. Pick one person to contact today: a mentor, a client or a colleague.",
-    after: 'Try: "I\'d love 20 minutes to share an idea with you." Say yes to the conversations that matter, and no to the rest.',
-  },
-  luteal: {
-    text: "Protect your focus this week. Block time for deep work and keep meetings short.",
-    after: 'Try: "I can\'t take this on this week, but I can look at it on Monday."',
-  },
-  menstrual: {
-    text: "Give yourself room to rest. Keep today light and move what can wait.",
-    after: 'Try: "I\'m keeping today light. Can we move this to next week?"',
-  },
-};
+const COACH = CONTENT.coach;
 
-// Question buttons. Typed questions are matched to a topic by keyword.
-// reply(phaseKey) → { text, list?, after?, session? }
-const COACH_TOPICS = [
-  {
-    id: "focus",
-    question: "How can I stay focused today?",
-    keywords: ["focus", "work", "productive", "concentrat", "task"],
-    reply: (key) => ({
-      text: "You're in your " + PHASES[key].name + " phase (" + PHASES[key].powr + "). Good fits for today:",
-      list: PHASES[key].work,
-    }),
-  },
-  {
-    id: "eat",
-    question: "What should I eat?",
-    keywords: ["eat", "food", "meal", "hungry", "snack", "nutrition", "cook"],
-    reply: (key) => ({
-      text: "Some ideas for your " + PHASES[key].name + " phase:",
-      list: PHASES[key].eat,
-      after: "Suggestions only. Eat what feels good for you.",
-    }),
-  },
-  {
-    id: "boundaries",
-    question: "Help me set boundaries",
-    keywords: ["boundar", "say no", "overwhelm", "busy", "stress", "intention"],
-    reply: (key) => BOUNDARY_SCRIPTS[key],
-  },
-  {
-    id: "breathing",
-    question: "A quick breathing exercise",
-    keywords: ["breath", "calm", "anxious", "relax", "reset"],
-    reply: () => ({ text: "Let's slow down for two minutes. Breathe in for 4, out for 6.", session: "calm" }),
-  },
-];
+// Fills "{phase}", "{powr}", ... in a content template for one phase.
+function fillTemplate(template, phaseKey) {
+  const phase = PHASES[phaseKey];
+  const vars = { phase: phase.name, powr: phase.powr, tagline: phase.tagline, firstMove: phase.move[0], firstWork: phase.work[0] };
+  return template.replace(/\{(\w+)\}/g, (match, name) => (name in vars ? vars[name] : match));
+}
 
-const COACH_FALLBACK = {
-  text: "I'm a demo coach, so I can help with a few things:",
-  list: ["Staying focused", "What to eat", "Setting boundaries", "A quick breathing exercise"],
-  after: "Tap a question above to try one.",
-};
-
-// Suggested for You. tips(phase) → 3 short lines shown in the timer.
-const COACH_SESSIONS = [
-  {
-    id: "calm", title: "Calm your mind", minutes: 2, art: "water",
-    tips: (p) => ["Sit comfortably and relax your shoulders.", "Let each breath out be a little longer.", p.name + " phase: " + p.tagline],
-  },
-  {
-    id: "energy", title: "Boost energy", minutes: 3, art: "sunrise",
-    tips: (p) => ["Stand up and roll your shoulders.", "Take a few brisk steps between breaths.", "Movement idea for your " + p.name + " phase: " + p.move[0] + "."],
-  },
-  {
-    id: "goals", title: "Set clear goals", minutes: 2, art: "notebook",
-    tips: (p) => ["Write down one goal for today.", "Keep it small and specific.", "Good fit for your " + p.name + " phase: " + p.work[0] + "."],
-  },
-  {
-    id: "sleep", title: "Better sleep", minutes: 3, art: "mountains",
-    tips: () => ["Dim the lights and put your phone away.", "Let your breath out be slow and long.", "A warm, caffeine-free drink can help you wind down."],
-  },
-];
+// Content reply spec → message for today's phase: { text, list?, after?, session? }
+function coachReply(reply, phaseKey) {
+  const spec = reply.byPhase ? reply.byPhase[phaseKey] : reply;
+  return {
+    text: fillTemplate(spec.text, phaseKey),
+    list: typeof spec.list === "string" ? PHASES[phaseKey][spec.list] : spec.list,
+    after: spec.after && fillTemplate(spec.after, phaseKey),
+    session: spec.session,
+  };
+}
 
 // Drawn scenes for the session cards (stand-ins for photos).
 const SESSION_ART = {
@@ -1057,18 +929,18 @@ const chatMessages = [];
 
 function findTopic(text) {
   const lower = text.toLowerCase();
-  return COACH_TOPICS.find((t) => t.keywords.some((k) => lower.includes(k)));
+  return COACH.topics.find((t) => t.keywords.some((k) => lower.includes(k)));
 }
 
 function renderCoachChips() {
-  document.getElementById("coach-chips").innerHTML = COACH_TOPICS.map((t) =>
+  document.getElementById("coach-chips").innerHTML = COACH.topics.map((t) =>
     '<button type="button" class="chip" data-topic="' + t.id + '">' + t.question + icon("arrow") + "</button>"
   ).join("");
 }
 
 function renderChatMessage(m) {
   if (m.from === "user") return '<div class="bubble bubble-user">' + escapeHTML(m.text) + "</div>";
-  const session = m.session && COACH_SESSIONS.find((s) => s.id === m.session);
+  const session = m.session && COACH.sessions.find((s) => s.id === m.session);
   return (
     '<div class="bubble bubble-coach">' +
       "<p>" + m.text + "</p>" +
@@ -1093,15 +965,15 @@ function scrollToLastMessage() {
 
 // One question → one scripted reply for today's phase.
 function askCoach(text, topic = findTopic(text)) {
-  const phaseKey = getCycleState(today(), loadSettings()).phaseKey;
+  const phaseKey = getCycleState(today(), store.settings.load()).phaseKey;
   chatMessages.push({ from: "user", text });
-  chatMessages.push({ from: "coach", ...(topic ? topic.reply(phaseKey) : COACH_FALLBACK) });
+  chatMessages.push({ from: "coach", ...coachReply(topic ? topic.reply : COACH.fallback, phaseKey) });
   renderChat();
   scrollToLastMessage();
 }
 
 function renderSessions() {
-  document.getElementById("session-row").innerHTML = COACH_SESSIONS.map((s) =>
+  document.getElementById("session-row").innerHTML = COACH.sessions.map((s) =>
     '<button type="button" class="session-card" data-session="' + s.id + '">' +
       '<svg class="session-art" viewBox="0 0 100 160" preserveAspectRatio="xMidYMid slice" aria-hidden="true">' + SESSION_ART[s.art] + "</svg>" +
       '<span class="session-play">' + icon("play") + "</span>" +
@@ -1169,11 +1041,11 @@ function startTimer() {
 }
 
 function openSession(id) {
-  const session = COACH_SESSIONS.find((s) => s.id === id);
-  const phase = getCycleState(today(), loadSettings()).phase;
+  const session = COACH.sessions.find((s) => s.id === id);
+  const phaseKey = getCycleState(today(), store.settings.load()).phaseKey;
   timer = { session, remaining: session.minutes * 60, elapsed: 0, intervalId: null };
   document.getElementById("timer-title").textContent = session.title;
-  document.getElementById("timer-tips").innerHTML = session.tips(phase).map((t) => "<li>" + t + "</li>").join("");
+  document.getElementById("timer-tips").innerHTML = session.tips.map((t) => "<li>" + fillTemplate(t, phaseKey) + "</li>").join("");
   setBreath("", "Ready when you are");
   renderTimer();
   timerDialog.showModal();
@@ -1205,33 +1077,16 @@ document.getElementById("ask-form").addEventListener("submit", function (e) {
 // 11. Settings screen
 // =====================================================================
 
-// Small drawn logos (24×24, filled) for the integration cards.
-const INTEGRATIONS = [
-  {
-    id: "whatsapp", name: "WhatsApp",
-    logo: '<rect width="24" height="24" rx="6" fill="#2fbf62"/><path d="M12 5.5a6.5 6.5 0 0 0-5.6 9.8L5.5 18.5l3.3-.9A6.5 6.5 0 1 0 12 5.5z" fill="none" stroke="#fff" stroke-width="1.6"/><path d="M9.5 9.5c0 2.5 2.5 5 5 5l.8-1.2-1.4-.7-.6.6c-.9-.4-1.6-1.1-2-2l.6-.6-.7-1.4z" fill="#fff"/>',
-  },
-  {
-    id: "gcal", name: "Google Calendar",
-    logo: '<rect x="2" y="2" width="20" height="20" rx="4" fill="#fff" stroke="#dfe3ea"/><path d="M2 6a4 4 0 0 1 4-4h12a4 4 0 0 1 4 4v2H2z" fill="#4285f4"/><text x="12" y="18.5" text-anchor="middle" font-size="9" font-weight="700" fill="#4285f4" font-family="system-ui, sans-serif">31</text>',
-  },
-  {
-    id: "apple", name: "Apple Health",
-    logo: '<rect x="2" y="2" width="20" height="20" rx="5" fill="#fff" stroke="#eceff3"/><path d="M12 18s-6-3.6-6-8a3.3 3.3 0 0 1 6-1.9A3.3 3.3 0 0 1 18 10c0 4.4-6 8-6 8z" fill="#f0506e"/>',
-  },
-  {
-    id: "outlook", name: "Outlook",
-    logo: '<rect width="24" height="24" rx="6" fill="#1f6fd1"/><ellipse cx="12" cy="12" rx="4.5" ry="5.5" fill="none" stroke="#fff" stroke-width="2.2"/>',
-  },
-  {
-    id: "garmin", name: "Garmin",
-    logo: '<rect width="24" height="24" rx="6" fill="#1c2b45"/><path d="M12 6 18 17H6z" fill="#fff"/>',
-  },
-  {
-    id: "oura", name: "Oura",
-    logo: '<rect width="24" height="24" rx="6" fill="#2a2f3a"/><circle cx="12" cy="13" r="5" fill="none" stroke="#fff" stroke-width="1.8"/><path d="M9 6.5h6" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/>',
-  },
-];
+// Small drawn logos (24×24, filled) for the integration cards; names come from content.js.
+const INTEGRATION_LOGOS = {
+  whatsapp: '<rect width="24" height="24" rx="6" fill="#2fbf62"/><path d="M12 5.5a6.5 6.5 0 0 0-5.6 9.8L5.5 18.5l3.3-.9A6.5 6.5 0 1 0 12 5.5z" fill="none" stroke="#fff" stroke-width="1.6"/><path d="M9.5 9.5c0 2.5 2.5 5 5 5l.8-1.2-1.4-.7-.6.6c-.9-.4-1.6-1.1-2-2l.6-.6-.7-1.4z" fill="#fff"/>',
+  gcal: '<rect x="2" y="2" width="20" height="20" rx="4" fill="#fff" stroke="#dfe3ea"/><path d="M2 6a4 4 0 0 1 4-4h12a4 4 0 0 1 4 4v2H2z" fill="#4285f4"/><text x="12" y="18.5" text-anchor="middle" font-size="9" font-weight="700" fill="#4285f4" font-family="system-ui, sans-serif">31</text>',
+  apple: '<rect x="2" y="2" width="20" height="20" rx="5" fill="#fff" stroke="#eceff3"/><path d="M12 18s-6-3.6-6-8a3.3 3.3 0 0 1 6-1.9A3.3 3.3 0 0 1 18 10c0 4.4-6 8-6 8z" fill="#f0506e"/>',
+  outlook: '<rect width="24" height="24" rx="6" fill="#1f6fd1"/><ellipse cx="12" cy="12" rx="4.5" ry="5.5" fill="none" stroke="#fff" stroke-width="2.2"/>',
+  garmin: '<rect width="24" height="24" rx="6" fill="#1c2b45"/><path d="M12 6 18 17H6z" fill="#fff"/>',
+  oura: '<rect width="24" height="24" rx="6" fill="#2a2f3a"/><circle cx="12" cy="13" r="5" fill="none" stroke="#fff" stroke-width="1.8"/><path d="M9 6.5h6" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/>',
+};
+const INTEGRATIONS = CONTENT.integrations;
 const INTEGRATIONS_SHOWN = 3; // before "See All"
 const TOAST_MS = 2000;
 
@@ -1247,13 +1102,13 @@ function showToast(text) {
 }
 
 function renderIntegrations() {
-  const connected = loadPrefs().integrations;
+  const connected = store.prefs.load().integrations;
   const list = showAllIntegrations ? INTEGRATIONS : INTEGRATIONS.slice(0, INTEGRATIONS_SHOWN);
   document.getElementById("int-grid").innerHTML = list.map((item) => {
     const on = Boolean(connected[item.id]);
     return (
       '<button type="button" class="int-card' + (on ? " is-on" : "") + '" data-integration="' + item.id + '" aria-pressed="' + on + '">' +
-        '<svg class="int-logo" viewBox="0 0 24 24" aria-hidden="true">' + item.logo + "</svg>" +
+        '<svg class="int-logo" viewBox="0 0 24 24" aria-hidden="true">' + INTEGRATION_LOGOS[item.id] + "</svg>" +
         '<span class="int-chevron">' + icon("chevron") + "</span>" +
         '<span class="int-name">' + item.name + "</span>" +
         '<span class="int-status">' + (on ? "Connected" : "Not connected") + "</span>" +
@@ -1263,9 +1118,9 @@ function renderIntegrations() {
 }
 
 function toggleIntegration(id) {
-  const prefs = loadPrefs();
+  const prefs = store.prefs.load();
   prefs.integrations[id] = !prefs.integrations[id];
-  savePrefs(prefs);
+  store.prefs.save(prefs);
   renderIntegrations();
   const name = INTEGRATIONS.find((i) => i.id === id).name;
   showToast(name + (prefs.integrations[id] ? " connected (demo)" : " disconnected"));
@@ -1273,7 +1128,7 @@ function toggleIntegration(id) {
 
 function fillCycleForm() {
   const form = document.getElementById("cycle-form");
-  const settings = loadSettings();
+  const settings = store.settings.load();
   form.elements.lastPeriodStart.value = settings.lastPeriodStart;
   form.elements.lastPeriodStart.max = toISODate(today());
   form.elements.cycleLength.value = settings.cycleLength;
@@ -1294,8 +1149,7 @@ function submitCycleForm(form, errorId) {
   };
   const error = validateCycleSettings(settings);
   document.getElementById(errorId).textContent = error;
-  if (error) return false;
-  saveSettings(settings);
+  if (error || !store.settings.save(settings)) return false;
   renderAlignment();
   renderPlan();
   return true;
@@ -1314,9 +1168,9 @@ document.getElementById("onboard-form").addEventListener("submit", function (e) 
 });
 
 document.getElementById("weekly-toggle").addEventListener("change", function () {
-  const prefs = loadPrefs();
+  const prefs = store.prefs.load();
   prefs.weeklyInsight = this.checked;
-  savePrefs(prefs);
+  store.prefs.save(prefs);
   showToast("Weekly insight " + (this.checked ? "on" : "off") + " (demo)");
 });
 
@@ -1326,7 +1180,7 @@ function formatLongDate(date) {
 
 // Plain-text summary to share with a doctor.
 function buildDoctorReport() {
-  const settings = loadSettings();
+  const settings = store.settings.load();
   const now = getCycleState(today(), settings);
   const ranges = getPhaseRanges(settings);
   const nextPeriod = addDays(today(), settings.cycleLength - now.cycleDay + 1);
@@ -1359,9 +1213,16 @@ function downloadDoctorReport() {
   showToast("Report downloaded");
 }
 
+function renderFaq() {
+  document.getElementById("faq-list").innerHTML = CONTENT.faq.map((item) =>
+    "<details><summary>" + item.q + icon("chevron") + "</summary><p>" + item.a + "</p></details>"
+  ).join("");
+}
+
 function renderSettings() {
   renderIntegrations();
-  document.getElementById("weekly-toggle").checked = loadPrefs().weeklyInsight;
+  renderFaq();
+  document.getElementById("weekly-toggle").checked = store.prefs.load().weeklyInsight;
 }
 
 // =====================================================================
@@ -1475,11 +1336,11 @@ document.addEventListener("click", function (e) {
     downloadDoctorReport();
   } else if (target.id === "reset-btn") {
     if (confirm("Delete all your Cycle Sync data on this device? This can't be undone.")) {
-      resetAllData();
+      store.clearAll();
       location.reload();
     }
   } else if (target.dataset.topic) {
-    const topic = COACH_TOPICS.find((t) => t.id === target.dataset.topic);
+    const topic = COACH.topics.find((t) => t.id === target.dataset.topic);
     askCoach(topic.question, topic);
   } else if (target.dataset.session) {
     openSession(target.dataset.session);
@@ -1496,10 +1357,10 @@ document.addEventListener("click", function (e) {
     showScreen("phase-detail");
   } else if (target.dataset.month) {
     planMonth = new Date(planMonth.getFullYear(), planMonth.getMonth() + Number(target.dataset.month), 1);
-    renderMonth(loadSettings());
+    renderMonth(store.settings.load());
   } else if (target.id === "plan-today-btn") {
     planMonth = new Date(today().getFullYear(), today().getMonth(), 1);
-    renderMonth(loadSettings());
+    renderMonth(store.settings.load());
   } else if (target.dataset.log) {
     openLogDialog(target.dataset.log);
   } else if (target.dataset.screen || target.dataset.go) {
@@ -1511,7 +1372,7 @@ document.addEventListener("click", function (e) {
     refocus('[data-date="' + target.dataset.date + '"]');
   } else if (target.dataset.event) {
     openEventId = openEventId === target.dataset.event ? null : target.dataset.event;
-    renderDayEvents(loadSettings());
+    renderDayEvents(store.settings.load());
     refocus('[data-event="' + target.dataset.event + '"]');
   } else if (target.dataset.delete) {
     calendarSource.deleteEvent(target.dataset.delete);
@@ -1522,6 +1383,7 @@ document.addEventListener("click", function (e) {
   }
 });
 
+migrateStorage();
 if (IS_DEMO) seedDemoData();
 buildRing();
 renderAlignment();
@@ -1531,4 +1393,4 @@ renderCoachChips();
 renderSessions();
 renderSettings();
 document.getElementById("onboard-form").elements.lastPeriodStart.max = toISODate(today());
-showScreen(hasSettings() ? "alignment" : "onboarding");
+showScreen(store.settings.exists() ? "alignment" : "onboarding");
