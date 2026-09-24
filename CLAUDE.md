@@ -16,6 +16,52 @@ Owner: JekabsL — first-year Start School / Qwasar student.
   (Plan to be written once the user's design doc from Google Drive is in the folder.)
 - Keep this file updated whenever a new decision is made.
 
+## ▶ START HERE (status as of 2026-09-24)
+- Done: steps 1–2 (git, GitHub, phone frame, 3-tab bar with empty screens). Step 3 not started.
+- **The brief is being revised.** User's new design doc `reference/prototype.docx` changes colours, tabs
+  and the main screen (summary below). Sections "Screens" and "Style" further down are the ORIGINAL brief —
+  partly superseded; don't build from them until the decisions below are made.
+- **Next session, in order:**
+  1. Read `reference/prototype.docx` (`pandoc -t plain reference/prototype.docx`) and skim
+     `reference/in-the-flo.pdf` (`pdftotext`), the theory source.
+  2. Look for any layout picture the user added to the folder.
+  3. Ask the open decisions below with AskUserQuestion.
+  4. Update this file, write `implementation-plan.md` (steps + acceptance criteria), then resume building.
+- Demo is **Friday 2026-09-25** — keep scope small; mock anything that needs a server.
+
+## Prototype doc summary (`reference/prototype.docx`)
+- **Look**: sleek, premium, professional "health intelligence tool", not a period tracker.
+  **Pale/soft blue main, green accent. No pink/purple/"girly" styling.**
+- **Bottom dock, 4 tabs**: Alignment (dashboard) · Cycle Plan · AI Coach · Settings/Profile.
+- **Alignment (main, "aha moment")**: header "Day 14 · Ovulatory Phase · Open Up";
+  circular ring score (e.g. 78% Schedule Alignment) = how well today's/upcoming calendar items match the phase;
+  **3 wins** + **3 watch-outs** (e.g. pitching in Ovulatory = win; admin-heavy work in Ovulatory, stressful
+  meetings in Menstrual, missing complex carbs in Luteal = watch-outs).
+  User also wants a **calendar with tasks below**, on this same screen.
+- **Cycle Plan**: colour-coded cycle wheel + linear calendar; phases with POWR labels:
+  Follicular = Prepare, Ovulatory = Open Up, Luteal = Work, Menstrual = Rest.
+  Quick logging: energy 0–10, mood, focus; sleep (<8h / 8h / >8h); phase food check-ins.
+- **AI Coach**: chat coach; 2–3 min breathing/grounding resets; phase-specific scripts; "energy leak audit".
+- **Settings**: Google Calendar/Outlook sync, wearables, WhatsApp daily summary, privacy.
+- **Not feasible for real by Friday (static app, no backend)**: Google Calendar sync, real AI chat,
+  wearables, WhatsApp → mock them (sample tasks/events, scripted coach, non-functional toggles) — user to confirm.
+
+## Open decisions (ask with AskUserQuestion)
+1. Tasks/events for the alignment score: built-in sample data, user-typed tasks, or both?
+2. How the alignment % is calculated (e.g. each task has a type; % = tasks whose type suits today's phase).
+3. Which tabs are real vs mock-up (AI Coach, Settings integrations, logging).
+4. Calendar on the Alignment screen, in Cycle Plan, or both.
+5. New colour palette (blue/green base; 4 phase colours that aren't pink/purple).
+6. Menstrual/Ovulatory overlap on short cycles (e.g. 21-day cycle + 7-day period): which phase wins?
+7. Do the original onboarding + demo mode (`?demo=1`) + Move/Eat/Work content stay? (Probably yes.)
+
+## Sources and content rules
+- `reference/in-the-flo.pdf` = excerpt of *In the FLO* (Alisa Vitti, © HarperCollins, all rights reserved).
+  **Never commit it; never copy its text into the app** — write our own short paraphrased suggestions.
+- Evidence for cycle syncing is limited: frame tips as "suggestions inspired by *In the FLO*", not
+  "research-proven". Avoid medical claims (e.g. "adrenal fatigue", "cortisol spike risk").
+- `reference/` is gitignored. Everything in it stays local.
+
 ## Concept
 "Cycle Sync" — cycle-syncing app for high-performing women. Based on which of the
 four cycle phases she's in, it suggests how to **move**, what to **eat**, and what kind of **work** suits her energy.
@@ -28,7 +74,7 @@ four cycle phases she's in, it suggests how to **move**, what to **eat**, and wh
 - Run: `python3 -m http.server 8000` → http://localhost:8000. On phone (same Wi-Fi):
   `http://<laptop-local-IP>:8000` (find IP with `hostname -I`). User is on Kubuntu 26.04.
 
-## Screens
+## Screens (ORIGINAL brief — being revised, see prototype doc summary)
 1. **Onboarding**: first day of last period (date picker, no future dates), cycle length
    (default 28, 21–35), period length (default 5, 3–7). Validate inputs. Note:
    "For general wellness only. Not medical advice, and not for contraception."
@@ -74,7 +120,7 @@ Order: Follicular → Ovulatory → Luteal → Menstrual.
 
 **Tone**: supportive suggestions, never rules. No calorie restriction, fasting, or weight-loss framing anywhere.
 
-## Style
+## Style (ORIGINAL — superseded: prototype doc wants pale blue + green, no pink/purple)
 Soft, warm, premium. Rounded cards, generous spacing, system font.
 Phase colours (exact shades TBD, user will give feedback): Follicular = sage green,
 Ovulatory = warm gold/coral, Luteal = terracotta/amber, Menstrual = deep berry/plum.
@@ -92,7 +138,8 @@ Ovulatory = warm gold/coral, Luteal = terracotta/amber, Menstrual = deep berry/p
 ## Decisions log
 - `reference/` (gitignored, never push — repo is public): mentor's example files from another project
   ("24" build spec, implementation plan, ClAUDEE.md). Used only as a model for spec/plan format.
-- Step 3 on hold: waiting for user's Google Doc before deciding Menstrual/Ovulatory overlap on short cycles.
+- Step 3 on hold until the open decisions above are answered.
+- User on Pro plan; start a fresh session per step to save usage (this file carries the context).
 - Git branch: `main`. Commit author: JekabsL. Remote `origin` = https://github.com/JkLacis/cycle-sync (public). `gh` CLI logged in as JkLacis.
 - Screens are `<section class="screen" id="screen-NAME">`, toggled via the `hidden` attribute by `showScreen(name)`.
   Screen names: onboarding, today, calendar, phases, phase-detail, settings.
