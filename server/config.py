@@ -38,6 +38,7 @@ class Settings:
     history_max_chars: int
     rate_per_minute: int
     rate_per_day: int
+    rate_global_per_day: int  # all users together; protects the (free) API quota on a public server
     db_path: Path
     host: str
     port: int
@@ -66,6 +67,7 @@ def load_settings() -> Settings:
         history_max_chars=_int("COACH_HISTORY_MAX_CHARS", 24000),
         rate_per_minute=_int("RATE_LIMIT_PER_MINUTE", 10),
         rate_per_day=_int("RATE_LIMIT_PER_DAY", 200),
+        rate_global_per_day=_int("RATE_LIMIT_GLOBAL_PER_DAY", 300),
         db_path=Path(os.getenv("COACH_DB_PATH", str(ROOT / "server" / "data" / "coach.db"))),
         host=os.getenv("HOST", "127.0.0.1"),
         port=_int("PORT", 8000),

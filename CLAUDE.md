@@ -30,7 +30,7 @@ instructions. Technical language is fine when he is driving; keep it simple for 
   **Key status:** the first Gemini key leaked into chat (pasted into `.env.example`, never pushed) and is now revoked
   (401). The one in `.env` is that dead key → user must paste a NEW key in `.env` (never in chat, never `.env.example`;
   check only that it's non-empty and test with a tiny call). Eval run 20260924-200616: only #2, #3 answered (not graded).
-  **Pending OK — Render plan (user picked Render for a public link):** `render.yaml` (python, free, build
+  **Render plan built 2026-09-24 (user asked for the link):** `render.yaml` (python, free, build
   `pip install -r server/requirements.txt`, start `python -m server`, health `/api/health`, `GEMINI_API_KEY` sync:false,
   HOST 0.0.0.0, PORT from Render), `.python-version` 3.14, trust proxy X-Forwarded-For only when env says so (per-IP
   limit), global daily cap (~300 msgs) to protect the free quota, README. User then: new key → render.com sign-up with

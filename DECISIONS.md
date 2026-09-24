@@ -410,6 +410,10 @@ on the device (D1), so the server cannot know phase/day unless the client sends 
 **Trade-offs:** A = zero infra, safe by Friday, only works where the laptop runs (phone blocked on guest Wi-Fi). B = works on any phone, but more setup, a hosting account and a privacy review.
 **Recommendation:** A now; server URL is one config value so B is a contained follow-up.
 **Decision:** A (2026-09-24)
+**Update (2026-09-24): B on Render** — user wants a public link for any network. `render.yaml` Blueprint (free plan,
+Python 3.14, server serves app + API, key entered in Render's dashboard). Per-visitor limit via proxy headers
+(`FORWARDED_ALLOW_IPS=*`), plus a global daily cap (`RATE_LIMIT_GLOBAL_PER_DAY=300`) so the public link can't drain the
+free Gemini quota. Free plan sleeps after 15 min; SQLite history is ephemeral there.
 
 ### C2 Server stack
 - **A)** FastAPI + uvicorn + `anthropic` (AsyncAnthropic) + `python-dotenv`: async SSE streaming, typed request validation.

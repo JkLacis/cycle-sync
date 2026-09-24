@@ -47,8 +47,18 @@ Open http://localhost:8000. Stop with **Ctrl+C**. Check the coach is ready: http
 | `COACH_EFFORT` | `low` | `low` / `medium` / `high` — thinking depth vs. speed and cost |
 | `HOST` / `PORT` | `127.0.0.1` / `8000` | Where the server listens (`0.0.0.0` to allow other devices on the network) |
 | `RATE_LIMIT_PER_MINUTE` / `RATE_LIMIT_PER_DAY` | `10` / `200` | Coach messages per client IP |
+| `RATE_LIMIT_GLOBAL_PER_DAY` | `300` | Coach messages per day for all users together (protects the free quota) |
+| `FORWARDED_ALLOW_IPS` | `127.0.0.1` | Set to `*` behind a hosting proxy (Render) so the per-visitor limit sees real IPs |
 | `COACH_TIMEOUT_SECONDS` | `90` | Max time for one answer |
 | `COACH_DB_PATH` | `server/data/coach.db` | SQLite file with conversation history (gitignored) |
+
+### Public link (Render, free)
+
+`render.yaml` describes the deployment. Once: sign up at https://render.com with GitHub → **New → Blueprint** → pick
+this repo → paste the Gemini key when asked for `GEMINI_API_KEY` → **Deploy**. The app is then at
+`https://<service-name>.onrender.com` and redeploys on every push to `main`.
+Free plan: sleeps after 15 min without visitors (first visit then takes ~1 min — open it before a demo); the server's
+conversation history is wiped on each restart (the chat on the phone stays).
 
 ### Without the server
 

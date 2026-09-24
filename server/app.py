@@ -30,6 +30,7 @@ STATIC_FILES = {"index.html", "style.css", "content.js", "app.js"}
 app = FastAPI(title="Cycle Sync", docs_url=None, redoc_url=None, openapi_url=None)
 store = ConversationStore(settings.db_path)
 limiter = RateLimiter(settings.rate_per_minute, settings.rate_per_day)
+daily_cap = RateLimiter(per_minute=10**9, per_day=settings.rate_global_per_day)
 provider = load_provider()  # COACH_PROVIDER: gemini (default) or claude
 client = provider.create_client(settings.api_key) if settings.api_key else None
 
@@ -73,9 +74,13 @@ async def coach(req: CoachRequest, request: Request):
     if client is None:
         key_name = PROVIDERS[settings.provider][0]
         return api_error(503, "not_configured", f"The AI coach isn't set up: add {key_name} to .env and restart the server.")
+    # Behind a proxy (Render), set FORWARDED_ALLOW_IPS so request.client is the visitor, not the proxy.
     wait = limiter.check(request.client.host if request.client else "unknown")
     if wait is not None:
         return api_error(429, "rate_limited", "Too many messages. Please wait a moment.", {"Retry-After": str(wait)})
+    wait = daily_cap.check("all")
+    if wait is not None:
+        return api_error(429, "daily_limit", "The coach has reached today's limit. Please try again tomorrow.", {"Retry-After": str(wait)})
 
     async def events():
         async for event in stream_reply(provider, client, store, req):

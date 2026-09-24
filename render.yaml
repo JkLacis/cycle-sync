@@ -1,0 +1,25 @@
+# Render Blueprint: the public Cycle Sync app with the AI coach (https://render.com → New → Blueprint).
+# The server serves the app and /api/coach. Secrets are entered in Render's dashboard, never in this file.
+services:
+  - type: web
+    name: cycle-sync
+    runtime: python
+    plan: free
+    buildCommand: pip install -r server/requirements.txt
+    startCommand: python -m server
+    healthCheckPath: /api/health
+    envVars:
+      - key: GEMINI_API_KEY
+        sync: false            # Render asks for it when the Blueprint is created
+      - key: COACH_PROVIDER
+        value: gemini
+      - key: HOST
+        value: 0.0.0.0         # PORT is set by Render
+      - key: FORWARDED_ALLOW_IPS
+        value: "*"             # trust Render's proxy headers so the per-visitor rate limit sees real IPs
+      - key: RATE_LIMIT_PER_MINUTE
+        value: "10"
+      - key: RATE_LIMIT_PER_DAY
+        value: "100"
+      - key: RATE_LIMIT_GLOBAL_PER_DAY
+        value: "300"
