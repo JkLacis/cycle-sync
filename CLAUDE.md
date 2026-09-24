@@ -18,8 +18,9 @@ instructions. Technical language is fine when he is driving; keep it simple for 
 - Keep this file updated whenever a new decision is made.
 
 ## ▶ START HERE (status as of 2026-09-24)
-- Done: steps 1–2. All open decisions answered (see "Decisions" below).
-- `implementation-plan.md` is the build plan — follow it step by step, next unticked step first (step 3: new look + 4-tab dock).
+- Done: steps 1–4, 6, 7 (Alignment page built to match `reference/home-mockup.webp`).
+- `implementation-plan.md` is the build plan — next unticked step first (step 5: onboarding).
+  Until onboarding exists, `DEFAULT_SETTINGS` in app.js makes today Day 14 (28/5 cycle).
 - Demo is **Friday 2026-09-25** — keep scope small; steps 9–11 can be cut/simplified if time runs out.
 
 ## Prototype doc summary (`reference/prototype.docx`)
@@ -40,13 +41,15 @@ instructions. Technical language is fine when he is driving; keep it simple for 
   wearables, WhatsApp → mocked (confirmed): scripted coach, non-functional toggles.
 
 ## Decisions (2026-09-24) — details in `implementation-plan.md`
-1. Tasks: **user-typed only** (no sample data). Task = title, date, type. localStorage.
-2. Score: % of tasks in the next 7 days whose type suits the phase on that task's day
-   (task-type → phase table in the plan). Wins = up to 3 suited, watch-outs = up to 3 unsuited.
+1. Tasks: user-typed. Task = title, date, start/end time, type. localStorage.
+   Sample week (like the mockup) loads **only with `?demo=1`**. *(updated 2026-09-24)*
+2. Score: **today only** — % of today's tasks whose type suits today's phase (0–100). No tasks today → "–".
+   Good for you / Watch-outs = always exactly 3 short labels each: from today's task types first,
+   phase's own strengths/watch-outs fill the gaps. *(updated 2026-09-24)*
 3. Real: logging, tasks, score, calendar, phase tips. Mock: AI Coach (scripted + real breathing timer),
    Settings integration toggles. **Energy leak audit dropped.**
 4. Calendar on **both**: Alignment = week strip + tasks; Cycle Plan = full month calendar.
-5. Palette "cool spectrum" (see Style).
+5. Palette: **match the mockup** `reference/home-mockup.webp` (warm off-white, blue, sage green, soft peach watch-outs, yellow Ovulatory). See Style. *(updated 2026-09-24)*
 6. Short-cycle overlap: **Menstrual wins**.
 7. Keep onboarding, demo mode `?demo=1`, Move/Eat/Work tips (shown in phase detail from Cycle Plan).
 
@@ -73,7 +76,9 @@ four cycle phases she's in, it suggests how to **move**, what to **eat**, and wh
 - Bottom dock, 4 tabs: **Alignment · Cycle Plan · Coach · Settings** (icons + labels).
 - **Onboarding** (first visit): last period start (no future dates), cycle length (default 28, 21–35),
   period length (default 5, 3–7). Validate. Note: "For general wellness only. Not medical advice, and not for contraception."
-- **Alignment**: header "Day X · <Phase> Phase · <POWR>", score ring, 3 wins + 3 watch-outs, week strip + tasks + add task.
+- **Alignment** (follow the mockup image): "Cycle Sync" + calendar icon + avatar; "DAY X / <Phase>" + phase icon;
+  score ring 0–100 ("78 /100 Cycle Alignment", not a phase wheel); Good for you (3) + Watch-outs (3);
+  "Your Calendar This Week" Mon–Sun strip + today's events (time, title, High Sync/Good/Low Sync, chevron) + add task.
 - **Cycle Plan**: month calendar (phase colour **and** letter, today highlighted, prev/next), phase overview,
   tap phase → phase detail (Move/Eat/Work), quick logging.
 - **Coach**: scripted chat, 2-min breathing reset, phase scripts. Labelled as demo, not real AI.
@@ -115,12 +120,13 @@ Order: Follicular → Ovulatory → Luteal → Menstrual.
 **Tone**: supportive suggestions, never rules. No calorie restriction, fasting, or weight-loss framing anywhere.
 
 ## Style
-Sleek, premium "health intelligence tool" — not a period tracker. **No pink/purple.** Rounded cards, generous spacing, system font.
-Base bg #eef4fb, text #1f3350, accent green #3fa77a.
-Phases: Follicular #3fa7a0 teal · Ovulatory #6bbf59 green · Luteal #4a6fa5 slate blue · Menstrual #2e3d5c navy.
+Sleek, premium "health intelligence tool" — not a period tracker. Minimal, lots of whitespace, little text.
+Match the mockup image (Praful's reference). Warm off-white bg, dark navy text, blue score ring,
+sage-green "good" card, very soft peach "watch-out" card (no aggressive red, no pink-heavy styling).
+Exact colour tokens live in `:root` of style.css.
 
 ## Build order / progress
-See `implementation-plan.md` (steps 1–12 with "done when" criteria). Steps 1–2 done.
+See `implementation-plan.md` (steps 1–12 with "done when" criteria). Steps 1–4, 6, 7 done.
 
 ## Decisions log
 - `reference/` (gitignored, never push — repo is public): mentor's example files from another project
@@ -128,7 +134,12 @@ See `implementation-plan.md` (steps 1–12 with "done when" criteria). Steps 1�
 - User on Pro plan; start a fresh session per step to save usage (this file carries the context).
 - Git branch: `main`. Commit author: JekabsL. Remote `origin` = https://github.com/JkLacis/cycle-sync (public). `gh` CLI logged in as JkLacis.
 - Screens are `<section class="screen" id="screen-NAME">`, toggled via the `hidden` attribute by `showScreen(name)`.
-  Screen names: onboarding, today, calendar, phases, phase-detail, settings.
+  Screen names: onboarding, alignment, plan, coach, settings, phase-detail.
+  Any button with `data-go="NAME"` also opens a screen.
+- app.js sections: data (PHASES, TASK_TYPES, SYNC_LEVELS, ICONS) → date helpers → cycle logic →
+  storage → `calendarSource` (the one place events come from; swap for Google/Outlook later) →
+  `calculateCycleAlignment()` → demo seed → render functions per component → navigation → add-task sheet.
+- `?demo=1` uses its own localStorage key (`cyclesync.demo.tasks`) and always Day 14 Ovulatory.
 - Tabs are `<button class="tab" data-screen="NAME">`; active tab gets class `active`.
 - Phone frame kicks in at `min-width: 600px` (390×844, dark bezel). Below that the app fills the screen.
 - Colours are CSS variables in `:root` of style.css (palette in Style section).

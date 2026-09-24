@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <!-- Makes phones show the page at its real size instead of zoomed out -->
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Cycle Sync</title>
   <link rel="stylesheet" href="style.css">
 </head>
@@ -17,44 +17,133 @@
 
       <section class="screen" id="screen-onboarding" hidden>
         <h1>Welcome</h1>
-        <p class="placeholder">Onboarding screen: coming in step 4.</p>
+        <p class="placeholder">Onboarding: coming in step 5.</p>
       </section>
 
-      <section class="screen" id="screen-today">
-        <h1>Today</h1>
-        <p class="placeholder">Today screen: coming in step 5.</p>
+      <!-- ===== Alignment (home) ===== -->
+      <section class="screen screen-alignment" id="screen-alignment" hidden>
+
+        <header class="topbar">
+          <h1 class="brand">Cycle Sync</h1>
+          <div class="topbar-actions">
+            <button class="icon-btn" type="button" data-go="plan" aria-label="Open cycle calendar">
+              <span data-icon="calendar"></span>
+            </button>
+            <button class="avatar" type="button" data-go="settings" aria-label="Profile and settings">
+              <span data-icon="user"></span>
+            </button>
+          </div>
+        </header>
+
+        <div class="hero">
+          <!-- Filled by renderPhaseNow() -->
+          <div class="phase-now" id="phase-now"></div>
+          <!-- Built by buildRing(), updated by updateRing() -->
+          <div class="ring" id="ring"></div>
+        </div>
+
+        <div class="insights">
+          <section class="insight insight-good" aria-labelledby="good-title">
+            <button class="insight-head" type="button" data-go="plan">
+              <h2 id="good-title">Good for you</h2>
+              <span data-icon="chevron"></span>
+            </button>
+            <ul class="insight-list" id="good-list"></ul>
+          </section>
+          <section class="insight insight-watch" aria-labelledby="watch-title">
+            <button class="insight-head" type="button" data-go="plan">
+              <h2 id="watch-title">Watch-outs</h2>
+              <span data-icon="chevron"></span>
+            </button>
+            <ul class="insight-list" id="watch-list"></ul>
+          </section>
+        </div>
+
+        <section class="week-card" aria-labelledby="week-title">
+          <div class="week-head">
+            <h2 id="week-title">Your Calendar This Week</h2>
+            <button class="link-btn" type="button" data-go="plan">
+              Full calendar <span data-icon="arrow"></span>
+            </button>
+          </div>
+          <div class="week-strip" id="week-strip" role="group" aria-label="Choose a day"></div>
+          <div class="events-panel">
+            <ul class="events" id="events"></ul>
+            <button class="add-task" id="add-task-btn" type="button">
+              <span data-icon="plus"></span> Add task
+            </button>
+          </div>
+        </section>
+
       </section>
 
-      <section class="screen" id="screen-calendar" hidden>
-        <h1>Calendar</h1>
-        <p class="placeholder">Calendar: coming in step 6.</p>
+      <section class="screen" id="screen-plan" hidden>
+        <h1>Cycle Plan</h1>
+        <p class="placeholder">Month calendar and phases: coming in step 8.</p>
       </section>
 
-      <section class="screen" id="screen-phases" hidden>
-        <h1>Phases</h1>
-        <p class="placeholder">Phases list: coming in step 7.</p>
-      </section>
-
-      <section class="screen" id="screen-phase-detail" hidden>
-        <h1>Phase detail</h1>
-        <p class="placeholder">Phase detail: coming in step 7.</p>
+      <section class="screen" id="screen-coach" hidden>
+        <h1>AI Coach</h1>
+        <p class="placeholder">Coach: coming in step 10.</p>
       </section>
 
       <section class="screen" id="screen-settings" hidden>
         <h1>Settings</h1>
-        <p class="placeholder">Settings: coming later.</p>
+        <p class="placeholder">Settings: coming in step 11.</p>
+      </section>
+
+      <section class="screen" id="screen-phase-detail" hidden>
+        <h1>Phase detail</h1>
+        <p class="placeholder">Phase detail: coming in step 8.</p>
       </section>
 
     </main>
 
-    <!-- Bottom tab bar. data-screen says which screen each button opens. -->
-    <nav class="tabbar">
-      <button class="tab" data-screen="today">Today</button>
-      <button class="tab" data-screen="calendar">Calendar</button>
-      <button class="tab" data-screen="phases">Phases</button>
+    <!-- Bottom dock. data-screen says which screen each button opens. -->
+    <nav class="dock" aria-label="Main">
+      <button class="tab" type="button" data-screen="alignment"><span data-icon="home"></span>Alignment</button>
+      <button class="tab" type="button" data-screen="plan"><span data-icon="calendar"></span>Cycle Plan</button>
+      <button class="tab" type="button" data-screen="coach"><span data-icon="chat"></span>AI Coach</button>
+      <button class="tab" type="button" data-screen="settings"><span data-icon="user"></span>Settings</button>
     </nav>
 
   </div>
+
+  <!-- Add-task sheet -->
+  <dialog class="sheet" id="task-dialog" aria-labelledby="task-dialog-title">
+    <form id="task-form" novalidate>
+      <div class="sheet-head">
+        <h2 id="task-dialog-title">Add task</h2>
+        <button class="icon-btn icon-btn-small" type="button" id="task-cancel" aria-label="Close">
+          <span data-icon="close"></span>
+        </button>
+      </div>
+      <label class="field">
+        <span>Title</span>
+        <input name="title" type="text" maxlength="60" required autocomplete="off">
+      </label>
+      <label class="field">
+        <span>Type</span>
+        <select name="type" id="task-type"></select>
+      </label>
+      <label class="field">
+        <span>Date</span>
+        <input name="date" type="date" required>
+      </label>
+      <div class="field-row">
+        <label class="field">
+          <span>Start</span>
+          <input name="start" type="time" value="09:00" required>
+        </label>
+        <label class="field">
+          <span>End</span>
+          <input name="end" type="time" value="10:00" required>
+        </label>
+      </div>
+      <p class="form-error" id="task-error" role="alert"></p>
+      <button class="primary-btn" type="submit">Save task</button>
+    </form>
+  </dialog>
 
   <script src="app.js"></script>
 </body>
