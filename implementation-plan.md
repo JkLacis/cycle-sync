@@ -68,12 +68,12 @@ High Sync = suits this phase · Low Sync = on its avoid list · Good = suits no 
 - [x] `daysUntilNextPhase(date, settings)` returns a correct number
 - [x] `PHASES` object holds name, POWR label, icon (colour via CSS var), one-liner, Move/Eat/Work tips (own wording)
 
-### 5. [ ] Onboarding
-- [ ] Shown on first visit (no saved settings); other tabs hidden until done
-- [ ] Date picker: first day of last period, no future dates
-- [ ] Cycle length 21–35 (default 28), period length 3–7 (default 5); bad input shows a message
-- [ ] Disclaimer shown: "For general wellness only. Not medical advice, and not for contraception."
-- [ ] Save → stored in localStorage → Alignment screen opens; reload skips onboarding
+### 5. [x] Onboarding
+- [x] Shown on first visit (no saved settings); other tabs hidden until done
+- [x] Date picker: first day of last period, no future dates
+- [x] Cycle length 21–35 (default 28), period length 3–7 (default 5); bad input shows a message
+- [x] Disclaimer shown: "For general wellness only. Not medical advice, and not for contraception."
+- [x] Save → stored in localStorage → Alignment screen opens; reload skips onboarding
 
 ### 6. [x] Tasks (on Alignment screen)
 - [x] Week strip: Mon–Sun of this week (mockup), phase-colour dot per day (phase name in its screen-reader label), small dot if it has tasks

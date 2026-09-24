@@ -15,9 +15,34 @@
     <!-- All screens live here. Only one is visible at a time. -->
     <main class="screens">
 
-      <section class="screen" id="screen-onboarding" hidden>
-        <h1>Welcome</h1>
-        <p class="placeholder">Onboarding: coming in step 5.</p>
+      <!-- ===== Onboarding (first visit, until cycle data is saved) ===== -->
+      <section class="screen screen-settings" id="screen-onboarding" hidden>
+        <div class="onboard-hero">
+          <div class="flower flower-plan" data-flower></div>
+          <div class="onboard-text">
+            <h1 class="onboard-title">Welcome to Cycle Sync</h1>
+            <p class="onboard-sub">Tell us about your cycle to get your daily alignment.</p>
+          </div>
+        </div>
+        <form class="set-card cycle-form" id="onboard-form" novalidate>
+          <label class="field">
+            <span>First day of your last period</span>
+            <input name="lastPeriodStart" type="date" required>
+          </label>
+          <div class="field-row">
+            <label class="field">
+              <span>Cycle length (days)</span>
+              <input name="cycleLength" type="number" min="21" max="35" value="28" inputmode="numeric" required>
+            </label>
+            <label class="field">
+              <span>Period length (days)</span>
+              <input name="periodLength" type="number" min="3" max="7" value="5" inputmode="numeric" required>
+            </label>
+          </div>
+          <p class="form-error" id="onboard-error" role="alert"></p>
+          <button class="primary-btn" type="submit">Get started</button>
+        </form>
+        <p class="detail-note">For general wellness only. Not medical advice, and not for contraception.</p>
       </section>
 
       <!-- ===== Alignment (home) ===== -->

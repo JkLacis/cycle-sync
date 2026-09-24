@@ -365,7 +365,7 @@ const CYCLE_LIMITS = {
   periodLength: { min: 3, max: 7 },
 };
 
-// Until onboarding (step 5) exists: 28/5 cycle with today as day 14.
+// Demo mode (and the screens drawn behind onboarding): 28/5 cycle with today as day 14.
 const DEFAULT_SETTINGS = {
   lastPeriodStart: toISODate(addDays(today(), -13)),
   cycleLength: 28,
@@ -376,6 +376,11 @@ function loadSettings() {
   if (IS_DEMO) return DEFAULT_SETTINGS;
   const saved = localStorage.getItem(STORAGE_KEYS.settings);
   return saved ? JSON.parse(saved) : DEFAULT_SETTINGS;
+}
+
+// False until onboarding has saved the user's cycle data.
+function hasSettings() {
+  return IS_DEMO || localStorage.getItem(STORAGE_KEYS.settings) !== null;
 }
 
 function saveSettings(settings) {
@@ -1280,21 +1285,32 @@ function fillCycleForm() {
   document.getElementById("cycle-save").hidden = IS_DEMO;
 }
 
-document.getElementById("cycle-form").addEventListener("submit", function (e) {
-  e.preventDefault();
+// Onboarding + Cycle settings share this: read, check, save, redraw. Returns true when saved.
+function submitCycleForm(form, errorId) {
   const settings = {
-    lastPeriodStart: this.elements.lastPeriodStart.value,
-    cycleLength: Number(this.elements.cycleLength.value),
-    periodLength: Number(this.elements.periodLength.value),
+    lastPeriodStart: form.elements.lastPeriodStart.value,
+    cycleLength: Number(form.elements.cycleLength.value),
+    periodLength: Number(form.elements.periodLength.value),
   };
   const error = validateCycleSettings(settings);
-  document.getElementById("cycle-error").textContent = error;
-  if (error) return;
+  document.getElementById(errorId).textContent = error;
+  if (error) return false;
   saveSettings(settings);
   renderAlignment();
   renderPlan();
+  return true;
+}
+
+document.getElementById("cycle-form").addEventListener("submit", function (e) {
+  e.preventDefault();
+  if (!submitCycleForm(this, "cycle-error")) return;
   showScreen("settings");
   showToast("Cycle settings saved");
+});
+
+document.getElementById("onboard-form").addEventListener("submit", function (e) {
+  e.preventDefault();
+  if (submitCycleForm(this, "onboard-error")) showScreen("alignment");
 });
 
 document.getElementById("weekly-toggle").addEventListener("change", function () {
@@ -1368,6 +1384,8 @@ function showScreen(name) {
   }
   document.querySelector(".screens").scrollTop = 0;
   if (name === "cycle-settings") fillCycleForm(); // fresh values, no leftover edits
+  // No dock until onboarding is done.
+  document.querySelector(".dock").hidden = name === "onboarding";
   const tabName = SCREEN_TAB[name] || name;
   for (const tab of document.querySelectorAll(".tab")) {
     const active = tab.dataset.screen === tabName;
@@ -1512,4 +1530,5 @@ renderPlan();
 renderCoachChips();
 renderSessions();
 renderSettings();
-showScreen("alignment");
+document.getElementById("onboard-form").elements.lastPeriodStart.max = toISODate(today());
+showScreen(hasSettings() ? "alignment" : "onboarding");

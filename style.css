@@ -2136,6 +2136,37 @@ h2 {
   transform: translateX(20px);
 }
 
+/* Onboarding */
+.onboard-hero {
+  position: relative;
+  height: 170px;
+  margin: 8px 0 2px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  border-radius: var(--radius-lg);
+  background: linear-gradient(135deg, #f8fafd 0%, #e4ecf8 100%);
+  box-shadow: var(--shadow-soft);
+}
+
+.onboard-text {
+  position: relative;
+  max-width: 190px;
+  padding: 28px 0 0 18px;
+}
+
+.onboard-title {
+  margin: 0;
+  font-size: 26px;
+  font-weight: 300;
+  line-height: 1.2;
+}
+
+.onboard-sub {
+  margin: 8px 0 0;
+  font-size: 13.5px;
+  color: var(--text-muted);
+}
+
 /* Settings sub-screens */
 .sub-title {
   margin: 16px 4px 4px;
