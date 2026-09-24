@@ -70,12 +70,15 @@ four cycle phases she's in, it suggests how to **move**, what to **eat**, and wh
 ## Tech
 - Plain HTML/CSS/JS, four files: `index.html`, `style.css`, `content.js` (all app text, data only), `app.js` (logic).
   No frameworks, npm or build tools. *(content.js added 2026-09-24, DECISIONS.md D5)*
+- AI coach backend: `server/` (Python FastAPI + official `anthropic` SDK), run `.venv/bin/python -m server` (serves the
+  app too). API key only in `.env` (gitignored). Decisions C1–C9 in DECISIONS.md. System prompt `server/prompts/coach.md`,
+  knowledge `server/prompts/knowledge.md` (our paraphrase). Evals: `server/evals/`, results in `COACH_EVALS.md`.
 - Single-page app: screens are `<section>`s shown/hidden with JS, no reloads.
 - Data in `localStorage` (no backend, no login).
 - Mobile-first. On wide screens, show the app centred in a ~390px phone frame.
 - **Live (GitHub Pages, from `main`, updates ~1 min after each push):** https://jklacis.github.io/cycle-sync/
   (demo: add `?demo=1`). Use this for phone testing — the "Startup House Guest" Wi-Fi + ufw block phone → laptop.
-- Run: `python3 -m http.server 8000` → http://localhost:8000. On phone (same Wi-Fi):
+- Run: `.venv/bin/python -m server` → http://localhost:8000 (with AI coach), or `python3 -m http.server 8000` (offline coach). On phone (same Wi-Fi):
   `http://<laptop-local-IP>:8000` (find IP with `hostname -I`). User is on Kubuntu 26.04.
 
 ## Screens
@@ -89,9 +92,9 @@ four cycle phases she's in, it suggests how to **move**, what to **eat**, and wh
 - **Cycle Plan** (final design): hero card (Day X / phase, cycle bar with today marker, next phase in N days);
   month calendar with phase bars + phase-start icons + legend; Track Today (Energy/Mood/Focus/Sleep, logs per day);
   Phase Focus (3 tiles from `PHASES[x].focus`). Tap phase → phase detail (Move/Eat/Work).
-- **Coach** (match Praful's AI Coach mockup): "Hi there" card; Ask your coach (question box + 4 chips → scripted
-  phase-based replies as chat below, keyword matching for typed text); Suggested for You = 4 cards with drawn scenes
-  (no photo files) → guided breathing timer + phase tips. Small note: demo coach, not real AI.
+- **Coach** (match Praful's AI Coach mockup): real AI coach (Claude Opus 5.5 via `server/`, streamed), 4 phase-aware
+  chips, safe Markdown, Retry on every failure; offline scripted coach when the server is unreachable (GitHub Pages).
+  Suggested for You = 4 cards → guided breathing timer. Note: "Messages are processed by Anthropic, an AI provider."
 - **Settings** (match Praful's Settings mockup): Your Profile card; Integrations (tap = fake Connected/Not connected,
   See All adds Outlook/Garmin/Oura); Weekly insight switch; App Preferences → Cycle settings screen (edit + validate,
   view-only in demo), Data & privacy screen (privacy note + Reset all data), Appearance (coming soon), Doctor report
