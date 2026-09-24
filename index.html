@@ -221,9 +221,188 @@
 
       </section>
 
-      <section class="screen" id="screen-settings" hidden>
-        <h1>Settings</h1>
-        <p class="placeholder">Settings: coming in step 11.</p>
+      <!-- ===== Settings ===== -->
+      <section class="screen screen-settings" id="screen-settings" hidden>
+
+        <header class="topbar">
+          <h1 class="brand">Settings</h1>
+          <div class="topbar-actions">
+            <button class="icon-btn has-dot" type="button" id="bell-btn" aria-label="Notifications">
+              <span data-icon="bell"></span>
+            </button>
+            <button class="avatar" type="button" data-soon="Your profile" aria-label="Your profile">
+              <span data-icon="user"></span>
+            </button>
+          </div>
+        </header>
+
+        <button class="profile-card" type="button" data-soon="Your profile">
+          <span class="profile-avatar"><span data-icon="user"></span></span>
+          <span class="profile-text">
+            <span class="profile-title">Your Profile</span>
+            <span class="profile-sub">Manage your personal details</span>
+          </span>
+          <!-- Soft petals (decoration only) -->
+          <svg class="profile-art" viewBox="0 0 160 80" aria-hidden="true">
+            <defs>
+              <linearGradient id="profile-petal" x1="0" y1="1" x2="1" y2="0">
+                <stop offset="0" stop-color="#9dbbe6"/><stop offset="1" stop-color="#eef4fc"/>
+              </linearGradient>
+            </defs>
+            <path d="M110 84C84 70 56 46 58 16C86 26 106 54 110 84Z" fill="url(#profile-petal)"/>
+            <path d="M110 84C102 52 110 18 134-4C150 26 132 62 110 84Z" fill="url(#profile-petal)"/>
+            <path d="M110 84C94 72 66 66 44 74C62 54 98 58 110 84Z" fill="#8fa991" opacity="0.8"/>
+            <path d="M110 84C122 58 144 40 166 36C162 62 138 80 110 84Z" fill="url(#profile-petal)"/>
+          </svg>
+          <span class="profile-chevron"><span data-icon="chevron"></span></span>
+        </button>
+
+        <section class="set-card" aria-labelledby="int-title">
+          <div class="set-head">
+            <h2 id="int-title">Integrations</h2>
+            <button class="link-btn" type="button" id="int-see-all-btn" aria-expanded="false" aria-controls="int-grid">
+              <span id="int-see-all-label">See All</span><span data-icon="chevron"></span>
+            </button>
+          </div>
+          <!-- Built by renderIntegrations() -->
+          <div class="int-grid" id="int-grid"></div>
+          <p class="set-note">Demo: integrations are coming soon. Nothing is shared.</p>
+        </section>
+
+        <section class="set-card" id="notif-card" aria-labelledby="notif-title">
+          <h2 id="notif-title">Notifications</h2>
+          <div class="set-box">
+            <span class="set-icon tint-yellow"><span data-icon="sun"></span></span>
+            <label class="set-text" for="weekly-toggle">
+              <span class="set-label">Weekly insight</span>
+              <span class="set-sub">Get a weekly cycle outlook and personalised tips</span>
+            </label>
+            <input class="switch" type="checkbox" role="switch" id="weekly-toggle">
+          </div>
+        </section>
+
+        <section class="set-card" aria-labelledby="prefs-title">
+          <h2 id="prefs-title">App Preferences</h2>
+          <div class="set-list">
+            <button class="set-row" type="button" data-go="cycle-settings">
+              <span class="set-icon tint-red"><span data-icon="drop"></span></span>
+              <span class="set-text"><span class="set-label">Cycle settings</span></span>
+              <span data-icon="chevron"></span>
+            </button>
+            <button class="set-row" type="button" data-go="privacy">
+              <span class="set-icon tint-green"><span data-icon="lock"></span></span>
+              <span class="set-text"><span class="set-label">Data &amp; privacy</span></span>
+              <span data-icon="chevron"></span>
+            </button>
+            <button class="set-row" type="button" data-soon="Appearance">
+              <span class="set-icon tint-purple"><span data-icon="moon"></span></span>
+              <span class="set-text"><span class="set-label">Appearance</span></span>
+              <span data-icon="chevron"></span>
+            </button>
+            <button class="set-row" type="button" id="report-btn">
+              <span class="set-icon tint-blue"><span data-icon="doc-plus"></span></span>
+              <span class="set-text">
+                <span class="set-label">Doctor report</span>
+                <span class="set-sub">Export your cycle data</span>
+              </span>
+              <span data-icon="chevron"></span>
+            </button>
+          </div>
+        </section>
+
+        <section class="set-card" aria-labelledby="support-title">
+          <h2 id="support-title">Support</h2>
+          <div class="set-list">
+            <button class="set-row" type="button" data-go="help">
+              <span class="set-icon tint-yellow"><span data-icon="help"></span></span>
+              <span class="set-text"><span class="set-label">Help &amp; FAQs</span></span>
+              <span data-icon="chevron"></span>
+            </button>
+            <button class="set-row" type="button" data-soon="Contact us">
+              <span class="set-icon tint-blue"><span data-icon="mail"></span></span>
+              <span class="set-text"><span class="set-label">Contact us</span></span>
+              <span data-icon="chevron"></span>
+            </button>
+          </div>
+        </section>
+
+      </section>
+
+      <!-- ===== Settings → Cycle settings ===== -->
+      <section class="screen screen-settings" id="screen-cycle-settings" hidden>
+        <header class="topbar">
+          <button class="icon-btn" type="button" data-go="settings" aria-label="Back to Settings">
+            <span data-icon="back"></span>
+          </button>
+        </header>
+        <h1 class="sub-title">Cycle settings</h1>
+        <form class="set-card cycle-form" id="cycle-form" novalidate>
+          <label class="field">
+            <span>First day of your last period</span>
+            <input name="lastPeriodStart" type="date" required>
+          </label>
+          <div class="field-row">
+            <label class="field">
+              <span>Cycle length (days)</span>
+              <input name="cycleLength" type="number" min="21" max="35" inputmode="numeric" required>
+            </label>
+            <label class="field">
+              <span>Period length (days)</span>
+              <input name="periodLength" type="number" min="3" max="7" inputmode="numeric" required>
+            </label>
+          </div>
+          <p class="form-error" id="cycle-error" role="alert"></p>
+          <p class="set-note" id="cycle-demo-note" hidden>Demo mode always shows Day 14. Open the app without ?demo=1 to edit.</p>
+          <button class="primary-btn" type="submit" id="cycle-save">Save</button>
+        </form>
+        <p class="detail-note">For general wellness only. Not medical advice, and not for contraception.</p>
+      </section>
+
+      <!-- ===== Settings → Data & privacy ===== -->
+      <section class="screen screen-settings" id="screen-privacy" hidden>
+        <header class="topbar">
+          <button class="icon-btn" type="button" data-go="settings" aria-label="Back to Settings">
+            <span data-icon="back"></span>
+          </button>
+        </header>
+        <h1 class="sub-title">Data &amp; privacy</h1>
+        <div class="set-card prose">
+          <p><strong>Your data stays on this device.</strong> Cycle Sync has no account and no server. Your cycle settings, tasks and preferences are saved only in this browser.</p>
+          <p>Nothing is sent to Google, WhatsApp or anyone else. The integrations are a demo.</p>
+        </div>
+        <button class="danger-btn" type="button" id="reset-btn"><span data-icon="trash"></span>Reset all data</button>
+      </section>
+
+      <!-- ===== Settings → Help & FAQs ===== -->
+      <section class="screen screen-settings" id="screen-help" hidden>
+        <header class="topbar">
+          <button class="icon-btn" type="button" data-go="settings" aria-label="Back to Settings">
+            <span data-icon="back"></span>
+          </button>
+        </header>
+        <h1 class="sub-title">Help &amp; FAQs</h1>
+        <div class="set-card faq">
+          <details>
+            <summary>What is cycle syncing?<span data-icon="chevron"></span></summary>
+            <p>Planning your work, movement and food around the four phases of your cycle. Cycle Sync suggests what might suit each phase.</p>
+          </details>
+          <details>
+            <summary>Is this medical advice?<span data-icon="chevron"></span></summary>
+            <p>No. Cycle Sync is for general wellness only. It is not medical advice and not for contraception. Talk to a doctor about any health concerns.</p>
+          </details>
+          <details>
+            <summary>Where is my data stored?<span data-icon="chevron"></span></summary>
+            <p>Only on this device, in your browser. There is no account and no server.</p>
+          </details>
+          <details>
+            <summary>Is the AI Coach real AI?<span data-icon="chevron"></span></summary>
+            <p>Not yet. The coach gives pre-written suggestions based on your phase.</p>
+          </details>
+          <details>
+            <summary>Where do the suggestions come from?<span data-icon="chevron"></span></summary>
+            <p>They are inspired by <em>In the FLO</em> by Alisa Vitti, written in our own words. Evidence for cycle syncing is still limited, so treat them as ideas, not rules.</p>
+          </details>
+        </div>
       </section>
 
       <!-- ===== Phase detail (opened from Cycle Plan) ===== -->
@@ -244,8 +423,11 @@
       <button class="tab" type="button" data-screen="alignment"><span data-icon="home"></span>Alignment</button>
       <button class="tab" type="button" data-screen="plan"><span data-icon="calendar"></span>Cycle Plan</button>
       <button class="tab" type="button" data-screen="coach"><span data-icon="chat"></span>AI Coach</button>
-      <button class="tab" type="button" data-screen="settings"><span data-icon="user"></span>Settings</button>
+      <button class="tab" type="button" data-screen="settings"><span data-icon="gear"></span>Settings</button>
     </nav>
+
+    <!-- Short messages like "Coming soon". Shown by showToast(). -->
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
   </div>
 

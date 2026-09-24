@@ -110,10 +110,14 @@ Follicular = Prepare · Ovulatory = Open Up · Luteal = Work · Menstrual = Rest
 - [x] Guided timer (any card): start/pause, countdown, "breathe in / out" cue (4 in, 6 out) + 3 phase tips; closing stops it
 - [x] Phase scripts: boundaries (Luteal/Menstrual), intentions & outreach (Follicular/Ovulatory)
 
-### 11. [ ] Settings
-- [ ] Edit cycle data (same validation as onboarding) and "Reset all data" with confirm
-- [ ] Integration toggles (Google Calendar, Outlook, Apple Health, Garmin, Oura, WhatsApp 8:00 summary) switch on/off but do nothing; labelled "coming soon"
-- [ ] Privacy note: data stays on this device
+### 11. [x] Settings (matches Settings mockup, updated 2026-09-24)
+- [x] Header "Settings" + bell with dot (jumps to Notifications) + avatar; Your Profile card (coming soon)
+- [x] Integrations: WhatsApp, Google Calendar (on) + Apple Health (off) as in mockup; tap = switch Connected/Not connected (saved, does nothing); See All adds Outlook, Garmin, Oura; "demo, coming soon" note
+- [x] Notifications: Weekly insight switch (saved, for show)
+- [x] Cycle settings screen: edit cycle data (same validation as onboarding: no future date, 21–35, 3–7); saving updates all screens; view-only in `?demo=1`
+- [x] Data & privacy screen: "data stays on this device" note + "Reset all data" with confirm (removes only `cyclesync.*` keys)
+- [x] Doctor report: downloads a .txt summary (settings, today's day/phase, phase day ranges, next period, not-medical-advice line)
+- [x] Help & FAQs screen (5 questions); Appearance, Contact us, Profile → "coming soon" message
 
 ### 12. [ ] Demo mode + polish + phone
 - [ ] `?demo=1` shows a small panel to pick a pretend date; all screens follow it

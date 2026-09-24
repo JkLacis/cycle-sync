@@ -18,7 +18,7 @@ instructions. Technical language is fine when he is driving; keep it simple for 
 - Keep this file updated whenever a new decision is made.
 
 ## ▶ START HERE (status as of 2026-09-24)
-- Done: steps 1–4, 6, 7, 8, 10 (Alignment, Cycle Plan, AI Coach pages built to match Praful's mockups).
+- Done: steps 1–4, 6, 7, 8, 10, 11 (Alignment, Cycle Plan, AI Coach, Settings pages built to match Praful's mockups).
 - `implementation-plan.md` is the build plan — next unticked step first (step 5: onboarding).
   Until onboarding exists, `DEFAULT_SETTINGS` in app.js makes today Day 14 (28/5 cycle).
 - Demo is **Friday 2026-09-25** — keep scope small; steps 9–11 can be cut/simplified if time runs out.
@@ -87,7 +87,10 @@ four cycle phases she's in, it suggests how to **move**, what to **eat**, and wh
 - **Coach** (match Praful's AI Coach mockup): "Hi there" card; Ask your coach (question box + 4 chips → scripted
   phase-based replies as chat below, keyword matching for typed text); Suggested for You = 4 cards with drawn scenes
   (no photo files) → guided breathing timer + phase tips. Small note: demo coach, not real AI.
-- **Settings**: edit cycle data, reset, fake integration toggles, privacy note.
+- **Settings** (match Praful's Settings mockup): Your Profile card; Integrations (tap = fake Connected/Not connected,
+  See All adds Outlook/Garmin/Oura); Weekly insight switch; App Preferences → Cycle settings screen (edit + validate,
+  view-only in demo), Data & privacy screen (privacy note + Reset all data), Appearance (coming soon), Doctor report
+  (.txt download); Support → Help & FAQs screen, Contact us (coming soon). Dock Settings icon = gear.
 - **Demo mode**: URL contains `?demo=1` → small panel to pretend it's a different date.
 
 ## Cycle logic (use exactly this)
@@ -131,7 +134,7 @@ sage-green "good" card, very soft peach "watch-out" card (no aggressive red, no 
 Exact colour tokens live in `:root` of style.css.
 
 ## Build order / progress
-See `implementation-plan.md` (steps 1–12 with "done when" criteria). Steps 1–4, 6, 7, 8, 10 done.
+See `implementation-plan.md` (steps 1–12 with "done when" criteria). Steps 1–4, 6, 7, 8, 10, 11 done.
 
 ## Decisions log
 - `reference/` (gitignored, never push — repo is public): mentor's example files from another project
@@ -139,12 +142,15 @@ See `implementation-plan.md` (steps 1–12 with "done when" criteria). Steps 1�
 - User on Pro plan; start a fresh session per step to save usage (this file carries the context).
 - Git branch: `main`. Commit author: JekabsL. Remote `origin` = https://github.com/JkLacis/cycle-sync (public). `gh` CLI logged in as JkLacis.
 - Screens are `<section class="screen" id="screen-NAME">`, toggled via the `hidden` attribute by `showScreen(name)`.
-  Screen names: onboarding, alignment, plan, coach, settings, phase-detail.
+  Screen names: onboarding, alignment, plan, coach, settings, phase-detail, cycle-settings, privacy, help.
+  Sub-screens map to their tab via `SCREEN_TAB` in app.js. `data-soon="Name"` → "Name is coming soon" toast (`showToast`).
   Any button with `data-go="NAME"` also opens a screen.
 - app.js sections: data (PHASES, TASK_TYPES, SYNC_LEVELS, ICONS) → date helpers → cycle logic →
   storage → `calendarSource` (the one place events come from; swap for Google/Outlook later) →
   `calculateCycleAlignment()` → demo seed → render functions per component → navigation → add-task sheet.
 - `?demo=1` uses its own localStorage key (`cyclesync.demo.tasks`) and always Day 14 Ovulatory.
+- localStorage keys all start with `cyclesync.` (settings, tasks, demo.tasks, prefs). `validateCycleSettings()` is shared
+  by Settings and (later) onboarding.
 - Tabs are `<button class="tab" data-screen="NAME">`; active tab gets class `active`.
 - Phone frame kicks in at `min-width: 600px` (390×844, dark bezel). Below that the app fills the screen.
 - Colours are CSS variables in `:root` of style.css (palette in Style section).

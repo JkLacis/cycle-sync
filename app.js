@@ -152,6 +152,12 @@ const ICONS = {
   sparkle: '<path d="M12 3c.6 4.6 2.4 6.4 7 7-4.6.6-6.4 2.4-7 7-.6-4.6-2.4-6.4-7-7 4.6-.6 6.4-2.4 7-7z"/><path d="M19 3v3M17.5 4.5h3"/>',
   send: '<path d="M21 3 10 14M21 3l-7 18-4-7-7-4z"/>',
   play: '<path d="M8 5.5v13l10.5-6.5z"/>',
+  bell: '<path d="M6 16v-5a6 6 0 0 1 12 0v5l1.5 2h-15z"/><path d="M10 20.5a2 2 0 0 0 4 0"/>',
+  lock: '<rect x="5" y="10.5" width="14" height="10" rx="2"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5M12 14.5v2"/>',
+  help: '<circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.6v.6M12 17h.01"/>',
+  mail: '<rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="M4 7l8 6 8-6"/>',
+  "doc-plus": '<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M12 11v6M9 14h6"/>',
+  gear: '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/>',
 };
 
 // =====================================================================
@@ -263,9 +269,17 @@ function getCycleState(date, settings) {
 // =====================================================================
 
 const IS_DEMO = new URLSearchParams(location.search).get("demo") === "1";
+const STORAGE_PREFIX = "cyclesync.";
 const STORAGE_KEYS = {
-  settings: "cyclesync.settings",
-  tasks: IS_DEMO ? "cyclesync.demo.tasks" : "cyclesync.tasks",
+  settings: STORAGE_PREFIX + "settings",
+  tasks: STORAGE_PREFIX + (IS_DEMO ? "demo.tasks" : "tasks"),
+  prefs: STORAGE_PREFIX + "prefs",
+};
+
+// Allowed ranges for the cycle form (onboarding + Settings).
+const CYCLE_LIMITS = {
+  cycleLength: { min: 21, max: 35 },
+  periodLength: { min: 3, max: 7 },
 };
 
 // Until onboarding (step 5) exists: 28/5 cycle with today as day 14.
@@ -279,6 +293,46 @@ function loadSettings() {
   if (IS_DEMO) return DEFAULT_SETTINGS;
   const saved = localStorage.getItem(STORAGE_KEYS.settings);
   return saved ? JSON.parse(saved) : DEFAULT_SETTINGS;
+}
+
+function saveSettings(settings) {
+  localStorage.setItem(STORAGE_KEYS.settings, JSON.stringify(settings));
+}
+
+// Returns an error message, or "" when the settings are fine.
+function validateCycleSettings({ lastPeriodStart, cycleLength, periodLength }) {
+  const { cycleLength: c, periodLength: p } = CYCLE_LIMITS;
+  if (!lastPeriodStart) return "Pick the first day of your last period.";
+  if (parseLocalDate(lastPeriodStart) > today()) return "That date is in the future. Pick today or earlier.";
+  if (!Number.isInteger(cycleLength) || cycleLength < c.min || cycleLength > c.max) {
+    return "Cycle length must be " + c.min + "–" + c.max + " days.";
+  }
+  if (!Number.isInteger(periodLength) || periodLength < p.min || periodLength > p.max) {
+    return "Period length must be " + p.min + "–" + p.max + " days.";
+  }
+  return "";
+}
+
+// Integration switches + notification toggle (for show only, nothing is sent).
+const DEFAULT_PREFS = {
+  integrations: { whatsapp: true, gcal: true },
+  weeklyInsight: true,
+};
+
+function loadPrefs() {
+  const saved = localStorage.getItem(STORAGE_KEYS.prefs);
+  return saved ? JSON.parse(saved) : structuredClone(DEFAULT_PREFS);
+}
+
+function savePrefs(prefs) {
+  localStorage.setItem(STORAGE_KEYS.prefs, JSON.stringify(prefs));
+}
+
+// Removes everything Cycle Sync saved in this browser.
+function resetAllData() {
+  Object.keys(localStorage)
+    .filter((key) => key.startsWith(STORAGE_PREFIX))
+    .forEach((key) => localStorage.removeItem(key));
 }
 
 function loadTasks() {
@@ -938,8 +992,168 @@ document.getElementById("ask-form").addEventListener("submit", function (e) {
 });
 
 // =====================================================================
-// 11. Navigation
+// 11. Settings screen
 // =====================================================================
+
+// Small drawn logos (24×24, filled) for the integration cards.
+const INTEGRATIONS = [
+  {
+    id: "whatsapp", name: "WhatsApp",
+    logo: '<rect width="24" height="24" rx="6" fill="#2fbf62"/><path d="M12 5.5a6.5 6.5 0 0 0-5.6 9.8L5.5 18.5l3.3-.9A6.5 6.5 0 1 0 12 5.5z" fill="none" stroke="#fff" stroke-width="1.6"/><path d="M9.5 9.5c0 2.5 2.5 5 5 5l.8-1.2-1.4-.7-.6.6c-.9-.4-1.6-1.1-2-2l.6-.6-.7-1.4z" fill="#fff"/>',
+  },
+  {
+    id: "gcal", name: "Google Calendar",
+    logo: '<rect x="2" y="2" width="20" height="20" rx="4" fill="#fff" stroke="#dfe3ea"/><path d="M2 6a4 4 0 0 1 4-4h12a4 4 0 0 1 4 4v2H2z" fill="#4285f4"/><text x="12" y="18.5" text-anchor="middle" font-size="9" font-weight="700" fill="#4285f4" font-family="system-ui, sans-serif">31</text>',
+  },
+  {
+    id: "apple", name: "Apple Health",
+    logo: '<rect x="2" y="2" width="20" height="20" rx="5" fill="#fff" stroke="#eceff3"/><path d="M12 18s-6-3.6-6-8a3.3 3.3 0 0 1 6-1.9A3.3 3.3 0 0 1 18 10c0 4.4-6 8-6 8z" fill="#f0506e"/>',
+  },
+  {
+    id: "outlook", name: "Outlook",
+    logo: '<rect width="24" height="24" rx="6" fill="#1f6fd1"/><ellipse cx="12" cy="12" rx="4.5" ry="5.5" fill="none" stroke="#fff" stroke-width="2.2"/>',
+  },
+  {
+    id: "garmin", name: "Garmin",
+    logo: '<rect width="24" height="24" rx="6" fill="#1c2b45"/><path d="M12 6 18 17H6z" fill="#fff"/>',
+  },
+  {
+    id: "oura", name: "Oura",
+    logo: '<rect width="24" height="24" rx="6" fill="#2a2f3a"/><circle cx="12" cy="13" r="5" fill="none" stroke="#fff" stroke-width="1.8"/><path d="M9 6.5h6" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/>',
+  },
+];
+const INTEGRATIONS_SHOWN = 3; // before "See All"
+const TOAST_MS = 2000;
+
+let showAllIntegrations = false;
+let toastTimer = null;
+
+function showToast(text) {
+  const toast = document.getElementById("toast");
+  toast.textContent = text;
+  toast.classList.add("is-visible");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => toast.classList.remove("is-visible"), TOAST_MS);
+}
+
+function renderIntegrations() {
+  const connected = loadPrefs().integrations;
+  const list = showAllIntegrations ? INTEGRATIONS : INTEGRATIONS.slice(0, INTEGRATIONS_SHOWN);
+  document.getElementById("int-grid").innerHTML = list.map((item) => {
+    const on = Boolean(connected[item.id]);
+    return (
+      '<button type="button" class="int-card' + (on ? " is-on" : "") + '" data-integration="' + item.id + '" aria-pressed="' + on + '">' +
+        '<svg class="int-logo" viewBox="0 0 24 24" aria-hidden="true">' + item.logo + "</svg>" +
+        '<span class="int-chevron">' + icon("chevron") + "</span>" +
+        '<span class="int-name">' + item.name + "</span>" +
+        '<span class="int-status">' + (on ? "Connected" : "Not connected") + "</span>" +
+      "</button>"
+    );
+  }).join("");
+}
+
+function toggleIntegration(id) {
+  const prefs = loadPrefs();
+  prefs.integrations[id] = !prefs.integrations[id];
+  savePrefs(prefs);
+  renderIntegrations();
+  const name = INTEGRATIONS.find((i) => i.id === id).name;
+  showToast(name + (prefs.integrations[id] ? " connected (demo)" : " disconnected"));
+}
+
+function fillCycleForm() {
+  const form = document.getElementById("cycle-form");
+  const settings = loadSettings();
+  form.elements.lastPeriodStart.value = settings.lastPeriodStart;
+  form.elements.lastPeriodStart.max = toISODate(today());
+  form.elements.cycleLength.value = settings.cycleLength;
+  form.elements.periodLength.value = settings.periodLength;
+  document.getElementById("cycle-error").textContent = "";
+  // Demo mode always uses Day 14, so the form is view-only there.
+  for (const field of form.elements) field.disabled = IS_DEMO;
+  document.getElementById("cycle-demo-note").hidden = !IS_DEMO;
+  document.getElementById("cycle-save").hidden = IS_DEMO;
+}
+
+document.getElementById("cycle-form").addEventListener("submit", function (e) {
+  e.preventDefault();
+  const settings = {
+    lastPeriodStart: this.elements.lastPeriodStart.value,
+    cycleLength: Number(this.elements.cycleLength.value),
+    periodLength: Number(this.elements.periodLength.value),
+  };
+  const error = validateCycleSettings(settings);
+  document.getElementById("cycle-error").textContent = error;
+  if (error) return;
+  saveSettings(settings);
+  renderAlignment();
+  renderPlan();
+  showScreen("settings");
+  showToast("Cycle settings saved");
+});
+
+document.getElementById("weekly-toggle").addEventListener("change", function () {
+  const prefs = loadPrefs();
+  prefs.weeklyInsight = this.checked;
+  savePrefs(prefs);
+  showToast("Weekly insight " + (this.checked ? "on" : "off") + " (demo)");
+});
+
+function formatLongDate(date) {
+  return date.toLocaleDateString(undefined, { day: "numeric", month: "long", year: "numeric" });
+}
+
+// Plain-text summary to share with a doctor.
+function buildDoctorReport() {
+  const settings = loadSettings();
+  const now = getCycleState(today(), settings);
+  const ranges = getPhaseRanges(settings);
+  const nextPeriod = addDays(today(), settings.cycleLength - now.cycleDay + 1);
+  return [
+    "Cycle Sync: cycle summary",
+    "Created: " + formatLongDate(today()),
+    "",
+    "Last period started: " + formatLongDate(parseLocalDate(settings.lastPeriodStart)),
+    "Cycle length: " + settings.cycleLength + " days",
+    "Period length: " + settings.periodLength + " days",
+    "",
+    "Today: Day " + now.cycleDay + ", " + now.phase.name + " phase",
+    "Next period expected: " + formatLongDate(nextPeriod),
+    "",
+    "Phase days in this cycle:",
+    ...CYCLE_ORDER.map((key) => "  " + PHASES[key].name + ": " + (phaseRangeText(ranges[key]) || "none")),
+    "",
+    "Predictions are estimates based on the numbers above.",
+    "For general wellness only. Not medical advice, and not for contraception.",
+  ].join("\n");
+}
+
+function downloadDoctorReport() {
+  const blob = new Blob([buildDoctorReport()], { type: "text/plain" });
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = "cycle-sync-report-" + toISODate(today()) + ".txt";
+  link.click();
+  setTimeout(() => URL.revokeObjectURL(link.href), 1000); // after the download has started
+  showToast("Report downloaded");
+}
+
+function renderSettings() {
+  renderIntegrations();
+  document.getElementById("weekly-toggle").checked = loadPrefs().weeklyInsight;
+}
+
+// =====================================================================
+// 12. Navigation
+// =====================================================================
+
+// Sub-screens and the tab they belong to.
+const SCREEN_TAB = {
+  "phase-detail": "plan",
+  "cycle-settings": "settings",
+  privacy: "settings",
+  help: "settings",
+};
 
 // Show one screen and hide all the others.
 // name is e.g. "alignment", which matches the section id "screen-alignment".
@@ -948,8 +1162,8 @@ function showScreen(name) {
     screen.hidden = screen.id !== "screen-" + name;
   }
   document.querySelector(".screens").scrollTop = 0;
-  // Phase detail belongs to the Cycle Plan tab.
-  const tabName = name === "phase-detail" ? "plan" : name;
+  if (name === "cycle-settings") fillCycleForm(); // fresh values, no leftover edits
+  const tabName = SCREEN_TAB[name] || name;
   for (const tab of document.querySelectorAll(".tab")) {
     const active = tab.dataset.screen === tabName;
     tab.classList.toggle("active", active);
@@ -959,7 +1173,7 @@ function showScreen(name) {
 }
 
 // =====================================================================
-// 12. Add-task sheet
+// 13. Add-task sheet
 // =====================================================================
 
 const taskDialog = document.getElementById("task-dialog");
@@ -993,7 +1207,7 @@ taskForm.addEventListener("submit", function (e) {
 document.getElementById("task-cancel").addEventListener("click", () => taskDialog.close());
 
 // =====================================================================
-// 13. Start
+// 14. Start
 // =====================================================================
 
 // Fill every <span data-icon="name"> placeholder in the HTML.
@@ -1015,10 +1229,29 @@ function refocus(selector) {
 document.addEventListener("click", function (e) {
   const target = e.target.closest(
     "[data-screen], [data-go], [data-date], [data-event], [data-delete], [data-phase], [data-week], [data-topic], [data-session], " +
-      "#add-task-btn, #plan-today-btn, #see-all-btn, #coach-history-btn"
+      "[data-soon], [data-integration], #add-task-btn, #plan-today-btn, #see-all-btn, #coach-history-btn, " +
+      "#int-see-all-btn, #bell-btn, #report-btn, #reset-btn"
   );
   if (!target) return;
-  if (target.dataset.topic) {
+  if (target.dataset.soon) {
+    showToast(target.dataset.soon + " is coming soon");
+  } else if (target.dataset.integration) {
+    toggleIntegration(target.dataset.integration);
+  } else if (target.id === "int-see-all-btn") {
+    showAllIntegrations = !showAllIntegrations;
+    target.setAttribute("aria-expanded", showAllIntegrations);
+    document.getElementById("int-see-all-label").textContent = showAllIntegrations ? "Show less" : "See All";
+    renderIntegrations();
+  } else if (target.id === "bell-btn") {
+    document.getElementById("notif-card").scrollIntoView({ block: "start", behavior: "smooth" });
+  } else if (target.id === "report-btn") {
+    downloadDoctorReport();
+  } else if (target.id === "reset-btn") {
+    if (confirm("Delete all your Cycle Sync data on this device? This can't be undone.")) {
+      resetAllData();
+      location.reload();
+    }
+  } else if (target.dataset.topic) {
     const topic = COACH_TOPICS.find((t) => t.id === target.dataset.topic);
     askCoach(topic.question, topic);
   } else if (target.dataset.session) {
@@ -1066,4 +1299,5 @@ renderAlignment();
 renderPlan();
 renderCoachChips();
 renderSessions();
+renderSettings();
 showScreen("alignment");
