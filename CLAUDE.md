@@ -25,8 +25,18 @@ instructions. Technical language is fine when he is driving; keep it simple for 
 - Demo is **Friday 2026-09-25** — keep scope small; steps 9–11 can be cut/simplified if time runs out.
 - **AI coach (Praful's prompt), in progress:** server + frontend + eval runner built and pushed (commits 11d047f,
   79bb7ce, 7b2bde9). No free Anthropic credits → switched default to **Gemini free tier** (2026-09-24, DECISIONS C3).
-  **Next = Phase 4, blocked on the key:** `.env` has `GEMINI_API_KEY=` empty — user pastes it (never in chat; check
-  only that it's non-empty).
+  Busy-model fallback built (c83a16c): 3.8-flash → 3.5-flash-lite → 3.1-flash-lite, `reset` SSE event. Free tier was
+  very overloaded (503s, 10–50 s answers) on 2026-09-24 evening.
+  **Key status:** the first Gemini key leaked into chat (pasted into `.env.example`, never pushed) and is now revoked
+  (401). The one in `.env` is that dead key → user must paste a NEW key in `.env` (never in chat, never `.env.example`;
+  check only that it's non-empty and test with a tiny call). Eval run 20260924-200616: only #2, #3 answered (not graded).
+  **Pending OK — Render plan (user picked Render for a public link):** `render.yaml` (python, free, build
+  `pip install -r server/requirements.txt`, start `python -m server`, health `/api/health`, `GEMINI_API_KEY` sync:false,
+  HOST 0.0.0.0, PORT from Render), `.python-version` 3.14, trust proxy X-Forwarded-For only when env says so (per-IP
+  limit), global daily cap (~300 msgs) to protect the free quota, README. User then: new key → render.com sign-up with
+  GitHub → New → Blueprint → JkLacis/cycle-sync → paste key → Deploy. Free plan sleeps after 15 min (~1 min wake),
+  SQLite history wiped on sleep.
+  **Next = Phase 4 (after new key):**
   Then: `RATE_LIMIT_PER_MINUTE=100 .venv/bin/python -m server` → `/api/health` says "ready" →
   `.venv/bin/python -m server.evals.run_evals --delay 6` (27 cases, free) → grade each answer (accuracy, personalization,
   tone, length, safety) → write `COACH_EVALS.md` → fix prompt/code, re-run until all pass → check caching (`cached` tokens) in
