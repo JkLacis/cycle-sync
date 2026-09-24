@@ -10,6 +10,10 @@ Owner: JekabsL — first-year Start School / Qwasar student.
 - **One step at a time.** After each step: say how to see the result, then stop and wait for feedback.
 - **No unrequested features.** Suggest ideas; the user decides.
 - Commit after each working step with a succinct message, then `git push`.
+- **Open decisions → ask with AskUserQuestion** (clickable question cards), never guess.
+- **Acceptance criteria**: `implementation-plan.md` lists each step with checkable "done when" criteria.
+  After a step, verify each criterion, tick it `[x]`, and tick the step when all pass.
+  (Plan to be written once the user's design doc from Google Drive is in the folder.)
 - Keep this file updated whenever a new decision is made.
 
 ## Concept
@@ -86,6 +90,9 @@ Ovulatory = warm gold/coral, Luteal = terracotta/amber, Menstrual = deep berry/p
 8. [ ] Demo mode + polish + run on phone
 
 ## Decisions log
+- `reference/` (gitignored, never push — repo is public): mentor's example files from another project
+  ("24" build spec, implementation plan, ClAUDEE.md). Used only as a model for spec/plan format.
+- Step 3 on hold: waiting for user's Google Doc before deciding Menstrual/Ovulatory overlap on short cycles.
 - Git branch: `main`. Commit author: JekabsL. Remote `origin` = https://github.com/JkLacis/cycle-sync (public). `gh` CLI logged in as JkLacis.
 - Screens are `<section class="screen" id="screen-NAME">`, toggled via the `hidden` attribute by `showScreen(name)`.
   Screen names: onboarding, today, calendar, phases, phase-detail, settings.
