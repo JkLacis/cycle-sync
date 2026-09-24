@@ -23,6 +23,13 @@ instructions. Technical language is fine when he is driving; keep it simple for 
 - `implementation-plan.md` is the build plan — next unticked step: 12 (demo date panel, polish, phone test).
   `DEFAULT_SETTINGS` (Day 14, 28/5) is used in demo mode and behind onboarding; `hasSettings()` decides onboarding.
 - Demo is **Friday 2026-09-25** — keep scope small; steps 9–11 can be cut/simplified if time runs out.
+- **AI coach (Praful's prompt), in progress:** server + frontend + eval runner built and pushed (commits 11d047f,
+  79bb7ce, 7b2bde9; 10 unit tests + 79/79 click-through pass). **Next = Phase 4, blocked on the API key:**
+  `.env` exists but `ANTHROPIC_API_KEY=` is empty — user pastes it (never in chat; check only that it's non-empty).
+  Then: `RATE_LIMIT_PER_MINUTE=100 .venv/bin/python -m server` → `/api/health` says "ready" →
+  `.venv/bin/python -m server.evals.run_evals` (27 cases, ~$0.50–1/run) → grade each answer (accuracy, personalization,
+  tone, length, safety) → write `COACH_EVALS.md` → fix prompt/code, re-run until all pass → check `cache_read` > 0 in
+  server logs → verify coach UI at 390px → final summary (architecture, decisions, eval results, limits, cost/message).
 
 ## Prototype doc summary (`reference/prototype.docx`)
 - **Look**: sleek, premium, professional "health intelligence tool", not a period tracker.
