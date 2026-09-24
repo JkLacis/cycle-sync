@@ -807,14 +807,15 @@ function renderMonth(settings) {
       const date = new Date(year, month, dayNum);
       const cycleDay = getCycleDay(date, settings);
       const phaseKey = getPhase(cycleDay, settings);
-      cells.push({ date, dayNum, phaseKey, isStart: cycleDay === ranges[phaseKey].start, isToday: toISODate(date) === todayISO });
+      const iso = toISODate(date);
+      cells.push({ iso, dayNum, phaseKey, isStart: cycleDay === ranges[phaseKey].start, isToday: iso === todayISO });
     }
 
     // Numbers
     html += '<div class="month-row">' + cells.map((c) => {
       if (!c) return "<span></span>";
-      return '<span class="m-day' + (c.isToday ? " is-today" : "") + '">' + c.dayNum +
-        '<span class="sr-only">, ' + PHASES[c.phaseKey].name + (c.isToday ? ", today" : "") + "</span></span>";
+      return '<button type="button" class="m-day' + (c.isToday ? " is-today" : "") + '" data-day="' + c.iso + '">' + c.dayNum +
+        '<span class="sr-only">, ' + PHASES[c.phaseKey].name + (c.isToday ? ", today" : "") + "</span></button>";
     }).join("") + "</div>";
 
     // Phase bar: one segment per run of days in the same phase, icon where a phase starts.
@@ -926,7 +927,7 @@ document.getElementById("log-cancel").addEventListener("click", () => logDialog.
 // Three picture tiles for the current phase.
 function renderPhaseFocus(state) {
   document.getElementById("focus-grid").innerHTML = state.phase.focus.map((item, i) =>
-    '<button type="button" class="focus-tile focus-tile-' + (i + 1) + '" data-phase="' + state.phaseKey + '">' +
+    '<button type="button" class="focus-tile focus-tile-' + (i + 1) + '" data-phase="' + state.phaseKey + '" data-section="' + item.section + '">' +
       '<span class="focus-icon">' + icon(item.icon) + "</span>" +
       '<span class="focus-label">' + item.label + "</span>" +
     "</button>"
@@ -944,29 +945,61 @@ function renderPlan() {
   renderPhaseFocus(now);
 }
 
-function renderTipCard(title, iconName, items) {
+const DETAIL_ICONS = { work: "target", move: "dumbbell", eat: "cutlery" };
+
+function renderTipCard(id, title, iconName, items, ordered) {
+  const tag = ordered ? "ol" : "ul";
   return (
-    '<section class="tip-card">' +
+    '<section class="tip-card"' + (id ? ' id="' + id + '"' : "") + ">" +
       '<h2><span class="tip-icon">' + icon(iconName) + "</span>" + title + "</h2>" +
-      '<ul>' + items.map((t) => "<li>" + t + "</li>").join("") + "</ul>" +
+      "<" + tag + ">" + items.map((t) => "<li>" + t + "</li>").join("") + "</" + tag + ">" +
     "</section>"
   );
 }
 
 function renderPhaseDetail(phaseKey) {
   const phase = PHASES[phaseKey];
+  const text = CONTENT.phaseDetail;
   const days = phaseRangeText(getPhaseRanges(store.settings.load())[phaseKey]);
   document.getElementById("phase-detail").innerHTML =
     '<div class="detail-head" style="--phase-color: var(--' + phaseKey + ')">' +
       '<span class="phase-icon">' + icon(phase.icon) + "</span>" +
       "<h1>" + phase.name + "</h1>" +
-      '<p class="detail-meta">' + phase.powr + (days ? " · " + days : "") + "</p>" +
-      '<p class="detail-tagline">' + phase.tagline + "</p>" +
+      '<p class="detail-meta">' + phase.powr + (days ? " · " + days + " (estimated)" : "") + "</p>" +
+      '<p class="detail-tagline">' + phase.tagline + " " + phase.hormones + "</p>" +
     "</div>" +
-    renderTipCard("Work", "target", phase.work) +
-    renderTipCard("Move", "dumbbell", phase.move) +
-    renderTipCard("Eat", "cutlery", phase.eat) +
-    '<p class="detail-note">Suggestions inspired by <em>In the FLO</em>. For general wellness only, not medical advice.</p>';
+    ["work", "move", "eat"].map((key) => renderTipCard("phase-section-" + key, text.headings[key], DETAIL_ICONS[key], phase[key])).join("") +
+    renderTipCard("", text.planTitle, "calendar", text.planSteps, true) +
+    '<p class="detail-note">' + text.evidence + "</p>" +
+    '<p class="detail-note">' + text.source + "</p>";
+}
+
+// Opens phase detail; section ("work" | "move" | "eat") scrolls to that list.
+function openPhaseDetail(phaseKey, section) {
+  renderPhaseDetail(phaseKey);
+  openScreen("phase-detail");
+  if (section) document.getElementById("phase-section-" + section).scrollIntoView({ block: "start" });
+}
+
+// ----- Day sheet (tap a date in the month calendar) -----
+
+function openDaySheet(iso) {
+  const date = parseLocalDate(iso);
+  const state = getCycleState(date, store.settings.load());
+  const text = CONTENT.daySheet;
+  const { events } = calculateCycleAlignment({ phase: state.phaseKey, cycleDay: state.cycleDay, events: calendarSource.getEvents(iso) });
+  const tasks = events.length
+    ? '<ul class="sheet-list">' + events.map((e) =>
+        '<li><span><span class="sheet-time">' + e.start + "–" + e.end + "</span> " + escapeHTML(e.title) + "</span>" + syncBadge(e.sync) + "</li>"
+      ).join("") + "</ul>"
+    : "<p>" + text.noTasks + "</p>";
+  openSheet(date.toLocaleDateString(undefined, { weekday: "long", day: "numeric", month: "long" }),
+    '<p class="sheet-phase" style="--phase-color: var(--' + state.phaseKey + ')"><span class="phase-icon">' + icon(state.phase.icon) + "</span>" +
+      fillTemplate(text.phaseLine, state.phaseKey, { day: state.cycleDay }) + "</p>" +
+    tasks +
+    '<button type="button" class="sheet-btn" data-add-on="' + iso + '">' + icon("plus") + text.addLabel + "</button>" +
+    '<button type="button" class="sheet-btn" data-phase="' + state.phaseKey + '">' + icon("chevron") +
+      fillTemplate(text.ideasLabel, state.phaseKey) + "</button>");
 }
 
 // =====================================================================
@@ -1432,8 +1465,8 @@ const taskError = document.getElementById("task-error");
 const fields = taskForm.elements; // form.title would be the form's own title attribute
 let editingTaskId = null; // null = adding a new task
 
-// task = existing task to edit; without it the dialog adds a new one on the selected day.
-function openTaskDialog(task) {
+// task = existing task to edit; without it the dialog adds a new one on isoDate (default: the selected day).
+function openTaskDialog(task, isoDate) {
   taskForm.reset();
   editingTaskId = task ? task.id : null;
   document.getElementById("task-dialog-title").textContent = task ? "Edit task" : "Add task";
@@ -1443,7 +1476,7 @@ function openTaskDialog(task) {
     fields.start.value = task.start;
     fields.end.value = task.end;
   }
-  fields.date.value = task ? task.date : toISODate(selectedDate);
+  fields.date.value = task ? task.date : isoDate || toISODate(selectedDate);
   taskError.textContent = "";
   renderTaskSyncPreview();
   taskDialog.showModal();
@@ -1483,7 +1516,7 @@ taskForm.addEventListener("submit", function (e) {
   openEventId = editingTaskId;
   taskDialog.close();
   renderAlignment();
-  if (editingTaskId) showToast("Task updated");
+  showToast(editingTaskId ? "Task updated" : "Task added");
 });
 
 document.getElementById("task-cancel").addEventListener("click", () => taskDialog.close());
@@ -1514,7 +1547,7 @@ function refocus(selector) {
 // One click handler for the whole app (tabs, links, days, events).
 document.addEventListener("click", function (e) {
   const target = e.target.closest(
-    "[data-screen], [data-go], [data-back], [data-sheet], [data-edit], #ring, [data-date], [data-event], [data-delete], [data-phase], [data-month], [data-log], [data-topic], [data-session], " +
+    "[data-screen], [data-go], [data-back], [data-sheet], [data-edit], [data-day], [data-add-on], #ring, [data-date], [data-event], [data-delete], [data-phase], [data-month], [data-log], [data-topic], [data-session], " +
       "[data-soon], [data-integration], #add-task-btn, #plan-today-btn, #see-all-btn, #coach-history-btn, " +
       "#int-see-all-btn, #bell-btn, #report-btn, #reset-btn"
   );
@@ -1525,6 +1558,10 @@ document.addEventListener("click", function (e) {
     openScoreSheet();
   } else if (target.dataset.sheet === "lighter-day") {
     openLighterDaySheet();
+  } else if (target.dataset.day) {
+    openDaySheet(target.dataset.day);
+  } else if (target.dataset.addOn) {
+    openTaskDialog(null, target.dataset.addOn);
   } else if (target.dataset.edit) {
     const task = calendarSource.getEvent(target.dataset.edit);
     if (task) openTaskDialog(task);
@@ -1560,8 +1597,7 @@ document.addEventListener("click", function (e) {
     if (chatMessages.length) scrollToLastMessage();
     else document.getElementById("ask-input").focus();
   } else if (target.dataset.phase) {
-    renderPhaseDetail(target.dataset.phase);
-    openScreen("phase-detail");
+    openPhaseDetail(target.dataset.phase, target.dataset.section);
   } else if (target.dataset.month) {
     planMonth = new Date(planMonth.getFullYear(), planMonth.getMonth() + Number(target.dataset.month), 1);
     renderMonth(store.settings.load());

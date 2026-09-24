@@ -14,16 +14,18 @@
 const CONTENT = {
   // Keyed by phase. Order through a cycle is defined in app.js.
   // strengths / watchOuts fill the Alignment cards when today's tasks don't (PDF p. 17–20).
-  // focus = Cycle Plan "Phase Focus" tiles. typical = usual phase length (PDF p. 5).
+  // focus = Cycle Plan "Phase Focus" tiles; section = which list the tile jumps to. typical = usual phase length (PDF p. 5).
+  // hormones: PDF p. 9, 17–18. move: Fitness FLO p. 14. eat: Food FLO p. 11–12 (examples). work: Work FLO p. 20.
   phases: {
     follicular: {
       name: "Follicular",
       powr: "Prepare",
       icon: "sprout",
       tagline: "Creativity and fresh starts. Energy is rising.",
-      move: ["Dance class", "Jumping rope", "Indoor cycling", "Hiking"],
-      eat: ["Broccoli and zucchini", "Oats and citrus", "Lentils and eggs", "Fermented foods"],
-      work: ["Start new projects", "Brainstorm", "Research new ideas", "Plan the month ahead"],
+      hormones: "Estrogen is rising.",
+      move: ["Dance class or cardio dance", "Jumping rope or rebounding", "HIIT", "Indoor cycling", "Hiking"],
+      eat: ["Oats and barley", "Broccoli, carrots and zucchini", "Green peas and lentils", "Avocado and citrus fruit", "Eggs and chicken", "Sauerkraut and pickles"],
+      work: ["Start new projects", "Brainstorm with your team", "Tackle hard problems", "Research new ideas", "Seek out new clients", "Plan the month ahead"],
       strengths: [
         { label: "Big ideas", icon: "bulb" },
         { label: "New projects", icon: "spark" },
@@ -35,9 +37,9 @@ const CONTENT = {
         { label: "Late nights", icon: "moon" },
       ],
       focus: [
-        { label: "Start new projects", icon: "spark" },
-        { label: "Brainstorm", icon: "bulb" },
-        { label: "Light cardio", icon: "dumbbell" },
+        { label: "Start new projects", icon: "spark", section: "work" },
+        { label: "Brainstorm", icon: "bulb", section: "work" },
+        { label: "Light cardio", icon: "dumbbell", section: "move" },
       ],
       typical: "7–10 days",
     },
@@ -46,9 +48,10 @@ const CONTENT = {
       powr: "Open Up",
       icon: "sun",
       tagline: "Communication. Energy and confidence are at their peak.",
-      move: ["HIIT", "Kettlebells", "Kickboxing", "Power yoga"],
-      eat: ["Spinach and red peppers", "Quinoa and berries", "Salmon or shrimp", "Plenty of fibre"],
-      work: ["Pitch and present", "Negotiate", "Network", "Have the important conversations"],
+      hormones: "Estrogen is at its highest.",
+      move: ["HIIT class", "Kettlebells", "Boot camp", "Kickboxing", "Indoor cycling", "Power yoga"],
+      eat: ["Quinoa and corn", "Spinach, red peppers and asparagus", "Tomatoes and chard", "Berries, figs and apricots", "Red lentils and almonds", "Salmon or shrimp"],
+      work: ["Pitch, negotiate and present", "Have the important conversations", "Ask for a raise or promotion", "Go to networking events", "Share your work publicly", "Give talks"],
       strengths: [
         { label: "Networking", icon: "people" },
         { label: "Big ideas", icon: "bulb" },
@@ -60,9 +63,9 @@ const CONTENT = {
         { label: "Energy dips", icon: "moon" },
       ],
       focus: [
-        { label: "Networking", icon: "people" },
-        { label: "Share ideas", icon: "bulb" },
-        { label: "High energy activities", icon: "dumbbell" },
+        { label: "Networking", icon: "people", section: "work" },
+        { label: "Share ideas", icon: "bulb", section: "work" },
+        { label: "High energy activities", icon: "dumbbell", section: "move" },
       ],
       typical: "3–4 days",
     },
@@ -71,9 +74,10 @@ const CONTENT = {
       powr: "Work",
       icon: "leaf",
       tagline: "Completion. Energy gradually winds down.",
-      move: ["Weight lifting", "Pilates", "Barre", "Yoga"],
-      eat: ["Sweet potato and squash", "Brown rice and chickpeas", "Leafy greens", "Apples and walnuts"],
-      work: ["Deep focused work", "Admin", "Wrap up projects", "Review documents"],
+      hormones: "Progesterone is at its highest.",
+      move: ["Weight lifting", "Pilates", "Barre", "Yoga", "Shorter HIIT early in the phase"],
+      eat: ["Brown rice and millet", "Sweet potato and squash", "Cauliflower, cabbage and leafy greens", "Apples, pears and dates", "Chickpeas and walnuts", "Turkey, beef or cod"],
+      work: ["Deep focused work", "Admin and paperwork", "Review documents and reports", "Wrap up projects", "Help your team hit deadlines", "Organise your files"],
       strengths: [
         { label: "Deep work", icon: "target" },
         { label: "Wrapping up", icon: "check" },
@@ -85,9 +89,9 @@ const CONTENT = {
         { label: "Skipping carbs", icon: "leaf" },
       ],
       focus: [
-        { label: "Deep work", icon: "target" },
-        { label: "Wrap up projects", icon: "check" },
-        { label: "Strength training", icon: "dumbbell" },
+        { label: "Deep work", icon: "target", section: "work" },
+        { label: "Wrap up projects", icon: "check", section: "work" },
+        { label: "Strength training", icon: "dumbbell", section: "move" },
       ],
       typical: "10–14 days",
     },
@@ -96,9 +100,10 @@ const CONTENT = {
       powr: "Rest",
       icon: "drop",
       tagline: "Rest and reflection. Energy is at its lowest.",
+      hormones: "Hormone levels are at their lowest.",
       move: ["Walking", "Yin yoga", "Gentle mat Pilates", "Rest"],
-      eat: ["Soups and stews", "Beets and mushrooms", "Kidney beans", "Herbal tea"],
-      work: ["Review the past month", "Journal", "Set intentions", "Take breaks"],
+      eat: ["Warm soups and stews", "Buckwheat and wild rice", "Beets, kale and mushrooms", "Seaweed, for example in miso soup", "Blueberries and blackberries", "Kidney or adzuki beans"],
+      work: ["Review the past month", "Notice patterns in your planner", "Reassess your goals", "Trust your gut on decisions", "Take frequent breaks", "Take a personal day if you can"],
       strengths: [
         { label: "Reflection", icon: "pen" },
         { label: "Rest", icon: "moon" },
@@ -110,9 +115,9 @@ const CONTENT = {
         { label: "Packed days", icon: "calendar" },
       ],
       focus: [
-        { label: "Reflect and journal", icon: "pen" },
-        { label: "Rest", icon: "moon" },
-        { label: "Gentle walks", icon: "leaf" },
+        { label: "Reflect and journal", icon: "pen", section: "work" },
+        { label: "Rest", icon: "moon", section: "move" },
+        { label: "Gentle walks", icon: "leaf", section: "move" },
       ],
       typical: "3–7 days",
     },
@@ -132,6 +137,33 @@ const CONTENT = {
     hiit:       { label: "High-intensity workout",        short: "High energy", icon: "dumbbell",     suits: ["follicular", "ovulatory"], avoid: ["menstrual"] },
     strength:   { label: "Strength / Pilates / yoga",     short: "Strength",    icon: "target",       suits: ["luteal"],                  avoid: [] },
     rest:       { label: "Rest / gentle walk",            short: "Rest",        icon: "leaf",         suits: ["menstrual"],               avoid: [] },
+  },
+
+  // Cycle Plan → phase detail screen.
+  phaseDetail: {
+    headings: { work: "Work", move: "Move", eat: "Eat" },
+    // "Six steps for cyclical planning at work", PDF p. 21 (own wording).
+    planTitle: "Plan with your cycle",
+    planSteps: [
+      "At the end of the month, look ahead at what's due.",
+      "Map your phases and place flexible projects where they fit.",
+      "Keep fixed deadlines where they fall.",
+      "If a task lands in a tougher phase, drop something non-essential and add one small self-care moment.",
+      "In meetings, bring the strength of your current phase.",
+      "Share the idea with your team.",
+    ],
+    // McNulty et al. 2020 (Sports Med) and Colenso-Semple et al. 2023 found little or no change in
+    // exercise or strength performance across the cycle; no good evidence for phase-specific foods.
+    evidence: "Research on phase-based exercise and food is limited, and studies find little or no change in performance across the cycle. Treat these as ideas to try, and go by how you feel.",
+    source: "Suggestions inspired by <em>In the FLO</em>. For general wellness only, not medical advice.",
+  },
+
+  // Cycle Plan → tap a day in the month calendar.
+  daySheet: {
+    phaseLine: "Day {day} · {phase} phase (estimated)",
+    noTasks: "Nothing planned on this day.",
+    addLabel: "Add a task on this day",
+    ideasLabel: "See {phase} phase ideas",
   },
 
   // Alignment → tap the score ring. Points per level live in app.js (SYNC_LEVELS).
