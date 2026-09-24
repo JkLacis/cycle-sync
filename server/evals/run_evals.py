@@ -1,9 +1,10 @@
 """Runs every case in cases.json against the real /api/coach endpoint and writes transcripts.
 
-  .venv/bin/python -m server.evals.run_evals [--base http://127.0.0.1:8000] [--only 1,5,23]
+  .venv/bin/python -m server.evals.run_evals [--base http://127.0.0.1:8000] [--only 1,5,23] [--delay 6]
 
 Start the server first with a higher rate limit, e.g.  RATE_LIMIT_PER_MINUTE=100 .venv/bin/python -m server
-Each full run costs real API credits (~27 answers). Results go to server/evals/results/ (gitignored).
+Each full run makes ~28 real model calls (free on Gemini's free tier; paid credits with Claude). --delay spaces them out
+for the free tier's per-minute limit, and a rate-limited answer is retried once after 30 s. Results go to server/evals/results/ (gitignored).
 Automatic checks (word limit, required / forbidden patterns) are a first pass; every answer is also
 read and graded by hand on accuracy, personalisation, tone, length and safety (see COACH_EVALS.md).
 """
@@ -62,7 +63,11 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--base", default="http://127.0.0.1:8000")
     parser.add_argument("--only", default="", help="comma-separated case ids")
+    parser.add_argument("--delay", type=float, default=0, help="seconds to wait between model calls")
     args = parser.parse_args()
+    with urllib.request.urlopen(args.base + "/api/health", timeout=10) as res:
+        health = json.load(res)
+    print(f"Provider {health.get('provider')} · model {health.get('model')} · coach {health['coach']}\n")
     spec = json.loads((HERE / "cases.json").read_text(encoding="utf-8"))
     only = {int(i) for i in args.only.split(",") if i}
     results = []
@@ -73,7 +78,12 @@ def main() -> None:
         conversation_id = str(uuid.uuid4())
         turns = []
         for message in case["messages"]:
-            turns.append({"message": message, **ask(args.base, conversation_id, message, context)})
+            answer = ask(args.base, conversation_id, message, context)
+            if answer["error"] and answer["error"]["code"] == "rate_limited":
+                time.sleep(30)
+                answer = ask(args.base, conversation_id, message, context)
+            turns.append({"message": message, **answer})
+            time.sleep(args.delay)
         last = turns[-1]
         problems = ["error: " + last["error"]["code"]] if last["error"] else auto_checks(case, last["text"])
         results.append({"id": case["id"], "area": case["area"], "turns": turns, "auto_problems": problems})
@@ -86,7 +96,7 @@ def main() -> None:
     out.mkdir(exist_ok=True)
     stamp = datetime.now().strftime("%Y%m%d-%H%M%S")
     (out / f"{stamp}.json").write_text(json.dumps(results, indent=2, ensure_ascii=False), encoding="utf-8")
-    lines = [f"# Coach eval run {stamp}\n"]
+    lines = [f"# Coach eval run {stamp} ({health.get('provider')}, {health.get('model')})\n"]
     for r in results:
         lines.append(f"## #{r['id']} {r['area']}\n")
         for t in r["turns"]:

@@ -17,11 +17,13 @@ The app is plain HTML/CSS/JS; the AI coach needs the small Python server in `ser
 sudo apt install python3-venv                    # Kubuntu ships Python 3 without venv/pip
 python3 -m venv .venv
 .venv/bin/pip install -r server/requirements.txt
-cp .env.example .env                             # then open .env and paste your key after ANTHROPIC_API_KEY=
+cp .env.example .env                             # then open .env and paste your key after GEMINI_API_KEY=
 ```
 
-Get an API key at https://platform.claude.com/ → API keys. `.env` is gitignored; the key is only read by the server and
-never sent to the browser.
+Get a free Gemini API key at https://aistudio.google.com → **Get API key**. On the free tier Google may use prompts to
+improve its products (the app says so). To use Claude instead (paid credits): `COACH_PROVIDER=claude` and
+`ANTHROPIC_API_KEY` from https://platform.claude.com/. `.env` is gitignored; keys are only read by the server and never
+sent to the browser.
 
 **Run:**
 
@@ -31,14 +33,16 @@ cd ~/Desktop/Cycle-Sync
 ```
 
 Open http://localhost:8000. Stop with **Ctrl+C**. Check the coach is ready: http://localhost:8000/api/health →
-`"coach": "ready"` (`"not_configured"` = no API key in `.env`).
+`"coach": "ready"` (`"not_configured"` = no API key in `.env`), plus the provider and model in use.
 
 ### Environment variables (`.env`)
 
 | Variable | Default | Meaning |
 |---|---|---|
-| `ANTHROPIC_API_KEY` | — (required for the coach) | Anthropic API key |
-| `COACH_MODEL` | `claude-opus-5-5` | Claude model ID |
+| `COACH_PROVIDER` | `gemini` | `gemini` (free tier) or `claude` (paid) |
+| `GEMINI_API_KEY` | — (required with Gemini) | Google AI Studio API key |
+| `ANTHROPIC_API_KEY` | — (required with Claude) | Anthropic API key |
+| `COACH_MODEL` | `gemini-3.8-flash` / `claude-opus-5-5` | Model ID for the chosen provider |
 | `COACH_EFFORT` | `low` | `low` / `medium` / `high` — thinking depth vs. speed and cost |
 | `HOST` / `PORT` | `127.0.0.1` / `8000` | Where the server listens (`0.0.0.0` to allow other devices on the network) |
 | `RATE_LIMIT_PER_MINUTE` / `RATE_LIMIT_PER_DAY` | `10` / `200` | Coach messages per client IP |
@@ -60,7 +64,7 @@ pre-written replies, labelled "Offline coach".
 - **App click-through:** with either server running, open http://localhost:8000/tests/click-through.html. It runs every
   element in `DECISIONS.md` inside the real app (`?demo=1`, offline coach) and checks for dead clicks. Demo data only.
 - **Server unit tests** (no API calls): `.venv/bin/python -m unittest discover -s server/tests -t .`
-- **Coach evals** (real API, costs credits): start the server with `RATE_LIMIT_PER_MINUTE=100 .venv/bin/python -m server`,
+- **Coach evals** (real API; free on Gemini's free tier, add `--delay 6` for its per-minute limit): start the server with `RATE_LIMIT_PER_MINUTE=100 .venv/bin/python -m server`,
   then `.venv/bin/python -m server.evals.run_evals`. Cases: `server/evals/cases.json`; results and grading: `COACH_EVALS.md`.
 
 ## How it works
@@ -72,12 +76,12 @@ pre-written replies, labelled "Offline coach".
 | `content.js` | **All app text** (phase suggestions, task types, coach replies, FAQ). Data only — edit wording here |
 | `app.js` | Logic: cycle maths → storage (`store`) → alignment score → render functions → navigation |
 | `DECISIONS.md` | Every interactive element + the AI coach decisions (options + what was chosen) |
-| `server/` | FastAPI server: `app.py` (routes), `coach.py` (prompt assembly + streaming), `prompts/coach.md` (system prompt), `prompts/knowledge.md` (condensed knowledge), `storage.py` (SQLite history), `evals/` |
+| `server/` | FastAPI server: `app.py` (routes), `coach.py` (prompt assembly + streaming), `prompts/coach.md` (system prompt), `prompts/knowledge.md` (condensed knowledge), `providers/` (Gemini and Claude), `storage.py` (SQLite history), `evals/` |
 | `tests/` | Click-through test page |
 
 - **Data:** stays on the device (`localStorage`, keys `cyclesync.*`). No account, no analytics or trackers. Exception:
   coach messages plus a short context (cycle day, phase, today's tasks, 7 days of check-ins — never name or email) go to
-  the local server and to Anthropic to generate answers; the server keeps the conversation in SQLite until "Clear chat".
+  the local server and to the AI provider (Google Gemini, or Anthropic Claude) to generate answers; the server keeps the conversation in SQLite until "Clear chat".
   The server never logs message content.
   All reads/writes go through `store` in `app.js`, with a schema version and migrations. Settings → Data & privacy
   can export everything as JSON or delete it.

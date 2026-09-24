@@ -24,11 +24,12 @@ instructions. Technical language is fine when he is driving; keep it simple for 
   `DEFAULT_SETTINGS` (Day 14, 28/5) is used in demo mode and behind onboarding; `hasSettings()` decides onboarding.
 - Demo is **Friday 2026-09-25** — keep scope small; steps 9–11 can be cut/simplified if time runs out.
 - **AI coach (Praful's prompt), in progress:** server + frontend + eval runner built and pushed (commits 11d047f,
-  79bb7ce, 7b2bde9; 10 unit tests + 79/79 click-through pass). **Next = Phase 4, blocked on the API key:**
-  `.env` exists but `ANTHROPIC_API_KEY=` is empty — user pastes it (never in chat; check only that it's non-empty).
+  79bb7ce, 7b2bde9). No free Anthropic credits → switched default to **Gemini free tier** (2026-09-24, DECISIONS C3).
+  **Next = Phase 4, blocked on the key:** `.env` has `GEMINI_API_KEY=` empty — user pastes it (never in chat; check
+  only that it's non-empty).
   Then: `RATE_LIMIT_PER_MINUTE=100 .venv/bin/python -m server` → `/api/health` says "ready" →
-  `.venv/bin/python -m server.evals.run_evals` (27 cases, ~$0.50–1/run) → grade each answer (accuracy, personalization,
-  tone, length, safety) → write `COACH_EVALS.md` → fix prompt/code, re-run until all pass → check `cache_read` > 0 in
+  `.venv/bin/python -m server.evals.run_evals --delay 6` (27 cases, free) → grade each answer (accuracy, personalization,
+  tone, length, safety) → write `COACH_EVALS.md` → fix prompt/code, re-run until all pass → check caching (`cached` tokens) in
   server logs → verify coach UI at 390px → final summary (architecture, decisions, eval results, limits, cost/message).
 
 ## Prototype doc summary (`reference/prototype.docx`)
@@ -77,8 +78,9 @@ four cycle phases she's in, it suggests how to **move**, what to **eat**, and wh
 ## Tech
 - Plain HTML/CSS/JS, four files: `index.html`, `style.css`, `content.js` (all app text, data only), `app.js` (logic).
   No frameworks, npm or build tools. *(content.js added 2026-09-24, DECISIONS.md D5)*
-- AI coach backend: `server/` (Python FastAPI + official `anthropic` SDK), run `.venv/bin/python -m server` (serves the
-  app too). API key only in `.env` (gitignored). Decisions C1–C9 in DECISIONS.md. System prompt `server/prompts/coach.md`,
+- AI coach backend: `server/` (Python FastAPI), run `.venv/bin/python -m server` (serves the app too).
+  Provider via `COACH_PROVIDER`: **gemini** (default, free tier, `google-genai`, `gemini-3.8-flash`) or claude
+  (`anthropic`, `claude-opus-5-5`); code in `server/providers/`. API keys only in `.env` (gitignored). Decisions C1–C9 in DECISIONS.md. System prompt `server/prompts/coach.md`,
   knowledge `server/prompts/knowledge.md` (our paraphrase). Evals: `server/evals/`, results in `COACH_EVALS.md`.
 - Single-page app: screens are `<section>`s shown/hidden with JS, no reloads.
 - Data in `localStorage` (no backend, no login).
@@ -99,9 +101,9 @@ four cycle phases she's in, it suggests how to **move**, what to **eat**, and wh
 - **Cycle Plan** (final design): hero card (Day X / phase, cycle bar with today marker, next phase in N days);
   month calendar with phase bars + phase-start icons + legend; Track Today (Energy/Mood/Focus/Sleep, logs per day);
   Phase Focus (3 tiles from `PHASES[x].focus`). Tap phase → phase detail (Move/Eat/Work).
-- **Coach** (match Praful's AI Coach mockup): real AI coach (Claude Opus 5.5 via `server/`, streamed), 4 phase-aware
+- **Coach** (match Praful's AI Coach mockup): real AI coach (Gemini by default, or Claude, via `server/`, streamed), 4 phase-aware
   chips, safe Markdown, Retry on every failure; offline scripted coach when the server is unreachable (GitHub Pages).
-  Suggested for You = 4 cards → guided breathing timer. Note: "Messages are processed by Anthropic, an AI provider."
+  Suggested for You = 4 cards → guided breathing timer. Note names the provider (from `/api/health`); the Gemini note says free-tier messages may be used to improve Google's products.
 - **Settings** (match Praful's Settings mockup): Your Profile card; Integrations (tap = fake Connected/Not connected,
   See All adds Outlook/Garmin/Oura); Weekly insight switch; App Preferences → Cycle settings screen (edit + validate,
   view-only in demo), Data & privacy screen (privacy note + Reset all data), Appearance (coming soon), Doctor report

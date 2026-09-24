@@ -423,6 +423,12 @@ on the device (D1), so the server cannot know phase/day unless the client sends 
 - **C)** Claude Haiku 4.5. Fastest, ~$0.005/message, older knowledge, prompt too small to cache.
 **Recommendation:** A (docs' recommended default); switchable via `COACH_MODEL` in `.env`.
 **Decision:** A — `claude-opus-5-5`, effort `low` (2026-09-24)
+**Update (2026-09-24): Gemini is the default.** No free Anthropic API credits were available, so the user chose Google
+Gemini's free tier (options considered: Gemini, Groq, local Ollama — laptop has 5.7 GB RAM, too little — or offline only).
+`COACH_PROVIDER=gemini` (default, `gemini-3.8-flash`, thinking level `low`, official `google-genai` SDK) or `claude`
+(unchanged code path). Trade-off: on the free tier Google may use prompts to improve its products; the in-app note and
+the privacy screen say so. Gemini has no mid-conversation system message, so the user context is an `<app_context>`
+block at the start of the user turn; caching is Gemini's implicit prefix caching.
 
 ### C4 Knowledge grounding
 - **A)** Condensed knowledge file (~2–3K tokens, our own paraphrase of CONTENT_NOTES + evidence notes + excluded topics) in the system prompt, prompt-cached.
@@ -465,4 +471,4 @@ injected as a per-turn system message after the history (keeps the system prompt
 
 Fixed (no decision needed): API key only in server `.env` (gitignored, `.env.example` committed); input limit 1,000 chars;
 per-IP rate limit (10/min, 200/day, in memory); request timeout 60 s; no message content in logs; in-app note that
-messages are processed by an AI provider (Anthropic).
+messages are processed by an AI provider (Google Gemini by default, or Anthropic Claude).

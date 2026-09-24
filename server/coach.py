@@ -1,9 +1,9 @@
-"""One coach turn: assemble the Claude request, stream the reply, store the finished turn.
+"""One coach turn, independent of the AI provider: system prompt, user context, history, errors,
+and the streaming loop that stores a finished turn. Provider-specific code is in server/providers/.
 
-Request layout (prompt caching is a prefix match, so stable parts come first):
-  system    frozen coach prompt + knowledge            <- cache breakpoint 1 (same bytes for every user)
-  messages  stored history (text only), new user turn  <- cache breakpoint 2 (history prefix reused next turn)
-            per-turn "User context" system message     <- volatile, after the last breakpoint
+Prompt layout (prompt caching is a prefix match, so stable parts come first):
+  system    frozen coach prompt + knowledge   (same bytes for every user)
+  messages  stored history (text only), new user turn, then the per-turn "User context"
 """
 
 import asyncio
@@ -11,8 +11,7 @@ import json
 import logging
 import math
 from collections.abc import AsyncIterator
-
-import anthropic
+from typing import Protocol
 
 from .config import ROOT, settings
 from .schemas import CoachContext, CoachRequest
@@ -24,9 +23,6 @@ APP_NAME = "Cycle Sync"
 PROMPTS_DIR = ROOT / "server" / "prompts"
 PHASE_POWR = {"menstrual": "Rest", "follicular": "Prepare", "ovulatory": "Open Up", "luteal": "Work"}
 LEVEL_LABEL = {"high": "High Sync", "good": "Good", "moderate": "Moderate", "low": "Low Sync"}
-# Models that accept a {"role": "system"} message inside `messages` (the operator channel).
-# Other models get the context as a tagged block in the user turn instead.
-SYSTEM_ROLE_MODELS = {"claude-opus-5-5", "claude-opus-5", "claude-opus-4-8", "claude-fable-5", "claude-fable-5-1"}
 
 
 def load_system_prompt() -> str:
@@ -92,22 +88,9 @@ def trim_history(messages: list[dict]) -> list[dict]:
     return messages
 
 
-def build_request(history: list[dict], user_text: str, ctx: CoachContext | None) -> dict:
-    context_text = render_context(ctx)
-    user_turn = {"type": "text", "text": user_text, "cache_control": {"type": "ephemeral"}}
-    if settings.model in SYSTEM_ROLE_MODELS:
-        messages = [*history, {"role": "user", "content": [user_turn]}, {"role": "system", "content": context_text}]
-    else:
-        context_block = {"type": "text", "text": f"<app_context>\n{context_text}\n</app_context>"}
-        messages = [*history, {"role": "user", "content": [context_block, user_turn]}]
-    return {
-        "model": settings.model,
-        "max_tokens": settings.max_tokens,
-        "system": [{"type": "text", "text": SYSTEM_PROMPT, "cache_control": {"type": "ephemeral"}}],
-        "messages": messages,
-        # Thinking is adaptive (always on for Opus 5.5); effort controls depth, latency and cost.
-        "output_config": {"effort": settings.effort},
-    }
+def context_block(ctx: CoachContext | None) -> str:
+    """The user context as a tagged block, for providers without a mid-conversation system message."""
+    return f"<app_context>\n{render_context(ctx)}\n</app_context>"
 
 
 # code, user-facing message, retryable
@@ -128,46 +111,45 @@ def error_event(code: str) -> dict:
     return {"event": "error", "code": code, "message": message, "retryable": retryable}
 
 
-def classify_error(err: Exception) -> str:
-    # Most specific first: retryable (rate limit, overload, 5xx, network, timeout) vs not (4xx).
-    if isinstance(err, (TimeoutError, anthropic.APITimeoutError)):
-        return "timeout"
-    if isinstance(err, anthropic.RateLimitError):
-        return "rate_limited"
-    if isinstance(err, (anthropic.AuthenticationError, anthropic.PermissionDeniedError, anthropic.NotFoundError)):
-        return "config"
-    if isinstance(err, anthropic.BadRequestError):
-        return "bad_request"
-    if isinstance(err, anthropic.APIStatusError):
-        return "unavailable" if err.status_code >= 500 or err.status_code == 529 else "bad_request"
-    if isinstance(err, anthropic.APIConnectionError):
-        return "network"
-    return "unavailable"
+class TurnOutcome:
+    """Filled in by a provider once its stream ends."""
+
+    def __init__(self) -> None:
+        self.stop = "end"  # "end" | "max_tokens" | "refusal"
+        self.usage = ""  # token counts for the log (never content)
 
 
-async def stream_reply(client: anthropic.AsyncAnthropic, store: ConversationStore, req: CoachRequest) -> AsyncIterator[dict]:
+class Provider(Protocol):
+    name: str
+
+    def create_client(self, api_key: str): ...
+
+    def stream_turn(self, client, history: list[dict], user_text: str, ctx: CoachContext | None, outcome: TurnOutcome) -> AsyncIterator[str]: ...
+
+    def classify_error(self, err: Exception) -> str: ...
+
+
+async def stream_reply(provider: Provider, client, store: ConversationStore, req: CoachRequest) -> AsyncIterator[dict]:
     """Yields {"event": "delta", "text"} ... then {"event": "done"} or {"event": "error", ...}.
     After an error the client discards any partial text; nothing is stored for a failed turn."""
     history = trim_history(await asyncio.to_thread(store.history, req.conversation_id))
-    params = build_request(history, req.message, req.context)
+    outcome = TurnOutcome()
     parts: list[str] = []
     try:
         async with asyncio.timeout(settings.request_timeout_s):
-            async with client.messages.stream(**params) as stream:
-                async for text in stream.text_stream:
-                    parts.append(text)
-                    yield {"event": "delta", "text": text}
-                final = await stream.get_final_message()
+            async for text in provider.stream_turn(client, history, req.message, req.context, outcome):
+                parts.append(text)
+                yield {"event": "delta", "text": text}
     except Exception as err:  # noqa: BLE001 — every failure becomes a typed event for the UI
-        code = classify_error(err)
-        # Log type and request id only — never message content.
-        log.warning("coach turn failed: %s (%s) request_id=%s", code, type(err).__name__, getattr(err, "request_id", None))
+        code = "timeout" if isinstance(err, TimeoutError) else provider.classify_error(err)
+        # Log the error type only — never message content.
+        log.warning("coach turn failed: %s (%s) %s", code, type(err).__name__, getattr(err, "request_id", "") or "")
         yield error_event(code)
         return
 
     reply = "".join(parts).strip()
-    if final.stop_reason == "refusal":
-        log.info("coach refusal category=%s", getattr(final.stop_details, "category", None))
+    if outcome.stop == "refusal":
+        log.info("coach refusal %s", outcome.usage)
         yield error_event("refusal")
         return
     if not reply:
@@ -175,9 +157,5 @@ async def stream_reply(client: anthropic.AsyncAnthropic, store: ConversationStor
         return
 
     await asyncio.to_thread(store.add_turn, req.conversation_id, req.message, reply)
-    u = final.usage
-    log.info(
-        "coach turn ok model=%s in=%s cache_read=%s cache_write=%s out=%s stop=%s",
-        final.model, u.input_tokens, u.cache_read_input_tokens, u.cache_creation_input_tokens, u.output_tokens, final.stop_reason,
-    )
-    yield {"event": "done", "truncated": final.stop_reason == "max_tokens"}
+    log.info("coach turn ok provider=%s %s stop=%s", provider.name, outcome.usage, outcome.stop)
+    yield {"event": "done", "truncated": outcome.stop == "max_tokens"}

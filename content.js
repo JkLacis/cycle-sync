@@ -200,14 +200,18 @@ const CONTENT = {
   },
 
   coach: {
-    // AI coach UI (server + Claude). Chips change with the phase (C8).
+    // AI coach UI (server + Gemini or Claude). Chips change with the phase (C8).
     chipsByPhase: {
       follicular: ["What should I start this week?", "Help me plan the month ahead", "What workout suits me now?", "What should I eat this week?"],
       ovulatory: ["How do I nail today's presentation?", "How should I train today?", "What should I eat today?", "Help me plan my week"],
       luteal: ["How do I protect my focus today?", "What workout suits me now?", "What should I eat to keep my energy steady?", "Help me plan my week"],
       menstrual: ["How can I make today lighter?", "What gentle movement suits me?", "What should I eat today?", "Help me reflect on last month"],
     },
-    aiNote: "AI coach. Messages are processed by Anthropic, an AI provider. General information, not medical advice.",
+    // Shown under the chat; the server's /api/health says which provider is in use.
+    aiNotes: {
+      gemini: "AI coach. Messages are processed by Google (Gemini), an AI provider, and on the free tier may be used to improve Google's products. General information, not medical advice.",
+      claude: "AI coach. Messages are processed by Anthropic (Claude), an AI provider. General information, not medical advice.",
+    },
     offlineNote: "Offline coach: the AI server isn't reachable, so answers are pre-written.",
     offlineLabel: "Offline coach",
     retryLabel: "Retry",
@@ -391,7 +395,7 @@ const CONTENT = {
     },
     {
       q: "Is the AI Coach real AI?",
-      a: "Yes. When the app runs with its server, answers are written by Claude, an AI model from Anthropic, using your phase and today's plan. If the server can't be reached, an offline coach answers with pre-written suggestions instead. The coach gives general information, not medical advice.",
+      a: "Yes. When the app runs with its server, answers are written by an AI model (Google Gemini, or Anthropic Claude if the server is set up for it), using your phase and today's plan. The note under the chat says which one. If the server can't be reached, an offline coach answers with pre-written suggestions instead. The coach gives general information, not medical advice.",
     },
     {
       q: "How is the score calculated?",

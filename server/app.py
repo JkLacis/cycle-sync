@@ -1,7 +1,7 @@
 """HTTP server: serves the app files and the coach API.
 
   GET    /                          the app (index.html + a fixed allowlist of static files)
-  GET    /api/health                {"status", "coach": "ready" | "not_configured", "model"}
+  GET    /api/health                {"status", "coach": "ready" | "not_configured", "provider", "model"}
   POST   /api/coach                 streams one reply as server-sent events (see coach.stream_reply)
   DELETE /api/coach/{conversation}  deletes a conversation's stored history
 """
@@ -10,14 +10,14 @@ import json
 import logging
 import re
 
-import anthropic
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import FileResponse, JSONResponse, Response, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 
 from .coach import stream_reply
-from .config import ROOT, settings
+from .config import PROVIDERS, ROOT, settings
+from .providers import load_provider
 from .ratelimit import RateLimiter
 from .schemas import CONVERSATION_ID, CoachRequest
 from .storage import ConversationStore
@@ -30,15 +30,8 @@ STATIC_FILES = {"index.html", "style.css", "content.js", "app.js"}
 app = FastAPI(title="Cycle Sync", docs_url=None, redoc_url=None, openapi_url=None)
 store = ConversationStore(settings.db_path)
 limiter = RateLimiter(settings.rate_per_minute, settings.rate_per_day)
-client = (
-    anthropic.AsyncAnthropic(
-        api_key=settings.api_key,
-        max_retries=1,  # the SDK retries 429/5xx/connection errors once; the UI offers Retry after that
-        timeout=anthropic.Timeout(float(settings.request_timeout_s), connect=10.0),
-    )
-    if settings.api_key
-    else None
-)
+provider = load_provider()  # COACH_PROVIDER: gemini (default) or claude
+client = provider.create_client(settings.api_key) if settings.api_key else None
 
 
 def api_error(status: int, code: str, message: str, headers: dict | None = None) -> JSONResponse:
@@ -63,7 +56,12 @@ async def validation_error(request: Request, exc: RequestValidationError) -> JSO
 
 @app.get("/api/health")
 async def health() -> dict:
-    return {"status": "ok", "coach": "ready" if client else "not_configured", "model": settings.model}
+    return {
+        "status": "ok",
+        "coach": "ready" if client else "not_configured",
+        "provider": settings.provider,
+        "model": settings.model,
+    }
 
 
 def sse(event: dict) -> str:
@@ -73,13 +71,14 @@ def sse(event: dict) -> str:
 @app.post("/api/coach")
 async def coach(req: CoachRequest, request: Request):
     if client is None:
-        return api_error(503, "not_configured", "The AI coach isn't set up: add ANTHROPIC_API_KEY to .env and restart the server.")
+        key_name = PROVIDERS[settings.provider][0]
+        return api_error(503, "not_configured", f"The AI coach isn't set up: add {key_name} to .env and restart the server.")
     wait = limiter.check(request.client.host if request.client else "unknown")
     if wait is not None:
         return api_error(429, "rate_limited", "Too many messages. Please wait a moment.", {"Retry-After": str(wait)})
 
     async def events():
-        async for event in stream_reply(client, store, req):
+        async for event in stream_reply(provider, client, store, req):
             yield sse(event)
 
     return StreamingResponse(

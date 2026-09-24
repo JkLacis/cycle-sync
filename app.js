@@ -1153,6 +1153,7 @@ const CHECKIN_DAYS = 7;
 
 // "ai" = server + key ready · "offline" = no server (e.g. GitHub Pages) · "not_configured" = server without API key
 let coachMode = "offline";
+let coachProvider = "gemini"; // from /api/health; picks the AI provider note
 let coachRequest = null; // AbortController of the reply being streamed
 
 async function checkCoachServer() {
@@ -1160,6 +1161,7 @@ async function checkCoachServer() {
     const res = await fetch(COACH_HEALTH, { signal: AbortSignal.timeout(HEALTH_TIMEOUT_MS) });
     const health = res.ok ? await res.json() : null;
     coachMode = health && health.coach === "ready" ? "ai" : health ? "not_configured" : "offline";
+    if (health && COACH.aiNotes[health.provider]) coachProvider = health.provider;
   } catch {
     coachMode = "offline";
   }
@@ -1167,7 +1169,7 @@ async function checkCoachServer() {
 }
 
 function renderCoachNote() {
-  document.getElementById("coach-note").textContent = coachMode === "ai" ? COACH.aiNote : COACH.offlineNote;
+  document.getElementById("coach-note").textContent = coachMode === "ai" ? COACH.aiNotes[coachProvider] : COACH.offlineNote;
 }
 
 // The conversation id ties this device's chat to its history on the server.

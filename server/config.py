@@ -10,6 +10,13 @@ ROOT = Path(__file__).resolve().parent.parent
 load_dotenv(ROOT / ".env")
 
 
+# provider -> (API key variable, default model)
+PROVIDERS = {
+    "gemini": ("GEMINI_API_KEY", "gemini-3.8-flash"),
+    "claude": ("ANTHROPIC_API_KEY", "claude-opus-5-5"),
+}
+
+
 def _int(name: str, default: int) -> int:
     value = os.getenv(name, "").strip()
     return int(value) if value else default
@@ -17,6 +24,7 @@ def _int(name: str, default: int) -> int:
 
 @dataclass(frozen=True)
 class Settings:
+    provider: str  # "gemini" or "claude"
     api_key: str | None
     model: str
     effort: str
@@ -33,10 +41,15 @@ class Settings:
 
 
 def load_settings() -> Settings:
+    provider = os.getenv("COACH_PROVIDER", "gemini").strip().lower()
+    if provider not in PROVIDERS:
+        raise SystemExit(f"COACH_PROVIDER must be one of {', '.join(PROVIDERS)} (got {provider!r})")
+    key_name, default_model = PROVIDERS[provider]
     return Settings(
-        api_key=os.getenv("ANTHROPIC_API_KEY", "").strip() or None,
-        model=os.getenv("COACH_MODEL", "claude-opus-5-5").strip(),
-        effort=os.getenv("COACH_EFFORT", "low").strip(),
+        provider=provider,
+        api_key=os.getenv(key_name, "").strip() or None,
+        model=os.getenv("COACH_MODEL", "").strip() or default_model,
+        effort=os.getenv("COACH_EFFORT", "low").strip().lower(),
         # Thinking counts toward max_tokens, so leave room beyond the short reply.
         max_tokens=_int("COACH_MAX_TOKENS", 16000),
         request_timeout_s=_int("COACH_TIMEOUT_SECONDS", 90),
