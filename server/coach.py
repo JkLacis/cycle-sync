@@ -23,6 +23,10 @@ APP_NAME = "Cycle Sync"
 PROMPTS_DIR = ROOT / "server" / "prompts"
 PHASE_POWR = {"menstrual": "Rest", "follicular": "Prepare", "ovulatory": "Open Up", "luteal": "Work"}
 LEVEL_LABEL = {"high": "High Sync", "good": "Good", "moderate": "Moderate", "low": "Low Sync"}
+LANGUAGE_NAME = {
+    "en": "English", "lv": "Latvian", "lt": "Lithuanian", "et": "Estonian", "pl": "Polish",
+    "de": "German", "fr": "French", "es": "Spanish", "it": "Italian",
+}
 
 
 def load_system_prompt() -> str:
@@ -71,6 +75,10 @@ def render_context(ctx: CoachContext | None) -> str:
             lines.append(f"  - {c.date.isoformat()}: " + ", ".join(p for p in parts if p))
     else:
         lines.append("- Recent check-ins: none logged")
+    if ctx.language != "en":
+        # Per turn (not in the system prompt), so the cached prompt stays the same for every language.
+        name = LANGUAGE_NAME[ctx.language]
+        lines.append(f"- App language: {name}. Write your whole answer in {name}, whatever language the context above is in.")
     return "\n".join(lines)
 
 

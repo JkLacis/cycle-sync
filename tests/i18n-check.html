@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Cycle Sync translation check</title>
+  <style>
+    body { margin: 16px; font: 12px/1.5 ui-monospace, monospace; }
+    .pass { color: #2e6b3f; }
+    .fail { color: #b3261e; }
+  </style>
+</head>
+<body>
+  <!-- Every lang/<code>.js must have the same text as content.js (English), with the same {placeholders}. -->
+  <pre id="out">Running…</pre>
+  <script src="../content.js"></script>
+  <script src="../lang/lv.js"></script>
+  <script src="../lang/lt.js"></script>
+  <script src="../lang/et.js"></script>
+  <script src="../lang/pl.js"></script>
+  <script src="../lang/de.js"></script>
+  <script src="../lang/fr.js"></script>
+  <script src="../lang/es.js"></script>
+  <script src="../lang/it.js"></script>
+  <script>
+    const CODES = ["lv", "lt", "et", "pl", "de", "fr", "es", "it"];
+    // Not text: ids, icons, rules, brand names, the English item keys, and list references ("work", "planSteps").
+    const SKIP_KEYS = new Set(["icon", "section", "suits", "avoid", "id", "art", "minutes", "demoConnected", "chip", "session", "contact", "short"]);
+    const isObj = (v) => v !== null && typeof v === "object" && !Array.isArray(v);
+
+    // path → string (or array of strings) for every translatable leaf.
+    function leaves(obj, path = "", out = {}) {
+      for (const [key, value] of Object.entries(obj)) {
+        const p = path ? path + "." + key : key;
+        if (SKIP_KEYS.has(key)) continue;
+        if (/^phases\.\w+\.(strengths|watchOuts)$/.test(p)) continue; // English keys
+        if (/^integrations\.\d+\.name$/.test(p)) continue; // brand names
+        if (key === "list" && typeof value === "string") continue; // reference to a named list
+        if (typeof value === "string") out[p] = value;
+        else if (Array.isArray(value) && value.every((v) => typeof v === "string")) out[p] = value;
+        else if (Array.isArray(value)) value.forEach((v, i) => isObj(v) && leaves(v, p + "." + i, out));
+        else if (isObj(value)) leaves(value, p, out);
+      }
+      return out;
+    }
+
+    const placeholders = (text) => new Set([...String(text).matchAll(/\{(\w+)\}/g)].map((m) => m[1].replace(/Lower$/, "")));
+    const itemKeys = new Set([
+      ...Object.values(CONTENT.phases).flatMap((p) => [...p.strengths, ...p.watchOuts].map((i) => i.label)),
+      ...Object.values(CONTENT.taskTypes).map((t) => t.short),
+    ]);
+
+    const en = leaves(CONTENT);
+    const report = [];
+    let failures = 0;
+    for (const code of CODES) {
+      const tr = CONTENT_TRANSLATIONS[code];
+      const problems = [];
+      if (!tr) {
+        problems.push("file missing or CONTENT_TRANSLATIONS." + code + " not set");
+      } else {
+        const got = leaves(tr);
+        for (const [path, value] of Object.entries(en)) {
+          if (/^coach\.topics\.\d+\.keywords$/.test(path)) {
+            if (!Array.isArray(got[path]) || !got[path].length) problems.push("missing keywords: " + path);
+            continue;
+          }
+          if (!(path in got)) { problems.push("missing: " + path); continue; }
+          const a = Array.isArray(value) ? value.join("\n") : value;
+          const b = Array.isArray(got[path]) ? got[path].join("\n") : got[path];
+          if (typeof got[path] !== typeof value || Array.isArray(value) !== Array.isArray(got[path])) problems.push("wrong type: " + path);
+          if (/^(phaseDetail\.planSteps|lighterDay\.tips|coach\.chipsByPhase\.\w+|demoTasks)$/.test(path) && got[path].length !== value.length) {
+            problems.push("wrong length: " + path + " (" + got[path].length + " vs " + value.length + ")");
+          }
+          const need = placeholders(a);
+          const have = placeholders(b);
+          for (const n of need) if (!have.has(n)) problems.push("placeholder {" + n + "} missing: " + path);
+          for (const n of have) if (!need.has(n)) problems.push("extra placeholder {" + n + "}: " + path);
+        }
+        for (const path of Object.keys(got)) {
+          if (!(path in en) && !path.startsWith("itemLabels") && !/^ui\.(days|tasks)\./.test(path)) problems.push("unknown key: " + path);
+        }
+        for (const key of itemKeys) if (!tr.itemLabels || !tr.itemLabels[key]) problems.push("itemLabels missing: " + key);
+        for (const pl of ["days", "tasks"]) {
+          const forms = tr.ui && tr.ui[pl];
+          // Forms the language needs for whole numbers 0–100.
+          const rules = new Set(Array.from({ length: 101 }, (_, n) => new Intl.PluralRules(code).select(n)));
+          for (const rule of rules) if (!(forms && forms[rule])) problems.push("plural form missing: ui." + pl + "." + rule);
+        }
+        if ((tr.coach && tr.coach.topics || []).length !== CONTENT.coach.topics.length) problems.push("coach.topics count differs");
+      }
+      failures += problems.length ? 1 : 0;
+      report.push((problems.length ? "FAIL " : "PASS ") + code + (problems.length ? "\n  " + problems.join("\n  ") : ""));
+    }
+    const out = document.getElementById("out");
+    out.textContent = "RESULT: " + (CODES.length - failures) + "/" + CODES.length + " languages complete\n" + report.join("\n");
+    out.className = failures ? "fail" : "pass";
+  </script>
+</body>
+</html>

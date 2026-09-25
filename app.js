@@ -2,22 +2,24 @@
 // 1. Data
 // =====================================================================
 
-// Text content lives in content.js (loaded first). Short aliases for the two most used parts.
+// Text content lives in content.js (loaded first). Short aliases for the most used parts.
+// A translation is merged into these same objects before anything is drawn (see section 0b).
+const CONTENT_EN = structuredClone(CONTENT); // English copy: item keys + what the AI server gets
 const PHASES = CONTENT.phases;
 const TASK_TYPES = CONTENT.taskTypes;
+const UI = CONTENT.ui;
 
-// How well one task fits the phase on its day. points feed the 0–100 score.
+// How well one task fits the phase on its day. points feed the 0–100 score. Labels: UI.syncLevels.
 const SYNC_LEVELS = {
-  high:     { label: "High Sync", points: 100, icon: "target" },
-  good:     { label: "Good",      points: 75,  icon: "diamond" },
-  moderate: { label: "Moderate",  points: 60,  icon: "dash-circle" },
-  low:      { label: "Low Sync",  points: 0,   icon: "octagon" },
+  high:     { points: 100, icon: "target" },
+  good:     { points: 75,  icon: "diamond" },
+  moderate: { points: 60,  icon: "dash-circle" },
+  low:      { points: 0,   icon: "octagon" },
 };
 // Below this score the Alignment screen switches to the pink "recovery" look.
 const RECOVERY_BELOW = 50;
 
 const INSIGHT_COUNT = 3;
-const DAY_NAMES = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
 // Outline icons (24×24, stroke = text colour).
@@ -38,6 +40,7 @@ const ICONS = {
   bolt: '<path d="M13 2 4.5 14H11l-1 8 8.5-12H12z"/>',
   moon: '<path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/>',
   phone: '<rect x="7" y="2.5" width="10" height="19" rx="2.5"/><path d="M11 18.5h2"/>',
+  globe: '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.6-3.8-9s1.3-6.4 3.8-9z"/>',
   sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
   sunset: '<path d="M3 18h18M7 18a5 5 0 0 1 10 0M12 6v4M5.3 11.3l1.4 1.4M18.7 11.3l-1.4 1.4M6 22h12"/>',
   leaf: '<path d="M5 19C5 11 10 5 20 4c-1 10-7 15-15 15z"/><path d="M5 19l7-7"/>',
@@ -70,6 +73,140 @@ const ICONS = {
   "doc-plus": '<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M12 11v6M9 14h6"/>',
   gear: '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/>',
 };
+
+// =====================================================================
+// 0b. Language
+// The chosen language's file (lang/<code>.js) is loaded before start() and merged over CONTENT.
+// Choice order: ?lang=xx in the URL (not saved) → saved choice → the phone's language → English.
+// =====================================================================
+
+const LANGUAGES = {
+  en: { name: "English",   locale: "en-GB", english: "English" },
+  lv: { name: "Latviešu",  locale: "lv-LV", english: "Latvian" },
+  lt: { name: "Lietuvių",  locale: "lt-LT", english: "Lithuanian" },
+  et: { name: "Eesti",     locale: "et-EE", english: "Estonian" },
+  pl: { name: "Polski",    locale: "pl-PL", english: "Polish" },
+  de: { name: "Deutsch",   locale: "de-DE", english: "German" },
+  fr: { name: "Français",  locale: "fr-FR", english: "French" },
+  es: { name: "Español",   locale: "es-ES", english: "Spanish" },
+  it: { name: "Italiano",  locale: "it-IT", english: "Italian" },
+};
+const LANG_KEY = "cyclesync.lang"; // shared by real and demo mode
+
+function pickLanguage() {
+  const fromUrl = new URLSearchParams(location.search).get("lang");
+  if (LANGUAGES[fromUrl]) return fromUrl;
+  const saved = store.lang.load();
+  if (LANGUAGES[saved]) return saved;
+  for (const tag of navigator.languages || [navigator.language || ""]) {
+    const code = tag.slice(0, 2).toLowerCase();
+    if (LANGUAGES[code]) return code;
+  }
+  return "en";
+}
+
+let LANG = "en";
+let LOCALE = LANGUAGES.en.locale;
+
+const isPlainObject = (v) => v !== null && typeof v === "object" && !Array.isArray(v);
+
+// Copies translated text into target in place (so PHASES, UI, ... stay the same objects).
+// Objects merge key by key, arrays of objects merge by position, anything else is replaced.
+function mergeText(target, source) {
+  for (const [key, value] of Object.entries(source)) {
+    if (Array.isArray(value) && value.every(isPlainObject) && Array.isArray(target[key])) {
+      value.forEach((item, i) => (isPlainObject(target[key][i]) ? mergeText(target[key][i], item) : (target[key][i] = item)));
+    } else if (isPlainObject(value) && isPlainObject(target[key])) {
+      mergeText(target[key], value);
+    } else {
+      target[key] = value;
+    }
+  }
+}
+
+// Loads lang/<code>.js (not needed for English), merges it, then calls done. Falls back to English.
+function loadLanguage(done) {
+  LANG = pickLanguage();
+  LOCALE = LANGUAGES[LANG].locale;
+  document.documentElement.lang = LANG;
+  if (LANG === "en") return done();
+  const script = document.createElement("script");
+  script.src = "lang/" + LANG + ".js";
+  script.onload = () => {
+    if (CONTENT_TRANSLATIONS[LANG]) mergeText(CONTENT, CONTENT_TRANSLATIONS[LANG]);
+    done();
+  };
+  script.onerror = () => {
+    console.warn("Cycle Sync: could not load language " + LANG);
+    LANG = "en";
+    LOCALE = LANGUAGES.en.locale;
+    document.documentElement.lang = "en";
+    done();
+  };
+  document.head.append(script);
+}
+
+// Fills {name} in a template. {nameLower} = the same value in lower case, for languages that
+// don't capitalise phase names mid-sentence ("ta phase {phaseLower}").
+function fillVars(template, vars) {
+  return template.replace(/\{(\w+)\}/g, (match, name) => {
+    if (name in vars) return vars[name];
+    const base = name.replace(/Lower$/, "");
+    return base !== name && base in vars ? String(vars[base]).toLocaleLowerCase(LOCALE) : match;
+  });
+}
+
+// UI text with {name} values filled in. key can be "report.title".
+function t(key, vars = {}) {
+  const text = key.split(".").reduce((obj, k) => (obj ? obj[k] : undefined), UI);
+  return typeof text === "string" ? fillVars(text, vars) : key;
+}
+
+// "3 days", "1 task" ... with the right plural form for the language.
+function plural(key, n) {
+  const forms = UI[key];
+  const form = forms[new Intl.PluralRules(LOCALE).select(n)] ?? forms.other;
+  return form.replace("{n}", n.toLocaleString(LOCALE));
+}
+
+function syncLabel(level) {
+  return UI.syncLevels[level];
+}
+
+// Shown name of a Good for you / Watch-out item (the English name is its key).
+function itemLabel(key) {
+  return CONTENT.itemLabels[key] || key;
+}
+
+// Mon … Sun, short enough for the calendars (weeks start on Monday).
+function dayNames() {
+  return UI.weekdays;
+}
+
+// Puts UI text into the HTML: data-i18n (text), data-i18n-html, data-i18n-aria, data-i18n-placeholder.
+function translatePage() {
+  for (const el of document.querySelectorAll("[data-i18n]")) el.textContent = t(el.dataset.i18n);
+  for (const el of document.querySelectorAll("[data-i18n-html]")) el.innerHTML = t(el.dataset.i18nHtml);
+  for (const el of document.querySelectorAll("[data-i18n-aria]")) el.setAttribute("aria-label", t(el.dataset.i18nAria));
+  for (const el of document.querySelectorAll("[data-i18n-placeholder]")) el.placeholder = t(el.dataset.i18nPlaceholder);
+}
+
+function openLanguageSheet() {
+  openSheet(CONTENT.language.title,
+    '<div class="theme-options" role="radiogroup">' + Object.entries(LANGUAGES).map(([code, lang]) =>
+      '<button type="button" class="sheet-btn theme-option" role="radio" lang="' + code + '" aria-checked="' + (code === LANG) + '" data-lang-choice="' + code + '">' +
+        lang.name + "</button>"
+    ).join("") + "</div>" +
+    '<p class="sheet-note">' + CONTENT.language.note + "</p>");
+}
+
+// Saves the choice and reloads, so every screen is drawn again in the new language.
+function setLanguage(code) {
+  store.lang.save(code);
+  const url = new URL(location.href);
+  url.searchParams.delete("lang");
+  location.href = url.href;
+}
 
 // =====================================================================
 // 2. Small helpers
@@ -293,13 +430,13 @@ const DEFAULT_PREFS = {
 // Returns an error message, or "" when the settings are fine.
 function validateCycleSettings({ lastPeriodStart, cycleLength, periodLength }) {
   const { cycleLength: c, periodLength: p } = CYCLE_LIMITS;
-  if (!lastPeriodStart) return "Pick the first day of your last period.";
-  if (parseLocalDate(lastPeriodStart) > today()) return "That date is in the future. Pick today or earlier.";
+  if (!lastPeriodStart) return t("errPeriodStart");
+  if (parseLocalDate(lastPeriodStart) > today()) return t("errFuture");
   if (!Number.isInteger(cycleLength) || cycleLength < c.min || cycleLength > c.max) {
-    return "Cycle length must be " + c.min + "–" + c.max + " days.";
+    return t("errCycleLength", c);
   }
   if (!Number.isInteger(periodLength) || periodLength < p.min || periodLength > p.max) {
-    return "Period length must be " + p.min + "–" + p.max + " days.";
+    return t("errPeriodLength", p);
   }
   return "";
 }
@@ -321,7 +458,7 @@ function writeJSON(key, value) {
     return true;
   } catch (err) {
     console.warn("Cycle Sync: could not save " + key, err);
-    showToast("Couldn't save. Storage may be full or blocked.");
+    showToast(t("storageError"));
     return false;
   }
 }
@@ -400,6 +537,23 @@ const store = {
     },
     save(profile) {
       return writeJSON("profile", profile);
+    },
+  },
+  // Chosen language code, shared by real and demo mode (not namespaced).
+  lang: {
+    load() {
+      try {
+        return localStorage.getItem(LANG_KEY);
+      } catch {
+        return null;
+      }
+    },
+    save(code) {
+      try {
+        localStorage.setItem(LANG_KEY, code);
+      } catch (err) {
+        console.warn("Cycle Sync: could not save language", err);
+      }
     },
   },
   demoVersion: {
@@ -545,7 +699,7 @@ function calculateMonthlyAlignment(year, month, settings) {
 
 // Better phase(s) for a task type, e.g. "Luteal" — used in event details.
 function suitedPhaseNames(typeId) {
-  return TASK_TYPES[typeId].suits.map((k) => PHASES[k].name).join(" or ");
+  return TASK_TYPES[typeId].suits.map((k) => PHASES[k].name).join(UI.or);
 }
 
 // =====================================================================
@@ -557,10 +711,10 @@ const DEMO_VERSION = "2";
 
 // Sample tasks sit around "today", so they follow the pretend date too.
 function seedDemoData() {
-  const version = DEMO_VERSION + "@" + toISODate(today());
+  const version = DEMO_VERSION + "@" + toISODate(today()) + "@" + LANG;
   if (store.demoVersion.load() === version) return;
-  const t = today();
-  const day = (offset) => toISODate(addDays(t, offset));
+  const base = today();
+  const day = (offset) => toISODate(addDays(base, offset));
   // Today = the three events from the mockup (score 78 on Day 14).
   const tasks = [
     { title: "Client Presentation", date: day(0),  start: "10:00", end: "11:00", type: "networking" },
@@ -574,7 +728,10 @@ function seedDemoData() {
     { title: "Pilates",             date: day(2),  start: "18:00", end: "19:00", type: "strength" },
     { title: "Close out Q3 report", date: day(3),  start: "10:00", end: "12:00", type: "wrapup" },
   ];
-  tasks.forEach((task, i) => (task.id = "demo" + i));
+  tasks.forEach((task, i) => {
+    task.id = "demo" + i;
+    task.title = CONTENT.demoTasks[i] || task.title;
+  });
   store.tasks.save(tasks);
   store.logs.replaceAll({ [day(0)]: { energy: 7, mood: "Good", focus: "High", sleep: "8h" } });
   store.demoVersion.save(version);
@@ -588,7 +745,7 @@ function renderDemoBar() {
   const text = CONTENT.demo;
   bar.hidden = !IS_DEMO;
   if (!IS_DEMO) return;
-  const label = today().toLocaleDateString(undefined, { weekday: "short", day: "numeric", month: "short" });
+  const label = today().toLocaleDateString(LOCALE, { weekday: "short", day: "numeric", month: "short" });
   bar.innerHTML = "<strong>" + text.label + "</strong> · " + label + ' · <span class="demo-bar-link">' + text.change + "</span>";
 }
 
@@ -603,7 +760,7 @@ function openDemoSheet() {
     const iso = toISODate(addDays(realToday(), day - realDay));
     const active = getPhaseForDate(today(), settings) === key ? " is-active" : "";
     return '<button type="button" class="sheet-btn demo-phase' + active + '" data-demo-date="' + iso + '" style="--phase-color: var(--' + key + ')">' +
-      '<span class="phase-icon">' + icon(PHASES[key].icon) + "</span>" + PHASES[key].name + '<span class="demo-day">Day ' + day + "</span></button>";
+      '<span class="phase-icon">' + icon(PHASES[key].icon) + "</span>" + PHASES[key].name + '<span class="demo-day">' + t("dayN", { n: day }) + "</span></button>";
   });
   openSheet(text.title,
     '<p class="sheet-note">' + text.note + "</p>" + buttons.join("") +
@@ -631,12 +788,12 @@ let openEventId = null;
 
 function renderPhaseNow(state) {
   document.getElementById("phase-now").innerHTML =
-    '<p class="phase-day">DAY ' + state.cycleDay + "</p>" +
+    '<p class="phase-day">' + t("dayN", { n: state.cycleDay }).toLocaleUpperCase(LOCALE) + "</p>" +
     '<p class="phase-name" style="--phase-color: var(--' + state.phaseKey + ')">' +
       state.phase.name +
       '<span class="phase-icon" title="' + state.phase.powr + '">' + icon(state.phase.icon) + "</span>" +
     "</p>" +
-    '<button type="button" class="phase-link" data-phase="' + state.phaseKey + '">View phase details' + icon("chevron") + "</button>";
+    '<button type="button" class="phase-link" data-phase="' + state.phaseKey + '">' + t("viewPhaseDetails") + icon("chevron") + "</button>";
 }
 
 // Bar under the hero: normal = phase tips, recovery = gentler wording.
@@ -652,7 +809,7 @@ function renderRecommendation(state, isRecovery) {
   }
   bar.innerHTML =
     '<span class="rec-icon">' + icon(isRecovery ? "heart" : "bulb") + "</span>" +
-    '<span class="rec-text">See recommendations for ' + (isRecovery ? "recovery" : "your current phase") + "</span>" +
+    '<span class="rec-text">' + t(isRecovery ? "recRecovery" : "recNormal") + "</span>" +
     icon("chevron");
 }
 
@@ -699,7 +856,7 @@ function updateRing(id, score, label, emptyLabel) {
 function renderInsightList(listId, items, kind) {
   document.getElementById(listId).innerHTML = items
     .map((item) => '<li><button type="button" class="insight-item" data-insight="' + item.label + '" data-kind="' + kind + '">' +
-      '<span class="insight-chip">' + icon(item.icon) + "</span>" + item.label + "</button></li>")
+      '<span class="insight-chip">' + icon(item.icon) + "</span>" + itemLabel(item.label) + "</button></li>")
     .join("");
 }
 
@@ -712,19 +869,23 @@ function renderWeek(settings) {
   const monday = startOfWeek(today());
   const todayISO = toISODate(today());
   const selectedISO = toISODate(selectedDate);
+  const names = dayNames();
   let html = "";
   for (let i = 0; i < 7; i++) {
     const date = addDays(monday, i);
     const iso = toISODate(date);
     const phase = PHASES[getPhaseForDate(date, settings)];
     const count = calendarSource.getEvents(iso).length;
-    const label = date.toLocaleDateString(undefined, { weekday: "long", day: "numeric", month: "long" }) +
-      ", " + phase.name + " phase, " + count + (count === 1 ? " task" : " tasks");
+    const label = t("dayAria", {
+      date: date.toLocaleDateString(LOCALE, { weekday: "long", day: "numeric", month: "long" }),
+      phase: phase.name,
+      tasks: plural("tasks", count),
+    });
     html +=
       '<button type="button" class="day' + (iso === todayISO ? " is-today" : "") + '" data-date="' + iso + '"' +
         ' aria-pressed="' + (iso === selectedISO) + '" aria-label="' + label + '"' +
         ' style="--phase-color: var(--' + getPhaseForDate(date, settings) + ')">' +
-        '<span class="day-name">' + DAY_NAMES[i] + "</span>" +
+        '<span class="day-name">' + names[i] + "</span>" +
         '<span class="day-num">' + date.getDate() + "</span>" +
         '<span class="day-dots"><span class="day-phase-dot"></span>' + (count ? '<span class="day-task-dot"></span>' : "") + "</span>" +
       "</button>";
@@ -736,12 +897,11 @@ function eventDetailText(event, phaseKey) {
   const phaseName = PHASES[phaseKey].name;
   const typeLabel = TASK_TYPES[event.type].label;
   const better = suitedPhaseNames(event.type);
-  if (event.sync === "high") return typeLabel + ". A great fit for your " + phaseName + " phase.";
-  if (event.sync === "moderate") return typeLabel + ". Fine today, even better in your " + better + " phase.";
-  if (event.sync === "low") {
-    return typeLabel + (better ? ". Could fit better in your " + better + " phase." : ". Keep it light in your " + phaseName + " phase.");
-  }
-  return typeLabel + ". A fair fit for any phase.";
+  const vars = { type: typeLabel, phase: phaseName, better };
+  if (event.sync === "high") return t("evHigh", vars);
+  if (event.sync === "moderate") return t("evModerate", vars);
+  if (event.sync === "low") return t(better ? "evLowBetter" : "evLowLight", vars);
+  return t("evGood", vars);
 }
 
 function renderCalendarEvent(event, phaseKey) {
@@ -753,14 +913,14 @@ function renderCalendarEvent(event, phaseKey) {
         '<span class="event-dot"></span>' +
         '<span class="event-time">' + event.start + " – " + event.end + "</span>" +
         '<span class="event-title">' + escapeHTML(event.title) + "</span>" +
-        '<span class="badge">' + icon(sync.icon) + sync.label + "</span>" +
+        '<span class="badge">' + icon(sync.icon) + syncLabel(event.sync) + "</span>" +
         '<span class="event-chevron">' + icon("chevron") + "</span>" +
       "</button>" +
       '<div class="event-detail" id="detail-' + event.id + '"' + (isOpen ? "" : " hidden") + ">" +
         "<p>" + eventDetailText(event, phaseKey) + "</p>" +
         '<span class="event-actions">' +
-          '<button type="button" class="delete-btn" data-edit="' + event.id + '">' + icon("pen") + "Edit</button>" +
-          '<button type="button" class="delete-btn" data-delete="' + event.id + '">' + icon("trash") + "Delete</button>" +
+          '<button type="button" class="delete-btn" data-edit="' + event.id + '">' + icon("pen") + t("edit") + "</button>" +
+          '<button type="button" class="delete-btn" data-delete="' + event.id + '">' + icon("trash") + t("delete") + "</button>" +
         "</span>" +
       "</div>" +
     "</li>"
@@ -774,7 +934,7 @@ function renderDayEvents(settings) {
   const list = document.getElementById("events");
   list.innerHTML = rated.map((e) => renderCalendarEvent(e, state.phaseKey)).join("");
   if (!rated.length) {
-    list.innerHTML = '<li class="events-empty">Nothing planned. Add a task to see how it fits your phase.</li>';
+    list.innerHTML = '<li class="events-empty">' + t("eventsEmpty") + "</li>";
   }
 }
 
@@ -791,9 +951,9 @@ function renderAlignment() {
   document.getElementById("screen-alignment").classList.toggle("is-recovery", isRecovery);
   for (const btn of document.querySelectorAll("[data-phase-today]")) btn.dataset.phase = now.phaseKey;
   renderPhaseNow(now);
-  updateRing("ring", result.score, "Cycle Alignment", "No tasks today");
+  updateRing("ring", result.score, t("ringLabel"), t("ringEmpty"));
   document.getElementById("ring").setAttribute("aria-label",
-    (result.score === null ? "No tasks today to score" : "Cycle alignment " + result.score + " out of 100") + ". How your score works");
+    result.score === null ? t("ringAriaEmpty") : t("ringAria", { score: result.score }));
   renderRecommendation(now, isRecovery);
   renderInsights(result);
   renderWeek(settings);
@@ -821,7 +981,7 @@ function todaysAlignment() {
 }
 
 function syncBadge(level) {
-  return '<span class="badge sync-' + level + '">' + icon(SYNC_LEVELS[level].icon) + SYNC_LEVELS[level].label + "</span>";
+  return '<span class="badge sync-' + level + '">' + icon(SYNC_LEVELS[level].icon) + syncLabel(level) + "</span>";
 }
 
 function openScoreSheet() {
@@ -862,7 +1022,7 @@ function insightSheetItems(kind) {
 function insightRows(items, kind) {
   return '<ul class="insight-rows insight-' + kind + '">' + items.map((item) =>
     '<li><button type="button" class="insight-row" data-insight="' + item.label + '" data-kind="' + kind + '">' +
-      '<span class="insight-chip">' + icon(item.icon) + "</span>" + item.label + icon("chevron") + "</button></li>"
+      '<span class="insight-chip">' + icon(item.icon) + "</span>" + itemLabel(item.label) + icon("chevron") + "</button></li>"
   ).join("") + "</ul>";
 }
 
@@ -883,7 +1043,7 @@ function openInsightDetail(label, kind) {
   const { now } = todaysAlignment();
   const phase = PHASES[now.phaseKey];
   const detail = CONTENT.insightDetails[kind][label] || { why: phase.tagline, how: phase.work.slice(0, 3) };
-  document.getElementById("detail-title").textContent = label;
+  document.getElementById("detail-title").textContent = itemLabel(label);
   document.getElementById("detail-body").innerHTML =
     '<p class="detail-tag detail-tag-' + kind + '">' + fillTemplate(kind === "good" ? text.goodTag : text.watchTag, now.phaseKey) + "</p>" +
     "<p>" + fillTemplate(detail.why, now.phaseKey) + "</p>" +
@@ -932,7 +1092,7 @@ let planMonth = new Date(today().getFullYear(), today().getMonth(), 1);
 // "Days 13–15", "Day 8" or "" for a zero-day phase.
 function phaseRangeText(range) {
   if (range.start > range.end) return "";
-  return range.start === range.end ? "Day " + range.start : "Days " + range.start + "–" + range.end;
+  return range.start === range.end ? t("dayN", { n: range.start }) : t("daysRange", range);
 }
 
 function phaseLength(range) {
@@ -950,24 +1110,26 @@ function renderPlanHero(state, settings) {
   const next = PHASES[getPhaseForDate(addDays(today(), days), settings)];
 
   document.getElementById("plan-hero").innerHTML =
-    '<p class="plan-day">Day ' + state.cycleDay + "</p>" +
+    '<p class="plan-day">' + t("dayN", { n: state.cycleDay }) + "</p>" +
     '<p class="plan-phase" style="--phase-color: var(--' + state.phaseKey + ')">' + state.phase.name +
       '<span class="plan-phase-icon">' + icon(state.phase.icon) + "</span></p>" +
-    '<div class="cycle-line" role="img" aria-label="Day ' + state.cycleDay + " of " + settings.cycleLength + '">' +
+    '<div class="cycle-line" role="img" aria-label="' + t("dayOf", { day: state.cycleDay, total: settings.cycleLength }) + '">' +
       segments + '<span class="cycle-marker" style="left: ' + markerAt + '%"></span>' +
     "</div>" +
-    '<p class="plan-next-label">Next phase</p>' +
-    '<p class="plan-next">' + next.name + " in " + days + (days === 1 ? " day" : " days") + "</p>";
+    '<p class="plan-next-label">' + t("nextPhase") + "</p>" +
+    '<p class="plan-next">' + t("nextIn", { phase: next.name, days: plural("days", days) }) + "</p>";
 }
 
 // Cycle Plan wheel: alignment of the month shown in the calendar.
 function updateMonthRing(settings) {
   const text = CONTENT.monthRing;
   const { score } = calculateMonthlyAlignment(planMonth.getFullYear(), planMonth.getMonth(), settings);
-  const month = planMonth.toLocaleDateString(undefined, { month: "long" });
+  const month = planMonth.toLocaleDateString(LOCALE, { month: "long" });
   updateRing("month-ring", score, text.label, text.empty);
-  document.getElementById("month-ring").setAttribute("aria-label",
-    month + ": " + (score === null ? text.empty : text.label + " " + score + " out of 100"));
+  document.getElementById("month-ring").setAttribute("aria-label", t("monthRingAria", {
+    month,
+    text: score === null ? text.empty : t("monthRingScore", { label: text.label, score }),
+  }));
 }
 
 function renderMonth(settings) {
@@ -980,10 +1142,10 @@ function renderMonth(settings) {
   const ranges = getPhaseRanges(settings);
 
   document.getElementById("plan-month").textContent =
-    planMonth.toLocaleDateString(undefined, { month: "long", year: "numeric" });
+    planMonth.toLocaleDateString(LOCALE, { month: "long", year: "numeric" });
 
   let html = '<div class="month-row month-names" aria-hidden="true">' +
-    DAY_NAMES.map((d) => "<span>" + d + "</span>").join("") + "</div>";
+    dayNames().map((d) => "<span>" + d + "</span>").join("") + "</div>";
 
   for (let w = 0; w < weeks; w++) {
     const cells = [];
@@ -1004,7 +1166,7 @@ function renderMonth(settings) {
     html += '<div class="month-row">' + cells.map((c) => {
       if (!c) return "<span></span>";
       return '<button type="button" class="m-day' + (c.isToday ? " is-today" : "") + '" data-day="' + c.iso + '">' + c.dayNum +
-        '<span class="sr-only">, ' + PHASES[c.phaseKey].name + (c.isToday ? ", today" : "") + "</span></button>";
+        '<span class="sr-only">, ' + PHASES[c.phaseKey].name + (c.isToday ? ", " + t("today") : "") + "</span></button>";
     }).join("") + "</div>";
 
     // Phase bar: one segment per run of days in the same phase, icon where a phase starts.
@@ -1044,21 +1206,32 @@ function renderLegend() {
 
 // ----- Track Today (daily check-in) -----
 
+// Saved values stay in English (the server checks them); shown text: UI.log / UI.logOptions.
 const LOG_FIELDS = [
-  { id: "energy", label: "Energy", icon: "bolt",  color: "energy", format: (v) => v + "/10" },
-  { id: "mood",   label: "Mood",   icon: "smile", color: "mood",   options: ["Low", "Okay", "Good", "Great"] },
-  { id: "focus",  label: "Focus",  icon: "focus", color: "focus",  options: ["Low", "Medium", "High"] },
-  { id: "sleep",  label: "Sleep",  icon: "moon",  color: "sleep",  options: ["<8h", "8h", ">8h"] },
+  { id: "energy", icon: "bolt",  color: "energy", format: (v) => v + "/10" },
+  { id: "mood",   icon: "smile", color: "mood",   options: ["Low", "Okay", "Good", "Great"] },
+  { id: "focus",  icon: "focus", color: "focus",  options: ["Low", "Medium", "High"] },
+  { id: "sleep",  icon: "moon",  color: "sleep",  options: ["<8h", "8h", ">8h"] },
 ];
+
+function logFieldLabel(f) {
+  return UI.log[f.id];
+}
+
+// Shown text for a saved check-in value.
+function logValueText(f, value) {
+  if (f.format) return f.format(value);
+  return (UI.logOptions[f.id] && UI.logOptions[f.id][value]) || value;
+}
 const DEFAULT_ENERGY = 5;
 
 function renderTrackToday() {
   const log = store.logs.load()[toISODate(today())] || {};
   document.getElementById("track-grid").innerHTML = LOG_FIELDS.map((f) => {
-    const value = log[f.id] === undefined ? "–" : f.format ? f.format(log[f.id]) : log[f.id];
+    const value = log[f.id] === undefined ? "–" : logValueText(f, log[f.id]);
     return (
-      '<button type="button" class="track track-' + f.color + '" data-log="' + f.id + '" aria-label="' + f.label + ": " + value + '">' +
-        '<span class="track-top"><span class="track-icon">' + icon(f.icon) + "</span>" + f.label + "</span>" +
+      '<button type="button" class="track track-' + f.color + '" data-log="' + f.id + '" aria-label="' + escapeHTML(logFieldLabel(f) + ": " + value) + '">' +
+        '<span class="track-top"><span class="track-icon">' + icon(f.icon) + "</span>" + logFieldLabel(f) + "</span>" +
         '<span class="track-bottom"><span class="track-value">' + escapeHTML(value) + "</span>" + icon("chevron") + "</span>" +
       "</button>"
     );
@@ -1068,9 +1241,9 @@ function renderTrackToday() {
 // Mood / Focus / Sleep as rows of pill buttons (radio inputs).
 function renderLogChoices() {
   document.getElementById("log-choices").innerHTML = LOG_FIELDS.filter((f) => f.options).map((f) =>
-    '<fieldset class="choice" id="log-' + f.id + '"><legend>' + f.label + "</legend>" +
+    '<fieldset class="choice" id="log-' + f.id + '"><legend>' + logFieldLabel(f) + "</legend>" +
       f.options.map((opt) =>
-        '<label><input type="radio" name="' + f.id + '" value="' + escapeHTML(opt) + '"><span>' + escapeHTML(opt) + "</span></label>"
+        '<label><input type="radio" name="' + f.id + '" value="' + escapeHTML(opt) + '"><span>' + escapeHTML(logValueText(f, opt)) + "</span></label>"
       ).join("") +
     "</fieldset>"
   ).join("");
@@ -1155,7 +1328,7 @@ function renderPhaseDetail(phaseKey) {
     '<div class="detail-head" style="--phase-color: var(--' + phaseKey + ')">' +
       '<span class="phase-icon">' + icon(phase.icon) + "</span>" +
       "<h1>" + phase.name + "</h1>" +
-      '<p class="detail-meta">' + phase.powr + (days ? " · " + days + " (estimated)" : "") + "</p>" +
+      '<p class="detail-meta">' + phase.powr + (days ? " · " + days + " (" + t("estimated") + ")" : "") + "</p>" +
       '<p class="detail-tagline">' + phase.tagline + " " + phase.hormones + "</p>" +
     "</div>" +
     ["work", "move", "eat"].map((key) => renderTipCard("phase-section-" + key, text.headings[key], DETAIL_ICONS[key], phase[key])).join("") +
@@ -1183,7 +1356,7 @@ function openDaySheet(iso) {
         '<li><span><span class="sheet-time">' + e.start + "–" + e.end + "</span> " + escapeHTML(e.title) + "</span>" + syncBadge(e.sync) + "</li>"
       ).join("") + "</ul>"
     : "<p>" + text.noTasks + "</p>";
-  openSheet(date.toLocaleDateString(undefined, { weekday: "long", day: "numeric", month: "long" }),
+  openSheet(date.toLocaleDateString(LOCALE, { weekday: "long", day: "numeric", month: "long" }),
     '<p class="sheet-phase" style="--phase-color: var(--' + state.phaseKey + ')"><span class="phase-icon">' + icon(state.phase.icon) + "</span>" +
       fillTemplate(text.phaseLine, state.phaseKey, { day: state.cycleDay }) + "</p>" +
     tasks +
@@ -1203,7 +1376,7 @@ const COACH = CONTENT.coach;
 function fillTemplate(template, phaseKey, extra = {}) {
   const phase = PHASES[phaseKey];
   const vars = { phase: phase.name, powr: phase.powr, tagline: phase.tagline, firstMove: phase.move[0], firstWork: phase.work[0], ...extra };
-  return template.replace(/\{(\w+)\}/g, (match, name) => (name in vars ? vars[name] : match));
+  return fillVars(template, vars);
 }
 
 // Named lists a reply can point to (besides the phase's own work / move / eat).
@@ -1221,9 +1394,9 @@ function coachVars() {
     vars: {
       day: now.cycleDay,
       nextPhase: PHASES[getPhaseForDate(addDays(today(), nextIn), settings)].name,
-      nextIn: nextIn + (nextIn === 1 ? " day" : " days"),
-      scoreText: result.score === null ? "no tasks yet" : result.score + "/100",
-      levels: Object.values(SYNC_LEVELS).map((l) => l.label + " " + l.points).join(", "),
+      nextIn: plural("days", nextIn),
+      scoreText: result.score === null ? t("noTasksYet") : result.score + "/100",
+      levels: Object.entries(SYNC_LEVELS).map(([level, l]) => syncLabel(level) + " " + l.points).join(", "),
     },
   };
 }
@@ -1274,8 +1447,9 @@ let chatMessages = [];
 
 // Keywords match from the start of a word ("eat" matches "eating", not "breathing").
 function findTopic(text) {
-  const lower = text.toLowerCase();
-  const matches = (keyword) => new RegExp("\\b" + keyword.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).test(lower);
+  const lower = text.toLocaleLowerCase(LOCALE);
+  // Start of a word, also for letters like ā, ž, ł, é (\b only knows a–z).
+  const matches = (keyword) => new RegExp("(?<![\\p{L}\\p{N}])" + keyword.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "u").test(lower);
   return COACH.topics.find((t) => t.keywords.some(matches));
 }
 
@@ -1345,7 +1519,7 @@ function coachContext() {
     cycle_length: settings.cycleLength,
     period_length: settings.periodLength,
     phase: now.phaseKey,
-    phase_days: phaseRangeText(getPhaseRanges(settings)[now.phaseKey]),
+    phase_days: phaseRangeTextEn(getPhaseRanges(settings)[now.phaseKey]),
     next_phase: getPhaseForDate(addDays(today(), nextIn), settings),
     next_phase_in_days: nextIn,
     score: result.score,
@@ -1353,11 +1527,18 @@ function coachContext() {
       title: e.title.slice(0, 60),
       start: e.start,
       end: e.end,
-      type: TASK_TYPES[e.type] ? TASK_TYPES[e.type].label : e.type,
+      type: CONTENT_EN.taskTypes[e.type] ? CONTENT_EN.taskTypes[e.type].label : e.type,
       level: e.sync,
     })),
     checkins,
+    language: LANG, // the coach answers in this language
   };
+}
+
+// The server always gets English day ranges ("Days 13–15").
+function phaseRangeTextEn(range) {
+  if (range.start > range.end) return "";
+  return range.start === range.end ? "Day " + range.start : "Days " + range.start + "–" + range.end;
 }
 
 // Reads "event: x\ndata: {...}\n\n" blocks from a fetch body and calls onEvent for each.
@@ -1430,7 +1611,7 @@ function renderChatMessage(m, index) {
   if (m.from === "user") return '<div class="bubble bubble-user">' + escapeHTML(m.text) + "</div>";
   if (m.pending) {
     return '<div class="bubble bubble-coach" data-msg="' + index + '">' +
-      (m.text ? renderMarkdown(m.text) : TYPING_DOTS) + "</div>";
+      (m.text ? renderMarkdown(m.text) : typingDots()) + "</div>";
   }
   if (m.error) {
     return '<div class="bubble bubble-coach bubble-error" role="alert">' +
@@ -1452,7 +1633,7 @@ function renderChatMessage(m, index) {
       (m.after ? "<p>" + escapeHTML(m.after) + "</p>" : "") +
       (session
         ? '<button type="button" class="bubble-action" data-session="' + session.id + '">' +
-            icon("play") + "Start " + session.title + " · " + session.minutes + " min</button>"
+            icon("play") + t("startSession", { title: session.title, n: session.minutes }) + "</button>"
         : "") +
       (m.source === "offline" && index === chatMessages.length - 1
         ? '<button type="button" class="bubble-action" data-retry="' + index + '">' + icon("sparkle") + COACH.retryAiLabel + "</button>"
@@ -1487,7 +1668,7 @@ function clearChat() {
   renderChat();
   let undone = false;
   showToast(COACH.cleared, {
-    label: "Undo",
+    label: t("undo"),
     onClick: () => {
       undone = true;
       chatMessages = previous;
@@ -1544,7 +1725,14 @@ function answerLastQuestion() {
   streamAnswer(question, reply);
 }
 
-const TYPING_DOTS = '<span class="typing" aria-label="Coach is typing"><i></i><i></i><i></i></span>';
+function typingDots() {
+  return '<span class="typing" aria-label="' + t("typing") + '"><i></i><i></i><i></i></span>';
+}
+
+// Server errors in the chosen language (by code); the server's English text if the code is new.
+function coachErrorText(error) {
+  return UI.coachErrors[error.code] || error.message;
+}
 
 async function streamAnswer(question, reply) {
   const controller = new AbortController();
@@ -1563,7 +1751,7 @@ async function streamAnswer(question, reply) {
       const body = await res.json().catch(() => null);
       if (!body || res.status === 404 || res.status === 405) result = { offline: true };
       else if (body.code === "not_configured") result = { offline: true, notConfigured: true };
-      else result = { error: { message: body.message, retryable: res.status === 429 || res.status >= 500 } };
+      else result = { error: { message: coachErrorText(body), retryable: res.status === 429 || res.status >= 500 } };
     } else {
       await readEventStream(res.body, (event) => {
         const bubble = () => document.querySelector('[data-msg="' + chatMessages.indexOf(reply) + '"]');
@@ -1573,11 +1761,11 @@ async function streamAnswer(question, reply) {
         } else if (event.event === "reset") {
           // The server switched to a backup model mid-answer: start the answer again.
           reply.text = "";
-          if (bubble()) bubble().innerHTML = TYPING_DOTS;
+          if (bubble()) bubble().innerHTML = typingDots();
         } else if (event.event === "done") {
           result = { done: true, truncated: event.truncated };
         } else if (event.event === "error") {
-          result = { error: { message: event.message, retryable: event.retryable } };
+          result = { error: { message: coachErrorText(event), retryable: event.retryable } };
         }
       });
       if (!result) result = { error: { message: COACH.interrupted, retryable: true } };
@@ -1587,7 +1775,7 @@ async function streamAnswer(question, reply) {
     result = aborted && controller.signal.reason !== "timeout"
       ? { cancelled: true } // chat was cleared while streaming
       : aborted
-        ? { error: { message: "The coach took too long to answer. Try again.", retryable: true } }
+        ? { error: { message: UI.coachErrors.timeout, retryable: true } }
         : { offline: true }; // network failure: server unreachable
   } finally {
     clearTimeout(timeout);
@@ -1628,7 +1816,7 @@ function renderSessions() {
     '<button type="button" class="session-card" data-session="' + s.id + '">' +
       '<svg class="session-art" viewBox="0 0 100 160" preserveAspectRatio="xMidYMid slice" aria-hidden="true">' + SESSION_ART[s.art] + "</svg>" +
       '<span class="session-play">' + icon("play") + "</span>" +
-      '<span class="session-min">' + s.minutes + " min</span>" +
+      '<span class="session-min">' + t("minutes", { n: s.minutes }) + "</span>" +
       '<span class="session-title">' + s.title + "</span>" +
     "</button>"
   ).join("");
@@ -1653,14 +1841,14 @@ function setBreath(state, cue) {
 
 function breathTick() {
   const inhale = timer.elapsed % (BREATH.in + BREATH.out) < BREATH.in;
-  setBreath(inhale ? "in" : "out", inhale ? "Breathe in" : "Breathe out");
+  setBreath(inhale ? "in" : "out", t(inhale ? "breatheIn" : "breatheOut"));
 }
 
 function renderTimer() {
-  let label = "Start";
-  if (timer.intervalId) label = "Pause";
-  else if (timer.remaining === 0) label = "Start again";
-  else if (timer.started) label = "Resume";
+  let label = t("timerStart");
+  if (timer.intervalId) label = t("timerPause");
+  else if (timer.remaining === 0) label = t("timerAgain");
+  else if (timer.started) label = t("timerResume");
   document.getElementById("timer-time").textContent = formatTime(timer.remaining);
   document.getElementById("timer-toggle").textContent = label;
 }
@@ -1683,7 +1871,7 @@ function startTimer() {
     timer.remaining--;
     if (timer.remaining <= 0) {
       stopTimer();
-      setBreath("", "Well done");
+      setBreath("", t("wellDone"));
       return;
     }
     breathTick();
@@ -1698,7 +1886,7 @@ function openSession(id) {
   timer = { session, remaining: session.minutes * 60, elapsed: 0, started: false, intervalId: null };
   document.getElementById("timer-title").textContent = session.title;
   document.getElementById("timer-tips").innerHTML = session.tips.map((t) => "<li>" + fillTemplate(t, phaseKey) + "</li>").join("");
-  setBreath("", "Ready when you are");
+  setBreath("", t("ready"));
   renderTimer();
   timerDialog.showModal();
 }
@@ -1706,7 +1894,7 @@ function openSession(id) {
 document.getElementById("timer-toggle").addEventListener("click", () => {
   if (timer.intervalId) {
     stopTimer();
-    setBreath("", "Paused");
+    setBreath("", t("paused"));
   } else {
     startTimer();
   }
@@ -1787,7 +1975,7 @@ function renderIntegrations() {
         '<svg class="int-logo" viewBox="0 0 24 24" aria-hidden="true">' + INTEGRATION_LOGOS[item.id] + "</svg>" +
         '<span class="int-chevron">' + icon("chevron") + "</span>" +
         '<span class="int-name">' + item.name + "</span>" +
-        '<span class="int-status">' + (on ? "Connected" : "Not connected") + "</span>" +
+        '<span class="int-status">' + t(on ? "connected" : "notConnected") + "</span>" +
       "</button>"
     );
   }).join("");
@@ -1816,7 +2004,7 @@ function renderBell() {
   const unseen = hasUnseenInsight();
   const bell = document.getElementById("bell-btn");
   bell.classList.toggle("has-dot", unseen);
-  bell.setAttribute("aria-label", unseen ? "Notifications, 1 new" : "Notifications");
+  bell.setAttribute("aria-label", t(unseen ? "notificationsNew" : "notifications"));
 }
 
 // Current phase until it ends, then the next one — from the user's own dates.
@@ -1826,8 +2014,8 @@ function weeklyInsightHTML() {
   const now = getCycleState(today(), settings);
   const nextStart = addDays(today(), daysUntilNextPhase(today(), settings));
   const nextKey = getPhaseForDate(nextStart, settings);
-  const shortDate = (date) => date.toLocaleDateString(undefined, { weekday: "short", day: "numeric", month: "short" });
-  const goodFor = (key) => PHASES[key].work.slice(0, 2).join(", ").toLowerCase();
+  const shortDate = (date) => date.toLocaleDateString(LOCALE, { weekday: "short", day: "numeric", month: "short" });
+  const goodFor = (key) => PHASES[key].work.slice(0, 2).join(", ").toLocaleLowerCase(LOCALE);
   const vars = {
     phaseEnds: shortDate(addDays(nextStart, -1)),
     goodFor: goodFor(now.phaseKey),
@@ -1897,7 +2085,7 @@ document.getElementById("cycle-form").addEventListener("submit", function (e) {
   e.preventDefault();
   if (!submitCycleForm(this, "cycle-error")) return;
   goBack("settings");
-  showToast("Cycle settings saved");
+  showToast(t("cycleSaved"));
 });
 
 document.getElementById("onboard-form").addEventListener("submit", function (e) {
@@ -1913,11 +2101,11 @@ document.getElementById("weekly-toggle").addEventListener("change", function () 
   prefs.weeklyInsight = this.checked;
   store.prefs.save(prefs);
   renderBell();
-  showToast("Weekly insight " + (this.checked ? "on" : "off"));
+  showToast(t(this.checked ? "weeklyOn" : "weeklyOff"));
 });
 
 function formatLongDate(date) {
-  return date.toLocaleDateString(undefined, { day: "numeric", month: "long", year: "numeric" });
+  return date.toLocaleDateString(LOCALE, { day: "numeric", month: "long", year: "numeric" });
 }
 
 const REPORT_LOG_DAYS = 30;
@@ -1931,10 +2119,10 @@ function reportLogLines() {
     const log = logs[iso];
     if (!log) continue;
     const parts = LOG_FIELDS.filter((f) => log[f.id] !== undefined)
-      .map((f) => f.label + " " + (f.format ? f.format(log[f.id]) : log[f.id]));
+      .map((f) => logFieldLabel(f) + " " + logValueText(f, log[f.id]));
     lines.push("  " + iso + "  " + parts.join(" · "));
   }
-  return lines.length ? lines : ["  None logged."];
+  return lines.length ? lines : ["  " + t("report.noneLogged")];
 }
 
 // Plain-text summary to share with a doctor.
@@ -1944,24 +2132,24 @@ function buildDoctorReport() {
   const ranges = getPhaseRanges(settings);
   const nextPeriod = addDays(today(), settings.cycleLength - now.cycleDay + 1);
   return [
-    "Cycle Sync: cycle summary",
-    "Created: " + formatLongDate(today()),
+    t("report.title"),
+    t("report.created", { date: formatLongDate(today()) }),
     "",
-    "Last period started: " + formatLongDate(parseLocalDate(settings.lastPeriodStart)),
-    "Cycle length: " + settings.cycleLength + " days",
-    "Period length: " + settings.periodLength + " days",
+    t("report.lastPeriod", { date: formatLongDate(parseLocalDate(settings.lastPeriodStart)) }),
+    t("report.cycleLength", { days: plural("days", settings.cycleLength) }),
+    t("report.periodLength", { days: plural("days", settings.periodLength) }),
     "",
-    "Today: Day " + now.cycleDay + ", " + now.phase.name + " phase",
-    "Next period expected: " + formatLongDate(nextPeriod),
+    t("report.today", { day: now.cycleDay, phase: now.phase.name }),
+    t("report.nextPeriod", { date: formatLongDate(nextPeriod) }),
     "",
-    "Phase days in this cycle:",
-    ...CYCLE_ORDER.map((key) => "  " + PHASES[key].name + ": " + (phaseRangeText(ranges[key]) || "none")),
+    t("report.phaseDays"),
+    ...CYCLE_ORDER.map((key) => "  " + PHASES[key].name + ": " + (phaseRangeText(ranges[key]) || t("report.none"))),
     "",
-    "Daily check-ins (last " + REPORT_LOG_DAYS + " days):",
+    t("report.checkins", { days: plural("days", REPORT_LOG_DAYS) }),
     ...reportLogLines(),
     "",
-    "Predictions are estimates based on the numbers above.",
-    "For general wellness only. Not medical advice, and not for contraception.",
+    t("report.estimates"),
+    t("disclaimer"),
   ].join("\n");
 }
 
@@ -1975,17 +2163,17 @@ function downloadFile(filename, text, type) {
 
 function downloadDoctorReport() {
   downloadFile("cycle-sync-report-" + toISODate(today()) + ".txt", buildDoctorReport(), "text/plain");
-  showToast("Report downloaded");
+  showToast(t("reportDownloaded"));
 }
 
 function exportData() {
   downloadFile("cycle-sync-data-" + toISODate(today()) + ".json", JSON.stringify(store.exportAll(), null, 2), "application/json");
-  showToast("Data exported");
+  showToast(t("dataExported"));
 }
 
 // "High Sync (100), Good (75), ..." — built from SYNC_LEVELS so text never drifts from the scoring.
 function scoreLevelsText() {
-  return Object.values(SYNC_LEVELS).map((l) => l.label + " (" + l.points + ")").join(", ");
+  return Object.entries(SYNC_LEVELS).map(([level, l]) => syncLabel(level) + " (" + l.points + ")").join(", ");
 }
 
 function renderFaq() {
@@ -2000,7 +2188,7 @@ function renderProfile() {
   const name = store.profile.load().name;
   const avatar = name ? '<span class="avatar-initial">' + escapeHTML(name[0].toUpperCase()) + "</span>" : icon("user");
   for (const el of document.querySelectorAll(".avatar, .profile-avatar")) el.innerHTML = avatar;
-  document.getElementById("coach-hello-name").textContent = name ? "Hi " + name : "Hi there";
+  document.getElementById("coach-hello-name").textContent = name ? t("hiName", { name }) : t("hiThere");
   document.getElementById("profile-form").elements.name.value = name;
 }
 
@@ -2014,7 +2202,7 @@ document.getElementById("profile-form").addEventListener("submit", function (e) 
   if (!store.profile.save({ name: cleanName(this.elements.name.value) })) return;
   renderProfile();
   goBack("settings");
-  showToast("Profile saved");
+  showToast(t("profileSaved"));
 });
 
 // ----- Appearance (day / night / match device) -----
@@ -2055,6 +2243,7 @@ function renderSettings() {
   const { email, subject } = CONTENT.contact;
   document.getElementById("contact-link").href = "mailto:" + email + "?subject=" + encodeURIComponent(subject);
   document.getElementById("weekly-toggle").checked = store.prefs.load().weeklyInsight;
+  for (const el of document.querySelectorAll("[data-lang-value]")) el.textContent = LANGUAGES[LANG].name;
 }
 
 // =====================================================================
@@ -2127,7 +2316,7 @@ let editingTaskId = null; // null = adding a new task
 function openTaskDialog(task, isoDate) {
   taskForm.reset();
   editingTaskId = task ? task.id : null;
-  document.getElementById("task-dialog-title").textContent = task ? "Edit task" : "Add task";
+  document.getElementById("task-dialog-title").textContent = t(task ? "editTaskTitle" : "addTaskTitle");
   if (task) {
     fields.title.value = task.title;
     fields.type.value = task.type;
@@ -2150,9 +2339,9 @@ function renderTaskSyncPreview() {
   }
   const date = parseLocalDate(fields.date.value);
   const phaseKey = getPhaseForDate(date, store.settings.load());
-  const day = date.toLocaleDateString(undefined, { weekday: "short", day: "numeric", month: "short" });
+  const day = date.toLocaleDateString(LOCALE, { weekday: "short", day: "numeric", month: "short" });
   preview.innerHTML = syncBadge(getSyncLevel(fields.type.value, phaseKey)) +
-    '<span>on ' + day + " (" + PHASES[phaseKey].name + ", estimated)</span>";
+    "<span>" + t("previewOn", { date: day, phase: PHASES[phaseKey].name }) + "</span>";
 }
 
 fields.type.addEventListener("change", renderTaskSyncPreview);
@@ -2162,10 +2351,10 @@ taskForm.addEventListener("submit", function (e) {
   e.preventDefault();
   const title = fields.title.value.trim();
   const { date, start, end, type } = fields;
-  if (!title) return (taskError.textContent = "Add a title for the task.");
-  if (!date.value) return (taskError.textContent = "Pick a date.");
+  if (!title) return (taskError.textContent = t("errTaskTitle"));
+  if (!date.value) return (taskError.textContent = t("errTaskDate"));
   if (!start.value || !end.value || end.value <= start.value) {
-    return (taskError.textContent = "End time must be after the start time.");
+    return (taskError.textContent = t("errTaskTime"));
   }
   const task = { title, date: date.value, start: start.value, end: end.value, type: type.value };
   if (editingTaskId) calendarSource.updateEvent(editingTaskId, task);
@@ -2174,7 +2363,7 @@ taskForm.addEventListener("submit", function (e) {
   openEventId = editingTaskId;
   taskDialog.close();
   renderAlignment();
-  showToast(editingTaskId ? "Task updated" : "Task added");
+  showToast(t(editingTaskId ? "taskUpdated" : "taskAdded"));
 });
 
 document.getElementById("task-cancel").addEventListener("click", () => taskDialog.close());
@@ -2192,10 +2381,6 @@ for (const el of document.querySelectorAll("[data-flower]")) {
   el.innerHTML = flowerSVG();
 }
 
-document.getElementById("task-type").innerHTML = Object.entries(TASK_TYPES)
-  .map(([id, t]) => '<option value="' + id + '">' + t.label + "</option>")
-  .join("");
-
 // Re-rendering replaces buttons, so put keyboard focus back on the new one.
 function refocus(selector) {
   const el = document.querySelector(selector);
@@ -2207,12 +2392,16 @@ document.addEventListener("click", function (e) {
   const target = e.target.closest(
     "[data-screen], [data-go], [data-back], [data-sheet], [data-edit], [data-day], [data-add-on], #ring, [data-date], [data-event], [data-delete], [data-phase], [data-month], [data-log], [data-ask], [data-retry], [data-session], " +
       "[data-soon], [data-integration], #add-task-btn, #plan-today-btn, #see-all-btn, #coach-history-btn, " +
-      "[data-confirm-reset], [data-close-sheet], [data-demo-date], #demo-bar, [data-insights], [data-insight], [data-theme-choice], #appearance-btn, #clear-chat-btn, #int-see-all-btn, #bell-btn, #report-btn, #export-btn, #reset-btn"
+      "[data-confirm-reset], [data-close-sheet], [data-demo-date], #demo-bar, [data-insights], [data-insight], [data-theme-choice], #appearance-btn, [data-lang-choice], [data-lang-open], #clear-chat-btn, #int-see-all-btn, #bell-btn, #report-btn, #export-btn, #reset-btn"
   );
   if (!target) return;
   // Any action inside an info sheet replaces it (except an item's detail, which opens on top).
   if (infoSheet.open && infoSheet.contains(target) && !target.dataset.insight) infoSheet.close();
-  if (target.id === "appearance-btn") {
+  if (target.dataset.langChoice) {
+    setLanguage(target.dataset.langChoice);
+  } else if (target.hasAttribute("data-lang-open")) {
+    openLanguageSheet();
+  } else if (target.id === "appearance-btn") {
     openAppearanceSheet();
   } else if (target.dataset.themeChoice) {
     setTheme(target.dataset.themeChoice);
@@ -2236,13 +2425,13 @@ document.addEventListener("click", function (e) {
     const task = calendarSource.getEvent(target.dataset.edit);
     if (task) openTaskDialog(task);
   } else if (target.dataset.soon) {
-    showToast(target.dataset.soon + " is coming soon");
+    showToast(t("comingSoon", { name: target.dataset.soon }));
   } else if (target.dataset.integration) {
     openIntegrationSheet(target.dataset.integration);
   } else if (target.id === "int-see-all-btn") {
     showAllIntegrations = !showAllIntegrations;
     target.setAttribute("aria-expanded", showAllIntegrations);
-    document.getElementById("int-see-all-label").textContent = showAllIntegrations ? "Show less" : "See All";
+    document.getElementById("int-see-all-label").textContent = t(showAllIntegrations ? "showLess" : "seeAll");
     renderIntegrations();
   } else if (target.id === "bell-btn") {
     openNotifications();
@@ -2267,7 +2456,7 @@ document.addEventListener("click", function (e) {
     const showAll = target.getAttribute("aria-expanded") !== "true";
     target.setAttribute("aria-expanded", showAll);
     document.getElementById("session-row").classList.toggle("is-grid", showAll);
-    document.getElementById("see-all-label").textContent = showAll ? "Show less" : "See All";
+    document.getElementById("see-all-label").textContent = t(showAll ? "showLess" : "seeAll");
   } else if (target.id === "clear-chat-btn") {
     clearChat();
   } else if (target.id === "coach-history-btn") {
@@ -2307,8 +2496,8 @@ document.addEventListener("click", function (e) {
     openEventId = null;
     renderAlignment();
     if (removed) {
-      showToast("Task deleted", {
-        label: "Undo",
+      showToast(t("taskDeleted"), {
+        label: t("undo"),
         onClick: () => {
           calendarSource.restoreEvent(removed);
           openEventId = removed.id;
@@ -2321,21 +2510,30 @@ document.addEventListener("click", function (e) {
   }
 });
 
-migrateStorage();
-applyTheme();
-if (IS_DEMO) seedDemoData();
-renderDemoBar();
-buildRing("ring");
-buildRing("month-ring");
-renderAlignment();
-renderLogChoices();
-renderPlan();
-renderCoachChips();
-loadChat();
-renderCoachNote();
-checkCoachServer();
-renderSessions();
-renderSettings();
-renderProfile();
-document.getElementById("onboard-form").elements.lastPeriodStart.max = toISODate(today());
-openTab(store.settings.exists() ? "alignment" : "onboarding");
+// Draws everything once the language is ready.
+function start() {
+  translatePage();
+  document.getElementById("task-type").innerHTML = Object.entries(TASK_TYPES)
+    .map(([id, type]) => '<option value="' + id + '">' + type.label + "</option>")
+    .join("");
+  migrateStorage();
+  applyTheme();
+  if (IS_DEMO) seedDemoData();
+  renderDemoBar();
+  buildRing("ring");
+  buildRing("month-ring");
+  renderAlignment();
+  renderLogChoices();
+  renderPlan();
+  renderCoachChips();
+  loadChat();
+  renderCoachNote();
+  checkCoachServer();
+  renderSessions();
+  renderSettings();
+  renderProfile();
+  document.getElementById("onboard-form").elements.lastPeriodStart.max = toISODate(today());
+  openTab(store.settings.exists() ? "alignment" : "onboarding");
+}
+
+loadLanguage(start);

@@ -9,6 +9,8 @@ MESSAGE_MAX_CHARS = 1000
 
 Phase = Literal["menstrual", "follicular", "ovulatory", "luteal"]
 Level = Literal["high", "good", "moderate", "low"]
+# App languages (app.js LANGUAGES). The coach answers in the chosen one.
+Language = Literal["en", "lv", "lt", "et", "pl", "de", "fr", "es", "it"]
 TIME = r"^([01]\d|2[0-3]):[0-5]\d$"
 CONVERSATION_ID = r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
 
@@ -47,6 +49,7 @@ class CoachContext(Strict):
     score: int | None = Field(default=None, ge=0, le=100)
     tasks: list[Task] = Field(default_factory=list, max_length=12)
     checkins: list[CheckIn] = Field(default_factory=list, max_length=7)
+    language: Language = "en"
 
 
 class CoachRequest(Strict):

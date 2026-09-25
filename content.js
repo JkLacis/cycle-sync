@@ -456,6 +456,221 @@ const CONTENT = {
     realToday: "Back to real today",
   },
 
+  // Settings → Language (and the button on the welcome screen). Names live in LANGUAGES (app.js).
+  language: {
+    title: "Language",
+    note: "The whole app switches, including the AI coach's answers.",
+  },
+
+  // Display names for Good for you / Watch-out items. The English name is the key everywhere
+  // (strengths, watchOuts, taskTypes.short, insightDetails); translations fill this map.
+  itemLabels: {},
+
+  // Sample tasks for ?demo=1, in the same order as seedDemoData() in app.js.
+  demoTasks: ["Client Presentation", "Team Sync", "Contract Review", "Quarterly planning", "Product brainstorm", "Investor coffee", "Morning HIIT", "Salary conversation", "Pilates", "Close out Q3 report"],
+
+  // Short screen text: buttons, labels, messages. index.html uses data-i18n="key" for these.
+  // {name} = filled in by app.js. Plurals: { one, few, many, other } picked with Intl.PluralRules.
+  ui: {
+    // Welcome (onboarding)
+    onboardTitle: "Welcome to Cycle Sync",
+    onboardSub: "Tell us about your cycle to get your daily alignment.",
+    firstName: "First name (optional)",
+    lastPeriod: "First day of your last period",
+    cycleLength: "Cycle length (days)",
+    periodLength: "Period length (days)",
+    onboardHint: "Not sure? Keep 28 and 5. You can change them later in Settings.",
+    getStarted: "Get started",
+    disclaimer: "For general wellness only. Not medical advice, and not for contraception.",
+
+    // Shared
+    yourProfile: "Your profile",
+    back: "Back",
+    close: "Close",
+    save: "Save",
+    undo: "Undo",
+    seeAll: "See All",
+    showLess: "Show less",
+    or: " or ",
+    today: "today",
+    estimated: "estimated",
+    dayN: "Day {n}",
+    daysRange: "Days {start}–{end}",
+    weekdays: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"], // short, Monday first
+    days: { one: "{n} day", other: "{n} days" },
+    tasks: { one: "{n} task", other: "{n} tasks" },
+    minutes: "{n} min",
+    comingSoon: "{name} is coming soon",
+    storageError: "Couldn't save. Storage may be full or blocked.",
+
+    // Dock
+    mainNav: "Main",
+    tabAlignment: "Alignment",
+    tabPlan: "Cycle Plan",
+    tabCoach: "AI Coach",
+    tabSettings: "Settings",
+
+    // Alignment
+    openCalendar: "Open cycle calendar",
+    viewPhaseDetails: "View phase details",
+    recNormal: "See recommendations for your current phase",
+    recRecovery: "See recommendations for recovery",
+    ringLabel: "Cycle Alignment",
+    ringEmpty: "No tasks today",
+    ringAria: "Cycle alignment {score} out of 100. How your score works",
+    ringAriaEmpty: "No tasks today to score. How your score works",
+    goodTitle: "Good for you",
+    watchTitle: "Watch-outs",
+    weekTitle: "Your Calendar This Week",
+    viewFullCalendar: "View Full Calendar",
+    chooseDay: "Choose a day",
+    dayAria: "{date}, {phase}, {tasks}",
+    addTask: "Add task",
+    eventsEmpty: "Nothing planned. Add a task to see how it fits your phase.",
+    edit: "Edit",
+    delete: "Delete",
+    evHigh: "{type}. A great fit for your {phase} phase.",
+    evModerate: "{type}. Fine today, even better in your {better} phase.",
+    evLowBetter: "{type}. Could fit better in your {better} phase.",
+    evLowLight: "{type}. Keep it light in your {phase} phase.",
+    evGood: "{type}. A fair fit for any phase.",
+    syncLevels: { high: "High Sync", good: "Good", moderate: "Moderate", low: "Low Sync" },
+
+    // Cycle Plan
+    planTitle: "Cycle Plan",
+    backToMonth: "Back to this month",
+    prevMonth: "Previous month",
+    nextMonth: "Next month",
+    dayOf: "Day {day} of {total}",
+    nextPhase: "Next phase",
+    nextIn: "{phase} in {days}",
+    monthRingAria: "{month}: {text}",
+    monthRingScore: "{label} {score} out of 100",
+    trackTitle: "Track Today",
+    logToday: "Log today",
+    trackToday: "Track today",
+    focusTitle: "Phase Focus",
+    allTips: "All tips for this phase",
+    log: { energy: "Energy", mood: "Mood", focus: "Focus", sleep: "Sleep" },
+    // Saved values stay in English; these are only what is shown.
+    logOptions: {
+      mood: { Low: "Low", Okay: "Okay", Good: "Good", Great: "Great" },
+      focus: { Low: "Low", Medium: "Medium", High: "High" },
+      sleep: { "<8h": "<8h", "8h": "8h", ">8h": ">8h" },
+    },
+
+    // AI Coach
+    coachTitle: "AI Coach",
+    goToChat: "Go to your chat",
+    hiThere: "Hi there",
+    hiName: "Hi {name}",
+    coachSub: "How can I support you today?",
+    askTitle: "Ask your coach",
+    askPlaceholder: "Type your question...",
+    yourQuestion: "Your question",
+    send: "Send",
+    typing: "Coach is typing",
+    suggestedTitle: "Suggested for You",
+    startSession: "Start {title} · {n} min",
+    noTasksYet: "no tasks yet",
+    // Keyed by the server's error code; the server's English message is used for unknown codes.
+    coachErrors: {
+      timeout: "The coach took too long to answer. Try again.",
+      network: "Couldn't reach the AI service. Check the internet connection and try again.",
+      config: "The coach isn't set up correctly. Please try again later.",
+      bad_request: "The coach couldn't process that message.",
+      invalid_request: "The coach couldn't process that message.",
+      refusal: "I can't help with that request. If you're in danger or need urgent help, contact your local emergency services.",
+      empty: "The coach didn't return an answer. Try again.",
+      rate_limited: "Too many messages. Please wait a moment.",
+      daily_limit: "The coach has reached today's limit. Please try again tomorrow.",
+    },
+    breatheIn: "Breathe in",
+    breatheOut: "Breathe out",
+    timerStart: "Start",
+    timerPause: "Pause",
+    timerResume: "Resume",
+    timerAgain: "Start again",
+    wellDone: "Well done",
+    ready: "Ready when you are",
+    paused: "Paused",
+
+    // Settings
+    settingsTitle: "Settings",
+    notifications: "Notifications",
+    notificationsNew: "Notifications, 1 new",
+    profileTitle: "Your Profile",
+    profileSub: "Manage your personal details",
+    integrations: "Integrations",
+    integrationsNote: "Demo: integrations are coming soon. Nothing is shared.",
+    connected: "Connected",
+    notConnected: "Not connected",
+    weeklyInsight: "Weekly insight",
+    weeklySub: "Get a weekly cycle outlook and personalised tips",
+    weeklyOn: "Weekly insight on",
+    weeklyOff: "Weekly insight off",
+    prefsTitle: "App Preferences",
+    cycleSettings: "Cycle settings",
+    dataPrivacy: "Data & privacy",
+    appearance: "Appearance",
+    language: "Language",
+    doctorReport: "Doctor report",
+    doctorSub: "Export your cycle data",
+    support: "Support",
+    helpFaq: "Help & FAQs",
+    contactUs: "Contact us",
+    cycleDemoNote: "Demo mode always shows Day 14. Open the app without ?demo=1 to edit.",
+    cycleSaved: "Cycle settings saved",
+    profileNote: "Used only to greet you in the app. Stored on this device only.",
+    profileSaved: "Profile saved",
+    privacyDevice: "<strong>Your data stays on this device.</strong> Cycle Sync has no account. Your cycle settings, tasks, check-ins and preferences are saved only in this browser.",
+    privacyCoach: "<strong>AI Coach:</strong> when you send the coach a message, that message and a short summary of today (cycle day, phase, today's tasks, recent check-ins) go to the Cycle Sync server and to the AI provider (Google Gemini, or Anthropic Claude if the server is set up for it) to write the answer. On Gemini's free tier, Google may use these messages to improve its products. Your name and email are never sent. The conversation is kept on the server so the coach can follow it; \"Clear chat\" deletes it.",
+    privacyOthers: "Nothing is sent to Google, WhatsApp or anyone else. The integrations are a demo.",
+    exportData: "Export my data (JSON)",
+    resetData: "Reset all data",
+    reportDownloaded: "Report downloaded",
+    dataExported: "Data exported",
+
+    // Add / edit task
+    addTaskTitle: "Add task",
+    editTaskTitle: "Edit task",
+    taskTitle: "Title",
+    taskType: "Type",
+    taskDate: "Date",
+    taskStart: "Start",
+    taskEnd: "End",
+    saveTask: "Save task",
+    previewOn: "on {date} ({phase}, estimated)",
+    taskAdded: "Task added",
+    taskUpdated: "Task updated",
+    taskDeleted: "Task deleted",
+    errTaskTitle: "Add a title for the task.",
+    errTaskDate: "Pick a date.",
+    errTaskTime: "End time must be after the start time.",
+
+    // Cycle form checks
+    errPeriodStart: "Pick the first day of your last period.",
+    errFuture: "That date is in the future. Pick today or earlier.",
+    errCycleLength: "Cycle length must be {min}–{max} days.",
+    errPeriodLength: "Period length must be {min}–{max} days.",
+
+    // Doctor report (.txt)
+    report: {
+      title: "Cycle Sync: cycle summary",
+      created: "Created: {date}",
+      lastPeriod: "Last period started: {date}",
+      cycleLength: "Cycle length: {days}",
+      periodLength: "Period length: {days}",
+      today: "Today: Day {day}, {phase}",
+      nextPeriod: "Next period expected: {date}",
+      phaseDays: "Phase days in this cycle:",
+      none: "none",
+      checkins: "Daily check-ins (last {days}):",
+      noneLogged: "None logged.",
+      estimates: "Predictions are estimates based on the numbers above.",
+    },
+  },
+
   // Settings → Contact us.
   contact: { email: "praphull371@gmail.com", subject: "Cycle Sync" },
 
@@ -496,3 +711,7 @@ const CONTENT = {
     },
   ],
 };
+
+// Translations: lang/<code>.js adds CONTENT_TRANSLATIONS.<code> = { same keys as CONTENT, text only }.
+// Only the chosen language's file is loaded; app.js merges it over CONTENT before drawing.
+const CONTENT_TRANSLATIONS = {};

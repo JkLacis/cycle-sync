@@ -1,0 +1,4 @@
+<!DOCTYPE html><html><body style="margin:0"><iframe id="f" style="width:390px;height:844px;border:0"></iframe><script>
+const p=new URLSearchParams(location.search);const f=document.getElementById("f");
+f.onload=()=>{setTimeout(()=>{const w=f.contentWindow; w.requestAnimationFrame=(cb)=>setTimeout(cb,0); w.eval("renderAlignment(); renderMonth(store.settings.load())"); if(p.get("tab")) w.openTab(p.get("tab")); if(p.get("js")) w.eval(p.get("js"));},300); const i=new Image(); i.src="http://127.0.0.1:8001/x?"+Math.random(); document.body.appendChild(i);};
+f.src="../index.html?demo=1&lang="+(p.get("lang")||"en")+(p.get("date")?"&date="+p.get("date"):"");</script></body></html>

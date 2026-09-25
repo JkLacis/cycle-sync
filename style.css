@@ -2805,6 +2805,30 @@ a.set-row {
   color: var(--text-muted);
 }
 
+/* Language button on the welcome screen */
+.lang-pill {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-pill);
+  background: var(--glass);
+  color: var(--text);
+  font-family: inherit;
+  font-size: 12.5px;
+  cursor: pointer;
+}
+
+.lang-pill .icon {
+  width: 15px;
+  height: 15px;
+}
+
 /* Settings → Appearance choices */
 .theme-option[aria-checked="true"] {
   border-color: var(--blue);

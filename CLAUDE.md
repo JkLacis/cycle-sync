@@ -90,6 +90,13 @@ four cycle phases she's in, it suggests how to **move**, what to **eat**, and wh
 ## Tech
 - Plain HTML/CSS/JS, four files: `index.html`, `style.css`, `content.js` (all app text, data only), `app.js` (logic).
   No frameworks, npm or build tools. *(content.js added 2026-09-24, DECISIONS.md D5)*
+- **Languages (2026-09-25):** en (content.js) + lv, lt, et, pl, de, fr, es, it in `lang/<code>.js`
+  (`CONTENT_TRANSLATIONS.<code>`, same keys, text only; merged over CONTENT by `loadLanguage()` before `start()`).
+  Pick order: `?lang=xx` (not saved) → saved `cyclesync.lang` → phone language → English. Settings → Language and
+  a pill on the welcome screen; choosing reloads. Screen labels: `data-i18n*` attributes + `CONTENT.ui`, `t(key, vars)`,
+  `plural()`, `{xLower}` = lower-case value. English item names stay the keys (`itemLabels` = shown names).
+  Saved values (log options, task types) stay English. AI coach gets `context.language` and answers in it.
+  Check completeness: http://localhost:8000/tests/i18n-check.html. Translations are drafts → native-speaker review.
 - AI coach backend: `server/` (Python FastAPI), run `.venv/bin/python -m server` (serves the app too).
   Provider via `COACH_PROVIDER`: **gemini** (default, free tier, `google-genai`, `gemini-3.8-flash`) or claude
   (`anthropic`, `claude-opus-5-5`); code in `server/providers/`. API keys only in `.env` (gitignored). Decisions C1–C9 in DECISIONS.md. System prompt `server/prompts/coach.md`,
@@ -126,7 +133,7 @@ four cycle phases she's in, it suggests how to **move**, what to **eat**, and wh
   Suggested for You = 4 cards → guided breathing timer. Note names the provider (from `/api/health`); the Gemini note says free-tier messages may be used to improve Google's products.
 - **Settings** (match Praful's Settings mockup): Your Profile card; Integrations (tap = fake Connected/Not connected,
   See All adds Outlook/Garmin/Oura); Weekly insight switch; App Preferences → Cycle settings screen (edit + validate,
-  view-only in demo), Data & privacy screen (privacy note + Reset all data), Appearance sheet (Light / Dark / Match device,
+  view-only in demo), Language sheet (9 languages), Data & privacy screen (privacy note + Reset all data), Appearance sheet (Light / Dark / Match device,
   default Match device, `prefs.theme`, `applyTheme()` sets `<html data-theme>`; deep navy night palette = `:root[data-theme="dark"]`
   in style.css — new colours must be tokens), Doctor report
   (.txt download); Support → Help & FAQs screen, Contact us (coming soon). Dock Settings icon = gear.

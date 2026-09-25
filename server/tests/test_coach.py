@@ -120,6 +120,13 @@ class PromptTests(unittest.TestCase):
         self.assertIn("energy 7/10, mood Good, focus High, sleep 8h", text)
         self.assertIn("not available", coach.render_context(None))
 
+    def test_language_line(self):
+        self.assertNotIn("App language", coach.render_context(CTX))  # English: no extra line
+        text = coach.render_context(CTX.model_copy(update={"language": "lv"}))
+        self.assertIn("Write your whole answer in Latvian", text)
+        with self.assertRaises(ValueError):
+            CoachContext(**{**CTX.model_dump(), "language": "xx"})
+
     @mock.patch.object(claude, "settings", CLAUDE_SETTINGS)
     def test_request_layout(self):
         req = claude.build_request([{"role": "user", "content": "a"}, {"role": "assistant", "content": "b"}], "hi", CTX)

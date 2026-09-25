@@ -20,34 +20,38 @@
         <div class="onboard-hero">
           <div class="flower flower-plan" data-flower></div>
           <div class="onboard-text">
-            <h1 class="onboard-title">Welcome to Cycle Sync</h1>
-            <p class="onboard-sub">Tell us about your cycle to get your daily alignment.</p>
+            <h1 class="onboard-title" data-i18n="onboardTitle">Welcome to Cycle Sync</h1>
+            <p class="onboard-sub" data-i18n="onboardSub">Tell us about your cycle to get your daily alignment.</p>
           </div>
+          <!-- Language picker; the name is filled by renderSettings() -->
+          <button class="lang-pill" type="button" data-lang-open data-i18n-aria="language">
+            <span data-icon="globe"></span><span data-lang-value>English</span>
+          </button>
         </div>
         <form class="set-card cycle-form" id="onboard-form" novalidate>
           <label class="field">
-            <span>First name (optional)</span>
+            <span data-i18n="firstName">First name (optional)</span>
             <input name="name" type="text" maxlength="30" autocomplete="given-name">
           </label>
           <label class="field">
-            <span>First day of your last period</span>
+            <span data-i18n="lastPeriod">First day of your last period</span>
             <input name="lastPeriodStart" type="date" required>
           </label>
           <div class="field-row">
             <label class="field">
-              <span>Cycle length (days)</span>
+              <span data-i18n="cycleLength">Cycle length (days)</span>
               <input name="cycleLength" type="number" min="21" max="35" value="28" inputmode="numeric" required>
             </label>
             <label class="field">
-              <span>Period length (days)</span>
+              <span data-i18n="periodLength">Period length (days)</span>
               <input name="periodLength" type="number" min="2" max="7" value="5" inputmode="numeric" required>
             </label>
           </div>
-          <p class="field-hint">Not sure? Keep 28 and 5. You can change them later in Settings.</p>
+          <p class="field-hint" data-i18n="onboardHint">Not sure? Keep 28 and 5. You can change them later in Settings.</p>
           <p class="form-error" id="onboard-error" role="alert"></p>
-          <button class="primary-btn" type="submit">Get started</button>
+          <button class="primary-btn" type="submit" data-i18n="getStarted">Get started</button>
         </form>
-        <p class="detail-note">For general wellness only. Not medical advice, and not for contraception.</p>
+        <p class="detail-note" data-i18n="disclaimer">For general wellness only. Not medical advice, and not for contraception.</p>
       </section>
 
       <!-- ===== Alignment (home) ===== -->
@@ -56,10 +60,10 @@
         <header class="topbar">
           <h1 class="brand">Cycle Sync</h1>
           <div class="topbar-actions">
-            <button class="icon-btn" type="button" data-go="plan" aria-label="Open cycle calendar">
+            <button class="icon-btn" type="button" data-go="plan" aria-label="Open cycle calendar" data-i18n-aria="openCalendar">
               <span data-icon="calendar"></span>
             </button>
-            <button class="avatar" type="button" data-go="profile" aria-label="Your profile">
+            <button class="avatar" type="button" data-go="profile" aria-label="Your profile" data-i18n-aria="yourProfile">
               <span data-icon="user"></span>
             </button>
           </div>
@@ -81,14 +85,14 @@
         <div class="insights">
           <section class="insight insight-good" aria-labelledby="good-title">
             <button class="insight-head" type="button" data-insights="good">
-              <h2 id="good-title">Good for you</h2>
+              <h2 id="good-title" data-i18n="goodTitle">Good for you</h2>
               <span data-icon="chevron"></span>
             </button>
             <ul class="insight-list" id="good-list"></ul>
           </section>
           <section class="insight insight-watch" aria-labelledby="watch-title">
             <button class="insight-head" type="button" data-insights="watch">
-              <h2 id="watch-title">Watch-outs</h2>
+              <h2 id="watch-title" data-i18n="watchTitle">Watch-outs</h2>
               <span data-icon="chevron"></span>
             </button>
             <ul class="insight-list" id="watch-list"></ul>
@@ -97,16 +101,16 @@
 
         <section class="week-card" aria-labelledby="week-title">
           <div class="week-head">
-            <h2 id="week-title">Your Calendar This Week</h2>
+            <h2 id="week-title" data-i18n="weekTitle">Your Calendar This Week</h2>
             <button class="link-btn" type="button" data-go="plan">
-              View Full Calendar <span data-icon="arrow"></span>
+              <span data-i18n="viewFullCalendar">View Full Calendar</span> <span data-icon="arrow"></span>
             </button>
           </div>
-          <div class="week-strip" id="week-strip" role="group" aria-label="Choose a day"></div>
+          <div class="week-strip" id="week-strip" role="group" aria-label="Choose a day" data-i18n-aria="chooseDay"></div>
           <div class="events-panel">
             <ul class="events" id="events"></ul>
             <button class="add-task" id="add-task-btn" type="button">
-              <span data-icon="plus"></span> Add task
+              <span data-icon="plus"></span> <span data-i18n="addTask">Add task</span>
             </button>
           </div>
         </section>
@@ -117,12 +121,12 @@
       <section class="screen screen-plan" id="screen-plan" hidden>
 
         <header class="topbar">
-          <h1 class="brand">Cycle Plan</h1>
+          <h1 class="brand" data-i18n="planTitle">Cycle Plan</h1>
           <div class="topbar-actions">
-            <button class="icon-btn" type="button" id="plan-today-btn" aria-label="Back to this month">
+            <button class="icon-btn" type="button" id="plan-today-btn" aria-label="Back to this month" data-i18n-aria="backToMonth">
               <span data-icon="calendar"></span>
             </button>
-            <button class="avatar" type="button" data-go="profile" aria-label="Your profile">
+            <button class="avatar" type="button" data-go="profile" aria-label="Your profile" data-i18n-aria="yourProfile">
               <span data-icon="user"></span>
             </button>
           </div>
@@ -141,8 +145,8 @@
           <div class="plan-card-head">
             <h2 id="plan-month" aria-live="polite"></h2>
             <div class="month-nav">
-              <button class="round-btn" type="button" data-month="-1" aria-label="Previous month"><span data-icon="back"></span></button>
-              <button class="round-btn" type="button" data-month="1" aria-label="Next month"><span data-icon="chevron"></span></button>
+              <button class="round-btn" type="button" data-month="-1" aria-label="Previous month" data-i18n-aria="prevMonth"><span data-icon="back"></span></button>
+              <button class="round-btn" type="button" data-month="1" aria-label="Next month" data-i18n-aria="nextMonth"><span data-icon="chevron"></span></button>
             </div>
           </div>
           <div class="month-body">
@@ -155,8 +159,8 @@
 
         <section class="plan-card" aria-labelledby="track-title">
           <div class="plan-card-head">
-            <h2 id="track-title">Track Today</h2>
-            <button class="plus-btn" type="button" data-log="energy" aria-label="Log today"><span data-icon="plus"></span></button>
+            <h2 id="track-title" data-i18n="trackTitle">Track Today</h2>
+            <button class="plus-btn" type="button" data-log="energy" aria-label="Log today" data-i18n-aria="logToday"><span data-icon="plus"></span></button>
           </div>
           <!-- Built by renderTrackToday() -->
           <div class="track-grid" id="track-grid"></div>
@@ -164,8 +168,8 @@
 
         <section class="plan-card plan-focus" aria-labelledby="focus-title">
           <div class="plan-card-head">
-            <h2 id="focus-title">Phase Focus</h2>
-            <button class="round-btn round-btn-soft" type="button" id="focus-more" aria-label="All tips for this phase"><span data-icon="chevron"></span></button>
+            <h2 id="focus-title" data-i18n="focusTitle">Phase Focus</h2>
+            <button class="round-btn round-btn-soft" type="button" id="focus-more" aria-label="All tips for this phase" data-i18n-aria="allTips"><span data-icon="chevron"></span></button>
           </div>
           <!-- Built by renderPhaseFocus() -->
           <div class="focus-grid" id="focus-grid"></div>
@@ -177,12 +181,12 @@
       <section class="screen screen-coach" id="screen-coach" hidden>
 
         <header class="topbar">
-          <h1 class="brand">AI Coach</h1>
+          <h1 class="brand" data-i18n="coachTitle">AI Coach</h1>
           <div class="topbar-actions">
-            <button class="icon-btn" type="button" id="coach-history-btn" aria-label="Go to your chat">
+            <button class="icon-btn" type="button" id="coach-history-btn" aria-label="Go to your chat" data-i18n-aria="goToChat">
               <span data-icon="clock"></span>
             </button>
-            <button class="avatar" type="button" data-go="profile" aria-label="Your profile">
+            <button class="avatar" type="button" data-go="profile" aria-label="Your profile" data-i18n-aria="yourProfile">
               <span data-icon="user"></span>
             </button>
           </div>
@@ -191,17 +195,17 @@
         <div class="coach-hero">
           <div class="coach-hero-text">
             <p class="coach-hello"><span id="coach-hello-name">Hi there</span> <span aria-hidden="true">👋</span></p>
-            <p class="coach-sub">How can I support you today?</p>
+            <p class="coach-sub" data-i18n="coachSub">How can I support you today?</p>
           </div>
           <div class="flower flower-coach" data-flower></div>
         </div>
 
         <section class="coach-ask" aria-labelledby="ask-title">
-          <h2 id="ask-title">Ask your coach</h2>
+          <h2 id="ask-title" data-i18n="askTitle">Ask your coach</h2>
           <form class="ask-form" id="ask-form">
             <span class="ask-spark"><span data-icon="sparkle"></span></span>
-            <input id="ask-input" type="text" placeholder="Type your question..." aria-label="Your question" autocomplete="off" maxlength="1000" enterkeyhint="send">
-            <button class="send-btn" type="submit" aria-label="Send"><span data-icon="send"></span></button>
+            <input id="ask-input" type="text" placeholder="Type your question..." aria-label="Your question" data-i18n-placeholder="askPlaceholder" data-i18n-aria="yourQuestion" autocomplete="off" maxlength="1000" enterkeyhint="send">
+            <button class="send-btn" type="submit" aria-label="Send" data-i18n-aria="send"><span data-icon="send"></span></button>
           </form>
           <!-- Built by renderCoachChips() -->
           <div class="chips" id="coach-chips"></div>
@@ -215,9 +219,9 @@
 
         <section class="suggested" aria-labelledby="suggested-title">
           <div class="suggested-head">
-            <h2 id="suggested-title">Suggested for You</h2>
+            <h2 id="suggested-title" data-i18n="suggestedTitle">Suggested for You</h2>
             <button class="link-btn" type="button" id="see-all-btn" aria-expanded="false" aria-controls="session-row">
-              <span id="see-all-label">See All</span><span data-icon="chevron"></span>
+              <span id="see-all-label" data-i18n="seeAll">See All</span><span data-icon="chevron"></span>
             </button>
           </div>
           <!-- Built by renderSessions() -->
@@ -230,12 +234,12 @@
       <section class="screen screen-settings" id="screen-settings" hidden>
 
         <header class="topbar">
-          <h1 class="brand">Settings</h1>
+          <h1 class="brand" data-i18n="settingsTitle">Settings</h1>
           <div class="topbar-actions">
             <button class="icon-btn" type="button" id="bell-btn" aria-label="Notifications">
               <span data-icon="bell"></span>
             </button>
-            <button class="avatar" type="button" data-go="profile" aria-label="Your profile">
+            <button class="avatar" type="button" data-go="profile" aria-label="Your profile" data-i18n-aria="yourProfile">
               <span data-icon="user"></span>
             </button>
           </div>
@@ -244,8 +248,8 @@
         <button class="profile-card" type="button" data-go="profile">
           <span class="profile-avatar"><span data-icon="user"></span></span>
           <span class="profile-text">
-            <span class="profile-title">Your Profile</span>
-            <span class="profile-sub">Manage your personal details</span>
+            <span class="profile-title" data-i18n="profileTitle">Your Profile</span>
+            <span class="profile-sub" data-i18n="profileSub">Manage your personal details</span>
           </span>
           <span class="flower flower-profile" data-flower></span>
           <span class="profile-chevron"><span data-icon="chevron"></span></span>
@@ -253,54 +257,62 @@
 
         <section class="set-card" aria-labelledby="int-title">
           <div class="set-head">
-            <h2 id="int-title">Integrations</h2>
+            <h2 id="int-title" data-i18n="integrations">Integrations</h2>
             <button class="link-btn" type="button" id="int-see-all-btn" aria-expanded="false" aria-controls="int-grid">
-              <span id="int-see-all-label">See All</span><span data-icon="chevron"></span>
+              <span id="int-see-all-label" data-i18n="seeAll">See All</span><span data-icon="chevron"></span>
             </button>
           </div>
           <!-- Built by renderIntegrations() -->
           <div class="int-grid" id="int-grid"></div>
-          <p class="set-note">Demo: integrations are coming soon. Nothing is shared.</p>
+          <p class="set-note" data-i18n="integrationsNote">Demo: integrations are coming soon. Nothing is shared.</p>
         </section>
 
         <section class="set-card" aria-labelledby="notif-title">
-          <h2 id="notif-title">Notifications</h2>
+          <h2 id="notif-title" data-i18n="notifications">Notifications</h2>
           <div class="set-box">
             <span class="set-icon tint-yellow"><span data-icon="sun"></span></span>
             <label class="set-text" for="weekly-toggle">
-              <span class="set-label">Weekly insight</span>
-              <span class="set-sub">Get a weekly cycle outlook and personalised tips</span>
+              <span class="set-label" data-i18n="weeklyInsight">Weekly insight</span>
+              <span class="set-sub" data-i18n="weeklySub">Get a weekly cycle outlook and personalised tips</span>
             </label>
             <input class="switch" type="checkbox" role="switch" id="weekly-toggle">
           </div>
         </section>
 
         <section class="set-card" aria-labelledby="prefs-title">
-          <h2 id="prefs-title">App Preferences</h2>
+          <h2 id="prefs-title" data-i18n="prefsTitle">App Preferences</h2>
           <div class="set-list">
             <button class="set-row" type="button" data-go="cycle-settings">
               <span class="set-icon tint-red"><span data-icon="drop"></span></span>
-              <span class="set-text"><span class="set-label">Cycle settings</span></span>
+              <span class="set-text"><span class="set-label" data-i18n="cycleSettings">Cycle settings</span></span>
               <span data-icon="chevron"></span>
             </button>
             <button class="set-row" type="button" data-go="privacy">
               <span class="set-icon tint-green"><span data-icon="lock"></span></span>
-              <span class="set-text"><span class="set-label">Data &amp; privacy</span></span>
+              <span class="set-text"><span class="set-label" data-i18n="dataPrivacy">Data &amp; privacy</span></span>
               <span data-icon="chevron"></span>
             </button>
             <button class="set-row" type="button" id="appearance-btn">
               <span class="set-icon tint-purple"><span data-icon="moon"></span></span>
               <span class="set-text">
-                <span class="set-label">Appearance</span>
+                <span class="set-label" data-i18n="appearance">Appearance</span>
                 <span class="set-sub" id="appearance-value"></span>
+              </span>
+              <span data-icon="chevron"></span>
+            </button>
+            <button class="set-row" type="button" data-lang-open>
+              <span class="set-icon tint-green"><span data-icon="globe"></span></span>
+              <span class="set-text">
+                <span class="set-label" data-i18n="language">Language</span>
+                <span class="set-sub" data-lang-value></span>
               </span>
               <span data-icon="chevron"></span>
             </button>
             <button class="set-row" type="button" id="report-btn">
               <span class="set-icon tint-blue"><span data-icon="doc-plus"></span></span>
               <span class="set-text">
-                <span class="set-label">Doctor report</span>
-                <span class="set-sub">Export your cycle data</span>
+                <span class="set-label" data-i18n="doctorReport">Doctor report</span>
+                <span class="set-sub" data-i18n="doctorSub">Export your cycle data</span>
               </span>
               <span data-icon="chevron"></span>
             </button>
@@ -308,17 +320,17 @@
         </section>
 
         <section class="set-card" aria-labelledby="support-title">
-          <h2 id="support-title">Support</h2>
+          <h2 id="support-title" data-i18n="support">Support</h2>
           <div class="set-list">
             <button class="set-row" type="button" data-go="help">
               <span class="set-icon tint-yellow"><span data-icon="help"></span></span>
-              <span class="set-text"><span class="set-label">Help &amp; FAQs</span></span>
+              <span class="set-text"><span class="set-label" data-i18n="helpFaq">Help &amp; FAQs</span></span>
               <span data-icon="chevron"></span>
             </button>
             <!-- href (mailto:) set from content.js by renderSettings() -->
             <a class="set-row" id="contact-link">
               <span class="set-icon tint-blue"><span data-icon="mail"></span></span>
-              <span class="set-text"><span class="set-label">Contact us</span></span>
+              <span class="set-text"><span class="set-label" data-i18n="contactUs">Contact us</span></span>
               <span data-icon="chevron"></span>
             </a>
           </div>
@@ -329,76 +341,76 @@
       <!-- ===== Settings → Cycle settings ===== -->
       <section class="screen screen-settings" id="screen-cycle-settings" hidden>
         <header class="topbar">
-          <button class="icon-btn" type="button" data-back="settings" aria-label="Back">
+          <button class="icon-btn" type="button" data-back="settings" aria-label="Back" data-i18n-aria="back">
             <span data-icon="back"></span>
           </button>
         </header>
-        <h1 class="sub-title">Cycle settings</h1>
+        <h1 class="sub-title" data-i18n="cycleSettings">Cycle settings</h1>
         <form class="set-card cycle-form" id="cycle-form" novalidate>
           <label class="field">
-            <span>First day of your last period</span>
+            <span data-i18n="lastPeriod">First day of your last period</span>
             <input name="lastPeriodStart" type="date" required>
           </label>
           <div class="field-row">
             <label class="field">
-              <span>Cycle length (days)</span>
+              <span data-i18n="cycleLength">Cycle length (days)</span>
               <input name="cycleLength" type="number" min="21" max="35" inputmode="numeric" required>
             </label>
             <label class="field">
-              <span>Period length (days)</span>
+              <span data-i18n="periodLength">Period length (days)</span>
               <input name="periodLength" type="number" min="2" max="7" inputmode="numeric" required>
             </label>
           </div>
           <p class="form-error" id="cycle-error" role="alert"></p>
-          <p class="set-note" id="cycle-demo-note" hidden>Demo mode always shows Day 14. Open the app without ?demo=1 to edit.</p>
-          <button class="primary-btn" type="submit" id="cycle-save">Save</button>
+          <p class="set-note" id="cycle-demo-note" hidden data-i18n="cycleDemoNote">Demo mode always shows Day 14. Open the app without ?demo=1 to edit.</p>
+          <button class="primary-btn" type="submit" id="cycle-save" data-i18n="save">Save</button>
         </form>
-        <p class="detail-note">For general wellness only. Not medical advice, and not for contraception.</p>
+        <p class="detail-note" data-i18n="disclaimer">For general wellness only. Not medical advice, and not for contraception.</p>
       </section>
 
       <!-- ===== Settings → Your profile ===== -->
       <section class="screen screen-settings" id="screen-profile" hidden>
         <header class="topbar">
-          <button class="icon-btn" type="button" data-back="settings" aria-label="Back">
+          <button class="icon-btn" type="button" data-back="settings" aria-label="Back" data-i18n-aria="back">
             <span data-icon="back"></span>
           </button>
         </header>
-        <h1 class="sub-title">Your profile</h1>
+        <h1 class="sub-title" data-i18n="yourProfile">Your profile</h1>
         <form class="set-card cycle-form" id="profile-form" novalidate>
           <label class="field">
-            <span>First name (optional)</span>
+            <span data-i18n="firstName">First name (optional)</span>
             <input name="name" type="text" maxlength="30" autocomplete="given-name">
           </label>
-          <button class="primary-btn" type="submit">Save</button>
+          <button class="primary-btn" type="submit" data-i18n="save">Save</button>
         </form>
-        <p class="detail-note">Used only to greet you in the app. Stored on this device only.</p>
+        <p class="detail-note" data-i18n="profileNote">Used only to greet you in the app. Stored on this device only.</p>
       </section>
 
       <!-- ===== Settings → Data & privacy ===== -->
       <section class="screen screen-settings" id="screen-privacy" hidden>
         <header class="topbar">
-          <button class="icon-btn" type="button" data-back="settings" aria-label="Back">
+          <button class="icon-btn" type="button" data-back="settings" aria-label="Back" data-i18n-aria="back">
             <span data-icon="back"></span>
           </button>
         </header>
-        <h1 class="sub-title">Data &amp; privacy</h1>
+        <h1 class="sub-title" data-i18n="dataPrivacy">Data &amp; privacy</h1>
         <div class="set-card prose">
-          <p><strong>Your data stays on this device.</strong> Cycle Sync has no account. Your cycle settings, tasks, check-ins and preferences are saved only in this browser.</p>
-          <p><strong>AI Coach:</strong> when you send the coach a message, that message and a short summary of today (cycle day, phase, today's tasks, recent check-ins) go to the Cycle Sync server and to the AI provider (Google Gemini, or Anthropic Claude if the server is set up for it) to write the answer. On Gemini's free tier, Google may use these messages to improve its products. Your name and email are never sent. The conversation is kept on the server so the coach can follow it; "Clear chat" deletes it.</p>
-          <p>Nothing is sent to Google, WhatsApp or anyone else. The integrations are a demo.</p>
+          <p data-i18n-html="privacyDevice"><strong>Your data stays on this device.</strong> Cycle Sync has no account. Your cycle settings, tasks, check-ins and preferences are saved only in this browser.</p>
+          <p data-i18n-html="privacyCoach"><strong>AI Coach:</strong> when you send the coach a message, that message and a short summary of today (cycle day, phase, today's tasks, recent check-ins) go to the Cycle Sync server and to the AI provider (Google Gemini, or Anthropic Claude if the server is set up for it) to write the answer. On Gemini's free tier, Google may use these messages to improve its products. Your name and email are never sent. The conversation is kept on the server so the coach can follow it; "Clear chat" deletes it.</p>
+          <p data-i18n="privacyOthers">Nothing is sent to Google, WhatsApp or anyone else. The integrations are a demo.</p>
         </div>
-        <button class="sheet-btn export-btn" type="button" id="export-btn"><span data-icon="doc"></span>Export my data (JSON)</button>
-        <button class="danger-btn" type="button" id="reset-btn"><span data-icon="trash"></span>Reset all data</button>
+        <button class="sheet-btn export-btn" type="button" id="export-btn"><span data-icon="doc"></span><span data-i18n="exportData">Export my data (JSON)</span></button>
+        <button class="danger-btn" type="button" id="reset-btn"><span data-icon="trash"></span><span data-i18n="resetData">Reset all data</span></button>
       </section>
 
       <!-- ===== Settings → Help & FAQs ===== -->
       <section class="screen screen-settings" id="screen-help" hidden>
         <header class="topbar">
-          <button class="icon-btn" type="button" data-back="settings" aria-label="Back">
+          <button class="icon-btn" type="button" data-back="settings" aria-label="Back" data-i18n-aria="back">
             <span data-icon="back"></span>
           </button>
         </header>
-        <h1 class="sub-title">Help &amp; FAQs</h1>
+        <h1 class="sub-title" data-i18n="helpFaq">Help &amp; FAQs</h1>
         <!-- Built by renderFaq() from content.js -->
         <div class="set-card faq" id="faq-list"></div>
       </section>
@@ -406,7 +418,7 @@
       <!-- ===== Phase detail (opened from Cycle Plan) ===== -->
       <section class="screen screen-plan" id="screen-phase-detail" hidden>
         <header class="topbar">
-          <button class="icon-btn" type="button" data-back="plan" aria-label="Back">
+          <button class="icon-btn" type="button" data-back="plan" aria-label="Back" data-i18n-aria="back">
             <span data-icon="back"></span>
           </button>
         </header>
@@ -420,11 +432,11 @@
     <button class="demo-bar" type="button" id="demo-bar" hidden></button>
 
     <!-- Bottom dock. data-screen says which screen each button opens. -->
-    <nav class="dock" aria-label="Main">
-      <button class="tab" type="button" data-screen="alignment"><span data-icon="home"></span>Alignment</button>
-      <button class="tab" type="button" data-screen="plan"><span data-icon="calendar"></span>Cycle Plan</button>
-      <button class="tab" type="button" data-screen="coach"><span data-icon="chat"></span>AI Coach</button>
-      <button class="tab" type="button" data-screen="settings"><span data-icon="gear"></span>Settings</button>
+    <nav class="dock" aria-label="Main" data-i18n-aria="mainNav">
+      <button class="tab" type="button" data-screen="alignment"><span data-icon="home"></span><span data-i18n="tabAlignment">Alignment</span></button>
+      <button class="tab" type="button" data-screen="plan"><span data-icon="calendar"></span><span data-i18n="tabPlan">Cycle Plan</span></button>
+      <button class="tab" type="button" data-screen="coach"><span data-icon="chat"></span><span data-i18n="tabCoach">AI Coach</span></button>
+      <button class="tab" type="button" data-screen="settings"><span data-icon="gear"></span><span data-i18n="tabSettings">Settings</span></button>
     </nav>
 
     <!-- Short messages like "Coming soon". Shown by showToast(). -->
@@ -436,37 +448,37 @@
   <dialog class="sheet" id="task-dialog" aria-labelledby="task-dialog-title">
     <form id="task-form" novalidate>
       <div class="sheet-head">
-        <h2 id="task-dialog-title">Add task</h2>
-        <button class="icon-btn icon-btn-small" type="button" id="task-cancel" aria-label="Close">
+        <h2 id="task-dialog-title" data-i18n="addTaskTitle">Add task</h2>
+        <button class="icon-btn icon-btn-small" type="button" id="task-cancel" aria-label="Close" data-i18n-aria="close">
           <span data-icon="close"></span>
         </button>
       </div>
       <label class="field">
-        <span>Title</span>
+        <span data-i18n="taskTitle">Title</span>
         <input name="title" type="text" maxlength="60" required autocomplete="off">
       </label>
       <label class="field">
-        <span>Type</span>
+        <span data-i18n="taskType">Type</span>
         <select name="type" id="task-type"></select>
       </label>
       <!-- Live level for the chosen type + date, filled by renderTaskSyncPreview() -->
       <p class="sync-preview" id="task-sync" aria-live="polite"></p>
       <label class="field">
-        <span>Date</span>
+        <span data-i18n="taskDate">Date</span>
         <input name="date" type="date" required>
       </label>
       <div class="field-row">
         <label class="field">
-          <span>Start</span>
+          <span data-i18n="taskStart">Start</span>
           <input name="start" type="time" value="09:00" required>
         </label>
         <label class="field">
-          <span>End</span>
+          <span data-i18n="taskEnd">End</span>
           <input name="end" type="time" value="10:00" required>
         </label>
       </div>
       <p class="form-error" id="task-error" role="alert"></p>
-      <button class="primary-btn" type="submit">Save task</button>
+      <button class="primary-btn" type="submit" data-i18n="saveTask">Save task</button>
     </form>
   </dialog>
 
@@ -474,7 +486,7 @@
   <dialog class="sheet" id="info-sheet" aria-labelledby="info-title">
     <div class="sheet-head">
       <h2 id="info-title"></h2>
-      <button class="icon-btn icon-btn-small" type="button" id="info-close" aria-label="Close">
+      <button class="icon-btn icon-btn-small" type="button" id="info-close" aria-label="Close" data-i18n-aria="close">
         <span data-icon="close"></span>
       </button>
     </div>
@@ -485,7 +497,7 @@
   <dialog class="sheet sheet-small" id="detail-sheet" aria-labelledby="detail-title">
     <div class="sheet-head">
       <h2 id="detail-title"></h2>
-      <button class="icon-btn icon-btn-small" type="button" id="detail-close" aria-label="Close">
+      <button class="icon-btn icon-btn-small" type="button" id="detail-close" aria-label="Close" data-i18n-aria="close">
         <span data-icon="close"></span>
       </button>
     </div>
@@ -496,18 +508,18 @@
   <dialog class="sheet" id="log-dialog" aria-labelledby="log-title">
     <form id="log-form">
       <div class="sheet-head">
-        <h2 id="log-title">Track today</h2>
-        <button class="icon-btn icon-btn-small" type="button" id="log-cancel" aria-label="Close">
+        <h2 id="log-title" data-i18n="trackToday">Track today</h2>
+        <button class="icon-btn icon-btn-small" type="button" id="log-cancel" aria-label="Close" data-i18n-aria="close">
           <span data-icon="close"></span>
         </button>
       </div>
       <label class="field log-energy">
-        <span>Energy <output id="energy-out" for="energy-input"></output>/10</span>
+        <span><span data-i18n="log.energy">Energy</span> <output id="energy-out" for="energy-input"></output>/10</span>
         <input id="energy-input" name="energy" type="range" min="0" max="10" step="1">
       </label>
       <!-- Mood / Focus / Sleep choices built by renderLogChoices() -->
       <div id="log-choices"></div>
-      <button class="primary-btn" type="submit">Save</button>
+      <button class="primary-btn" type="submit" data-i18n="save">Save</button>
     </form>
   </dialog>
 
@@ -515,7 +527,7 @@
   <dialog class="sheet timer-sheet" id="timer-dialog" aria-labelledby="timer-title">
     <div class="sheet-head">
       <h2 id="timer-title"></h2>
-      <button class="icon-btn icon-btn-small" type="button" id="timer-close" aria-label="Close">
+      <button class="icon-btn icon-btn-small" type="button" id="timer-close" aria-label="Close" data-i18n-aria="close">
         <span data-icon="close"></span>
       </button>
     </div>
@@ -527,6 +539,7 @@
     <ul class="timer-tips" id="timer-tips"></ul>
   </dialog>
 
+  <!-- content.js = English text; the chosen language (lang/<code>.js) is loaded by app.js -->
   <script src="content.js"></script>
   <script src="app.js"></script>
 </body>
