@@ -27,7 +27,7 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name
 
 # Only these files are public — never the repo root (it holds .env, server/, reference/).
 STATIC_FILES = {"index.html", "style.css", "content.js", "app.js"}
-LANG_FILES = {f"{code}.js" for code in ("lv", "lt", "et", "pl", "de", "fr", "es", "it")}
+LANG_FILES = {f"{code}.js" for code in ("lv", "lt", "et", "pl", "de", "fr", "es", "it", "hi")}
 
 app = FastAPI(title="Cycle Sync", docs_url=None, redoc_url=None, openapi_url=None)
 store = ConversationStore(settings.db_path)

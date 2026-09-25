@@ -10,7 +10,7 @@ MESSAGE_MAX_CHARS = 1000
 Phase = Literal["menstrual", "follicular", "ovulatory", "luteal"]
 Level = Literal["high", "good", "moderate", "low"]
 # App languages (app.js LANGUAGES). The coach answers in the chosen one.
-Language = Literal["en", "lv", "lt", "et", "pl", "de", "fr", "es", "it"]
+Language = Literal["en", "lv", "lt", "et", "pl", "de", "fr", "es", "it", "hi"]
 TIME = r"^([01]\d|2[0-3]):[0-5]\d$"
 CONVERSATION_ID = r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
 

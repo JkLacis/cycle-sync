@@ -90,6 +90,7 @@ const LANGUAGES = {
   fr: { name: "Français",  locale: "fr-FR", english: "French" },
   es: { name: "Español",   locale: "es-ES", english: "Spanish" },
   it: { name: "Italiano",  locale: "it-IT", english: "Italian" },
+  hi: { name: "हिन्दी",     locale: "hi-IN", english: "Hindi" },
 };
 const LANG_KEY = "cyclesync.lang"; // shared by real and demo mode
 
@@ -1448,8 +1449,8 @@ let chatMessages = [];
 // Keywords match from the start of a word ("eat" matches "eating", not "breathing").
 function findTopic(text) {
   const lower = text.toLocaleLowerCase(LOCALE);
-  // Start of a word, also for letters like ā, ž, ł, é (\b only knows a–z).
-  const matches = (keyword) => new RegExp("(?<![\\p{L}\\p{N}])" + keyword.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "u").test(lower);
+  // Start of a word, also for letters like ā, ž, ł, é and Devanagari (\b only knows a–z).
+  const matches = (keyword) => new RegExp("(?<![\\p{L}\\p{M}\\p{N}])" + keyword.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "u").test(lower);
   return COACH.topics.find((t) => t.keywords.some(matches));
 }
 

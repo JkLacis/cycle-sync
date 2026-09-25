@@ -25,7 +25,7 @@ PHASE_POWR = {"menstrual": "Rest", "follicular": "Prepare", "ovulatory": "Open U
 LEVEL_LABEL = {"high": "High Sync", "good": "Good", "moderate": "Moderate", "low": "Low Sync"}
 LANGUAGE_NAME = {
     "en": "English", "lv": "Latvian", "lt": "Lithuanian", "et": "Estonian", "pl": "Polish",
-    "de": "German", "fr": "French", "es": "Spanish", "it": "Italian",
+    "de": "German", "fr": "French", "es": "Spanish", "it": "Italian", "hi": "Hindi",
 }
 
 
