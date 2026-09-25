@@ -2398,6 +2398,38 @@ a.set-row {
   cursor: pointer;
 }
 
+/* ===== Demo date strip (only with ?demo=1), just above the dock ===== */
+.demo-bar {
+  padding: 6px 12px;
+  border: none;
+  border-top: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-muted);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.demo-bar strong {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.demo-bar-link {
+  color: var(--blue);
+  font-weight: 500;
+}
+
+.demo-phase .demo-day {
+  margin-left: auto;
+  color: var(--text-muted);
+  font-size: 13px;
+  font-weight: 400;
+}
+
+.demo-phase.is-active {
+  border-color: var(--phase-color);
+}
+
 /* ===== Bottom dock ===== */
 .dock {
   display: flex;

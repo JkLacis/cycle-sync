@@ -151,9 +151,14 @@ function toISODate(date) {
   return date.getFullYear() + "-" + m + "-" + d;
 }
 
-function today() {
+function realToday() {
   const now = new Date();
   return new Date(now.getFullYear(), now.getMonth(), now.getDate());
+}
+
+// In ?demo=1, "&date=YYYY-MM-DD" pretends today is that date (demo date panel).
+function today() {
+  return DEMO_DATE ?? realToday();
 }
 
 function addDays(date, days) {
@@ -230,6 +235,15 @@ function getCycleState(date, settings) {
 // =====================================================================
 
 const IS_DEMO = new URLSearchParams(location.search).get("demo") === "1";
+const DEMO_DATE = IS_DEMO ? readDemoDate() : null;
+
+// Pretend date from the URL, or null if missing/invalid.
+function readDemoDate() {
+  const iso = new URLSearchParams(location.search).get("date") || "";
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(iso)) return null;
+  const date = parseLocalDate(iso);
+  return toISODate(date) === iso ? date : null;
+}
 const STORAGE_PREFIX = "cyclesync.";
 // Demo mode keeps its own copies, so ?demo=1 never touches real data.
 const STORAGE_NS = STORAGE_PREFIX + (IS_DEMO ? "demo." : "");
@@ -259,7 +273,8 @@ const CYCLE_LIMITS = {
 
 // Demo mode (and the screens drawn behind onboarding): 28/5 cycle with today as day 14.
 const DEFAULT_SETTINGS = {
-  lastPeriodStart: toISODate(addDays(today(), -13)),
+  // Real today = Day 14; in demo the pretend date moves through the cycle.
+  lastPeriodStart: toISODate(addDays(realToday(), -13)),
   cycleLength: 28,
   periodLength: 5,
 };
@@ -523,8 +538,10 @@ function suitedPhaseNames(typeId) {
 // Bump DEMO_VERSION when the sample data changes, so old demo data is replaced.
 const DEMO_VERSION = "2";
 
+// Sample tasks sit around "today", so they follow the pretend date too.
 function seedDemoData() {
-  if (store.demoVersion.load() === DEMO_VERSION) return;
+  const version = DEMO_VERSION + "@" + toISODate(today());
+  if (store.demoVersion.load() === version) return;
   const t = today();
   const day = (offset) => toISODate(addDays(t, offset));
   // Today = the three events from the mockup (score 78 on Day 14).
@@ -543,7 +560,49 @@ function seedDemoData() {
   tasks.forEach((task, i) => (task.id = "demo" + i));
   store.tasks.save(tasks);
   store.logs.replaceAll({ [day(0)]: { energy: 7, mood: "Good", focus: "High", sleep: "8h" } });
-  store.demoVersion.save(DEMO_VERSION);
+  store.demoVersion.save(version);
+}
+
+// ----- Demo date panel -----
+
+// The strip above the dock: "Demo · Fri 25 Sep · Change date".
+function renderDemoBar() {
+  const bar = document.getElementById("demo-bar");
+  const text = CONTENT.demo;
+  bar.hidden = !IS_DEMO;
+  if (!IS_DEMO) return;
+  const label = today().toLocaleDateString(undefined, { weekday: "short", day: "numeric", month: "short" });
+  bar.innerHTML = "<strong>" + text.label + "</strong> · " + label + ' · <span class="demo-bar-link">' + text.change + "</span>";
+}
+
+// One button per phase (middle day of it, near the real date) + any-date picker.
+function openDemoSheet() {
+  const text = CONTENT.demo;
+  const settings = store.settings.load();
+  const ranges = getPhaseRanges(settings);
+  const realDay = getCycleDay(realToday(), settings);
+  const buttons = CYCLE_ORDER.filter((key) => ranges[key].start <= ranges[key].end).map((key) => {
+    const day = Math.floor((ranges[key].start + ranges[key].end) / 2);
+    const iso = toISODate(addDays(realToday(), day - realDay));
+    const active = getPhaseForDate(today(), settings) === key ? " is-active" : "";
+    return '<button type="button" class="sheet-btn demo-phase' + active + '" data-demo-date="' + iso + '" style="--phase-color: var(--' + key + ')">' +
+      '<span class="phase-icon">' + icon(PHASES[key].icon) + "</span>" + PHASES[key].name + '<span class="demo-day">Day ' + day + "</span></button>";
+  });
+  openSheet(text.title,
+    '<p class="sheet-note">' + text.note + "</p>" + buttons.join("") +
+    '<label class="field"><span>' + text.pick + '</span><input type="date" id="demo-date-input" value="' + toISODate(today()) + '"></label>' +
+    (DEMO_DATE ? '<button type="button" class="sheet-btn" data-demo-date="">' + icon("calendar") + text.realToday + "</button>" : ""));
+  document.getElementById("demo-date-input").addEventListener("change", (e) => {
+    if (e.target.value) setDemoDate(e.target.value);
+  });
+}
+
+// Reloads with the new pretend date ("" = real today), so every screen follows it.
+function setDemoDate(iso) {
+  const url = new URL(location.href);
+  if (iso) url.searchParams.set("date", iso);
+  else url.searchParams.delete("date");
+  location.href = url.href;
 }
 
 // =====================================================================
@@ -2031,12 +2090,16 @@ document.addEventListener("click", function (e) {
   const target = e.target.closest(
     "[data-screen], [data-go], [data-back], [data-sheet], [data-edit], [data-day], [data-add-on], #ring, [data-date], [data-event], [data-delete], [data-phase], [data-month], [data-log], [data-ask], [data-retry], [data-session], " +
       "[data-soon], [data-integration], #add-task-btn, #plan-today-btn, #see-all-btn, #coach-history-btn, " +
-      "[data-confirm-reset], [data-close-sheet], #clear-chat-btn, #int-see-all-btn, #bell-btn, #report-btn, #export-btn, #reset-btn"
+      "[data-confirm-reset], [data-close-sheet], [data-demo-date], #demo-bar, #clear-chat-btn, #int-see-all-btn, #bell-btn, #report-btn, #export-btn, #reset-btn"
   );
   if (!target) return;
   // Any action inside an info sheet replaces it.
   if (infoSheet.open && infoSheet.contains(target)) infoSheet.close();
-  if (target.id === "ring") {
+  if (target.id === "demo-bar") {
+    openDemoSheet();
+  } else if (target.dataset.demoDate !== undefined) {
+    setDemoDate(target.dataset.demoDate);
+  } else if (target.id === "ring") {
     openScoreSheet();
   } else if (target.dataset.sheet === "lighter-day") {
     openLighterDaySheet();
@@ -2135,6 +2198,7 @@ document.addEventListener("click", function (e) {
 
 migrateStorage();
 if (IS_DEMO) seedDemoData();
+renderDemoBar();
 buildRing();
 renderAlignment();
 renderLogChoices();

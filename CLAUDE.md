@@ -20,7 +20,9 @@ instructions. Technical language is fine when he is driving; keep it simple for 
 ## ▶ START HERE (status as of 2026-09-24)
 - Done: steps 1–11 + every element in `DECISIONS.md` (built + verified 2026-09-24, 94/94 checks).
   Test: http://localhost:8000/tests/click-through.html (demo data only). README = how to run.
-- `implementation-plan.md` is the build plan — next unticked step: 12 (demo date panel, polish, phone test).
+- `implementation-plan.md` is the build plan — step 12: demo date panel done 2026-09-25 (strip above dock →
+  sheet with 4 phase buttons + date picker; URL `&date=YYYY-MM-DD`; demo tasks follow the pretend date).
+  Left: phone readability check (user, via GitHub Pages/Render link).
   `DEFAULT_SETTINGS` (Day 14, 28/5) is used in demo mode and behind onboarding; `hasSettings()` decides onboarding.
 - Demo is **Friday 2026-09-25** — keep scope small; steps 9–11 can be cut/simplified if time runs out.
 - **AI coach (Praful's prompt), in progress:** server + frontend + eval runner built and pushed (commits 11d047f,
@@ -121,7 +123,8 @@ four cycle phases she's in, it suggests how to **move**, what to **eat**, and wh
   See All adds Outlook/Garmin/Oura); Weekly insight switch; App Preferences → Cycle settings screen (edit + validate,
   view-only in demo), Data & privacy screen (privacy note + Reset all data), Appearance (coming soon), Doctor report
   (.txt download); Support → Help & FAQs screen, Contact us (coming soon). Dock Settings icon = gear.
-- **Demo mode**: URL contains `?demo=1` → small panel to pretend it's a different date.
+- **Demo mode**: URL contains `?demo=1` → "Demo · date · Change date" strip above the dock → sheet to pretend it's
+  another date (`&date=YYYY-MM-DD`, page reloads). `today()` returns it; `realToday()` anchors DEFAULT_SETTINGS (real today = Day 14).
 
 ## Cycle logic (use exactly this)
 Days numbered from 1.

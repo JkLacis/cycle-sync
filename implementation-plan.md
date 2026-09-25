@@ -124,7 +124,7 @@ High Sync = suits this phase · Low Sync = on its avoid list · Good = suits no 
 - [x] Help & FAQs screen (5 questions); Appearance, Contact us, Profile → "coming soon" message
 
 ### 12. [ ] Demo mode + polish + phone
-- [ ] `?demo=1` shows a small panel to pick a pretend date; all screens follow it
-- [ ] Can show all 4 phases in the demo by changing the date
+- [x] `?demo=1` shows a small panel to pick a pretend date; all screens follow it
+- [x] Can show all 4 phases in the demo by changing the date
 - [ ] No console errors; text readable on phone
 - [ ] Runs on the phone over Wi-Fi (`http://<laptop-IP>:8000`)

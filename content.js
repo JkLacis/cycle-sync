@@ -376,6 +376,16 @@ const CONTENT = {
     cancel: "Cancel",
   },
 
+  // Demo date strip + sheet (only with ?demo=1).
+  demo: {
+    label: "Demo",
+    change: "Change date",
+    title: "Demo date",
+    note: "Pretend today is another day to show each phase. Only in demo mode.",
+    pick: "Or pick any date",
+    realToday: "Back to real today",
+  },
+
   // Settings → Contact us.
   contact: { email: "praphull371@gmail.com", subject: "Cycle Sync" },
 
