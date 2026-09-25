@@ -526,6 +526,21 @@ function calculateCycleAlignment({ phase, cycleDay, events }) {
   };
 }
 
+// Monthly score = average of the daily scores of days with tasks (empty days are skipped).
+// null when the month has no tasks. month is 0-based, like Date.
+function calculateMonthlyAlignment(year, month, settings) {
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const scores = [];
+  for (let d = 1; d <= daysInMonth; d++) {
+    const date = new Date(year, month, d);
+    const state = getCycleState(date, settings);
+    const { score } = calculateCycleAlignment({ phase: state.phaseKey, cycleDay: state.cycleDay, events: calendarSource.getEvents(toISODate(date)) });
+    if (score !== null) scores.push(score);
+  }
+  const score = scores.length ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : null;
+  return { score, daysScored: scores.length };
+}
+
 // Better phase(s) for a task type, e.g. "Luteal" — used in event details.
 function suitedPhaseNames(typeId) {
   return TASK_TYPES[typeId].suits.map((k) => PHASES[k].name).join(" or ");
@@ -641,52 +656,54 @@ function renderRecommendation(state, isRecovery) {
 
 const RING = { size: 200, stroke: 14, radius: 86 };
 
-function buildRing() {
+// Score wheel inside the element with this id ("ring" on Alignment, "month-ring" on Cycle Plan).
+// Each wheel has its own gradient, so it still draws when the other screen is hidden.
+function buildRing(id) {
   const c = RING.size / 2;
   const circumference = 2 * Math.PI * RING.radius;
-  document.getElementById("ring").innerHTML =
+  document.getElementById(id).innerHTML =
     '<svg viewBox="0 0 ' + RING.size + " " + RING.size + '" aria-hidden="true">' +
-      '<defs><linearGradient id="ring-gradient" x1="0" y1="0" x2="1" y2="1">' +
+      '<defs><linearGradient id="' + id + '-gradient" x1="0" y1="0" x2="1" y2="1">' +
         '<stop offset="0" style="stop-color: var(--ring-start)"/><stop offset="1" style="stop-color: var(--ring-end)"/>' +
       "</linearGradient></defs>" +
       '<circle class="ring-track" cx="' + c + '" cy="' + c + '" r="' + RING.radius + '" stroke-width="' + RING.stroke + '"/>' +
-      '<circle class="ring-fill" id="ring-fill" cx="' + c + '" cy="' + c + '" r="' + RING.radius + '" stroke-width="' + RING.stroke + '"' +
+      '<circle class="ring-fill" id="' + id + '-fill" style="stroke: url(#' + id + '-gradient)" cx="' + c + '" cy="' + c + '" r="' + RING.radius + '" stroke-width="' + RING.stroke + '"' +
         ' stroke-dasharray="' + circumference + '" stroke-dashoffset="' + circumference + '"/>' +
-      '<g class="ring-knob" id="ring-knob"><circle cx="' + c + '" cy="' + (c - RING.radius) + '" r="' + (RING.stroke / 2 + 2) + '"/></g>' +
+      '<g class="ring-knob" id="' + id + '-knob"><circle cx="' + c + '" cy="' + (c - RING.radius) + '" r="' + (RING.stroke / 2 + 2) + '"/></g>' +
     "</svg>" +
-    '<div class="ring-center" id="ring-center"></div>';
+    '<div class="ring-center" id="' + id + '-center"></div>';
 }
 
-function updateRing(score) {
+// label = text under the number; emptyLabel is used instead when score is null ("–").
+function updateRing(id, score, label, emptyLabel) {
   const circumference = 2 * Math.PI * RING.radius;
   const fraction = score === null ? 0 : score / 100;
-  const center = document.getElementById("ring-center");
-  const knob = document.getElementById("ring-knob");
+  const knob = document.getElementById(id + "-knob");
 
-  center.innerHTML =
+  document.getElementById(id + "-center").innerHTML =
     '<div class="ring-score"><span class="ring-number">' + (score === null ? "–" : score) + '</span><span class="ring-max">/100</span></div>' +
-    '<div class="ring-label">' + (score === null ? "No tasks today" : "Cycle Alignment") + "</div>" +
+    '<div class="ring-label">' + (score === null ? emptyLabel : label) + "</div>" +
     '<div class="ring-wave">' + icon("wave") + "</div>";
-  document.getElementById("ring").setAttribute("aria-label",
-    (score === null ? "No tasks today to score" : "Cycle alignment " + score + " out of 100") + ". How your score works");
 
   knob.style.visibility = score === null ? "hidden" : "visible";
   // Next frame, so the first render animates from empty.
   requestAnimationFrame(() => {
-    document.getElementById("ring-fill").style.strokeDashoffset = circumference * (1 - fraction);
+    document.getElementById(id + "-fill").style.strokeDashoffset = circumference * (1 - fraction);
     knob.style.transform = "rotate(" + fraction * 360 + "deg)";
   });
 }
 
-function renderInsightList(listId, items) {
+// kind = "good" or "watch". Each item opens its detail pop-up.
+function renderInsightList(listId, items, kind) {
   document.getElementById(listId).innerHTML = items
-    .map((item) => '<li class="insight-item"><span class="insight-chip">' + icon(item.icon) + "</span>" + item.label + "</li>")
+    .map((item) => '<li><button type="button" class="insight-item" data-insight="' + item.label + '" data-kind="' + kind + '">' +
+      '<span class="insight-chip">' + icon(item.icon) + "</span>" + item.label + "</button></li>")
     .join("");
 }
 
 function renderInsights(result) {
-  renderInsightList("good-list", result.goodForYou);
-  renderInsightList("watch-list", result.watchOuts);
+  renderInsightList("good-list", result.goodForYou, "good");
+  renderInsightList("watch-list", result.watchOuts, "watch");
 }
 
 function renderWeek(settings) {
@@ -772,11 +789,14 @@ function renderAlignment() {
   document.getElementById("screen-alignment").classList.toggle("is-recovery", isRecovery);
   for (const btn of document.querySelectorAll("[data-phase-today]")) btn.dataset.phase = now.phaseKey;
   renderPhaseNow(now);
-  updateRing(result.score);
+  updateRing("ring", result.score, "Cycle Alignment", "No tasks today");
+  document.getElementById("ring").setAttribute("aria-label",
+    (result.score === null ? "No tasks today to score" : "Cycle alignment " + result.score + " out of 100") + ". How your score works");
   renderRecommendation(now, isRecovery);
   renderInsights(result);
   renderWeek(settings);
   renderDayEvents(settings);
+  updateMonthRing(settings); // tasks may have changed
 }
 
 // ----- Info sheets (score explanation, lighter day) -----
@@ -818,6 +838,59 @@ function openScoreSheet() {
     "<h3>" + text.todayHeading + (result.score === null ? "" : ": " + result.score + "/100") + "</h3>" + tasks +
     '<p class="sheet-note">' + text.note + "</p>");
 }
+
+// ----- Good for you / Watch-outs pop-ups -----
+
+// The 3 items on the card first, then the rest for today's phase: its own strengths / watch-outs,
+// then task types that suit it (good) or are best avoided in it (watch). No repeats.
+function insightSheetItems(kind) {
+  const { now, result } = todaysAlignment();
+  const shown = kind === "good" ? result.goodForYou : result.watchOuts;
+  const phase = PHASES[now.phaseKey];
+  const types = Object.values(TASK_TYPES)
+    .filter((t) => (kind === "good" ? t.suits : t.avoid).includes(now.phaseKey))
+    .map((t) => ({ label: t.short, icon: t.icon }));
+  const more = [];
+  for (const item of [...(kind === "good" ? phase.strengths : phase.watchOuts), ...types]) {
+    if (![...shown, ...more].some((i) => i.label === item.label)) more.push(item);
+  }
+  return { now, shown, more };
+}
+
+function insightRows(items, kind) {
+  return '<ul class="insight-rows insight-' + kind + '">' + items.map((item) =>
+    '<li><button type="button" class="insight-row" data-insight="' + item.label + '" data-kind="' + kind + '">' +
+      '<span class="insight-chip">' + icon(item.icon) + "</span>" + item.label + icon("chevron") + "</button></li>"
+  ).join("") + "</ul>";
+}
+
+function openInsightsSheet(kind) {
+  const text = CONTENT.insightSheet;
+  const { now, shown, more } = insightSheetItems(kind);
+  openSheet(kind === "good" ? text.goodTitle : text.watchTitle,
+    '<p class="sheet-note">' + fillTemplate(text.intro, now.phaseKey) + "</p>" +
+    "<h3>" + text.todayHeading + "</h3>" + insightRows(shown, kind) +
+    (more.length ? "<h3>" + fillTemplate(kind === "good" ? text.moreGood : text.moreWatch, now.phaseKey) + "</h3>" + insightRows(more, kind) : ""));
+}
+
+const detailSheet = document.getElementById("detail-sheet");
+
+// Why + how for one item, for today's phase. Falls back to the phase's own tips if an item has no text.
+function openInsightDetail(label, kind) {
+  const text = CONTENT.insightSheet;
+  const { now } = todaysAlignment();
+  const phase = PHASES[now.phaseKey];
+  const detail = CONTENT.insightDetails[kind][label] || { why: phase.tagline, how: phase.work.slice(0, 3) };
+  document.getElementById("detail-title").textContent = label;
+  document.getElementById("detail-body").innerHTML =
+    '<p class="detail-tag detail-tag-' + kind + '">' + fillTemplate(kind === "good" ? text.goodTag : text.watchTag, now.phaseKey) + "</p>" +
+    "<p>" + fillTemplate(detail.why, now.phaseKey) + "</p>" +
+    "<h3>" + (kind === "good" ? text.goodHow : text.watchHow) + "</h3>" +
+    '<ul class="sheet-bullets">' + detail.how.map((h) => "<li>" + h + "</li>").join("") + "</ul>";
+  detailSheet.showModal();
+}
+
+document.getElementById("detail-close").addEventListener("click", () => detailSheet.close());
 
 // Lowest-scoring task today (first one on ties), or null.
 function lowestFitTask(events) {
@@ -885,6 +958,16 @@ function renderPlanHero(state, settings) {
     '<p class="plan-next">' + next.name + " in " + days + (days === 1 ? " day" : " days") + "</p>";
 }
 
+// Cycle Plan wheel: alignment of the month shown in the calendar.
+function updateMonthRing(settings) {
+  const text = CONTENT.monthRing;
+  const { score } = calculateMonthlyAlignment(planMonth.getFullYear(), planMonth.getMonth(), settings);
+  const month = planMonth.toLocaleDateString(undefined, { month: "long" });
+  updateRing("month-ring", score, text.label, text.empty);
+  document.getElementById("month-ring").setAttribute("aria-label",
+    month + ": " + (score === null ? text.empty : text.label + " " + score + " out of 100"));
+}
+
 function renderMonth(settings) {
   const year = planMonth.getFullYear();
   const month = planMonth.getMonth();
@@ -944,6 +1027,7 @@ function renderMonth(settings) {
     html += '<div class="month-row month-bar" aria-hidden="true">' + bar + "</div>";
   }
   document.getElementById("month").innerHTML = html;
+  updateMonthRing(settings);
 }
 
 function renderLegend() {
@@ -2090,12 +2174,16 @@ document.addEventListener("click", function (e) {
   const target = e.target.closest(
     "[data-screen], [data-go], [data-back], [data-sheet], [data-edit], [data-day], [data-add-on], #ring, [data-date], [data-event], [data-delete], [data-phase], [data-month], [data-log], [data-ask], [data-retry], [data-session], " +
       "[data-soon], [data-integration], #add-task-btn, #plan-today-btn, #see-all-btn, #coach-history-btn, " +
-      "[data-confirm-reset], [data-close-sheet], [data-demo-date], #demo-bar, #clear-chat-btn, #int-see-all-btn, #bell-btn, #report-btn, #export-btn, #reset-btn"
+      "[data-confirm-reset], [data-close-sheet], [data-demo-date], #demo-bar, [data-insights], [data-insight], #clear-chat-btn, #int-see-all-btn, #bell-btn, #report-btn, #export-btn, #reset-btn"
   );
   if (!target) return;
-  // Any action inside an info sheet replaces it.
-  if (infoSheet.open && infoSheet.contains(target)) infoSheet.close();
-  if (target.id === "demo-bar") {
+  // Any action inside an info sheet replaces it (except an item's detail, which opens on top).
+  if (infoSheet.open && infoSheet.contains(target) && !target.dataset.insight) infoSheet.close();
+  if (target.dataset.insights) {
+    openInsightsSheet(target.dataset.insights);
+  } else if (target.dataset.insight) {
+    openInsightDetail(target.dataset.insight, target.dataset.kind);
+  } else if (target.id === "demo-bar") {
     openDemoSheet();
   } else if (target.dataset.demoDate !== undefined) {
     setDemoDate(target.dataset.demoDate);
@@ -2199,7 +2287,8 @@ document.addEventListener("click", function (e) {
 migrateStorage();
 if (IS_DEMO) seedDemoData();
 renderDemoBar();
-buildRing();
+buildRing("ring");
+buildRing("month-ring");
 renderAlignment();
 renderLogChoices();
 renderPlan();

@@ -80,14 +80,14 @@
 
         <div class="insights">
           <section class="insight insight-good" aria-labelledby="good-title">
-            <button class="insight-head" type="button" data-phase-today>
+            <button class="insight-head" type="button" data-insights="good">
               <h2 id="good-title">Good for you</h2>
               <span data-icon="chevron"></span>
             </button>
             <ul class="insight-list" id="good-list"></ul>
           </section>
           <section class="insight insight-watch" aria-labelledby="watch-title">
-            <button class="insight-head" type="button" data-phase-today>
+            <button class="insight-head" type="button" data-insights="watch">
               <h2 id="watch-title">Watch-outs</h2>
               <span data-icon="chevron"></span>
             </button>
@@ -133,6 +133,8 @@
           <div class="flower flower-plan" data-flower></div>
           <!-- Filled by renderPlanHero() -->
           <div class="plan-hero-text" id="plan-hero"></div>
+          <!-- Month alignment wheel. Built by buildRing(), updated by updateMonthRing() -->
+          <div class="ring ring-month" id="month-ring" role="img"></div>
         </div>
 
         <section class="plan-card month-card" aria-labelledby="plan-month">
@@ -474,6 +476,17 @@
       </button>
     </div>
     <div class="info-body" id="info-body"></div>
+  </dialog>
+
+  <!-- Small detail pop-up for one Good for you / Watch-out item. Opens on top of the list. Filled by openInsightDetail(). -->
+  <dialog class="sheet sheet-small" id="detail-sheet" aria-labelledby="detail-title">
+    <div class="sheet-head">
+      <h2 id="detail-title"></h2>
+      <button class="icon-btn icon-btn-small" type="button" id="detail-close" aria-label="Close">
+        <span data-icon="close"></span>
+      </button>
+    </div>
+    <div class="info-body" id="detail-body"></div>
   </dialog>
 
   <!-- Track Today sheet (Cycle Plan) -->

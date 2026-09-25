@@ -376,6 +376,69 @@ const CONTENT = {
     cancel: "Cancel",
   },
 
+  // Alignment → "Good for you" / "Watch-outs" pop-ups. {phase} = today's phase.
+  insightSheet: {
+    goodTitle: "Good for you",
+    watchTitle: "Watch-outs",
+    intro: "Based on today's tasks and your {phase} phase. Tap one to learn more.",
+    todayHeading: "Today",
+    moreGood: "More for your {phase} phase",
+    moreWatch: "Also watch in your {phase} phase",
+    goodTag: "Good for you · {phase}",
+    watchTag: "Watch-out · {phase}",
+    goodHow: "How to do it",
+    watchHow: "Try instead",
+  },
+
+  // Detail pop-up for each item, keyed by its label. {phase} = today's phase.
+  // Our own suggestions (inspired by In the FLO), never health claims.
+  insightDetails: {
+    good: {
+      "Presenting": { why: "Words and confidence often come most easily in your {phase} phase, so it's a good window to present.", how: ["Put your key presentation or pitch on these days", "Rehearse once out loud, then trust your flow", "Leave time afterwards for questions and follow-ups"] },
+      "Networking": { why: "Connecting with people tends to feel natural and energising in your {phase} phase.", how: ["Book the coffee chat or intro call you've been putting off", "At an event, aim for two real conversations", "Follow up the same day while it's fresh"] },
+      "Big ideas": { why: "Your {phase} phase is a good moment for fresh thinking and new possibilities.", how: ["Block 30–60 minutes to brainstorm without judging ideas", "Capture everything in one list and sort it later", "Share one idea with someone to test it"] },
+      "Planning": { why: "With energy rising in your {phase} phase, looking ahead and mapping out steps can feel lighter.", how: ["Plan the next four weeks around your phases", "Put demanding work where your energy is usually highest", "Break one big goal into first steps"] },
+      "New projects": { why: "Starting something new tends to feel exciting rather than heavy in your {phase} phase.", how: ["Kick off the project you've been waiting to start", "Set a clear first milestone", "Set up the structure now; the detail work can come later"] },
+      "Admin work": { why: "Detail tasks can feel satisfying in your {phase} phase, when focus often turns inward.", how: ["Batch emails, invoices and paperwork into one block", "Tidy your files and to-do list", "Tick off small tasks for quick wins"] },
+      "Deep work": { why: "Your {phase} phase can suit steady, focused work on one thing at a time.", how: ["Block 60–90 minutes with notifications off", "Finish one task before switching", "Take a short walk between focus blocks"] },
+      "Wrapping up": { why: "Finishing things often comes naturally in your {phase} phase.", how: ["List your open loops and close the easiest three", "Review and polish work before it goes out", "Take a moment to notice what you've completed"] },
+      "Reflection": { why: "Your {phase} phase is a natural time to slow down, look back and listen to your gut.", how: ["Journal for 10 minutes: what worked, what didn't?", "Review the past month before planning the next one", "Write down one intention for your next cycle"] },
+      "Rest": { why: "Energy is often at its lowest in your {phase} phase, so rest is part of the plan, not a break from it.", how: ["Protect an early night or a slow morning", "Say no to one non-essential commitment", "Take short breaks between tasks"] },
+      "Gentle walks": { why: "Light movement can feel good while energy is lower in your {phase} phase.", how: ["Take an easy 20–30 minute walk, outside if you can", "Try yin yoga or gentle stretching instead of a hard workout", "Keep a pace where you could chat easily"] },
+      "High energy": { why: "Many people feel stronger and more energetic in their {phase} phase, so it can be a good time for harder workouts.", how: ["Try HIIT, a spin class or a dance class", "Warm up well and listen to your body", "Put demanding sessions on your highest-energy days"] },
+      "Strength": { why: "Strength training and steady movement can fit well in your {phase} phase.", how: ["Lift weights or try Pilates early in this phase", "Move to gentler barre or yoga as the phase goes on", "Focus on good form rather than heavy loads"] },
+    },
+    watch: {
+      "Routine admin": { why: "Your {phase} phase favours new ideas, so repetitive admin can feel draining now.", how: ["Batch admin into one short block", "Save bigger admin for your Luteal phase", "Use the rest of the day for creative work"] },
+      "Over-booking": { why: "Rising energy in your {phase} phase can make it tempting to say yes to everything.", how: ["Leave gaps between meetings", "Check next week's calendar before you accept", "Keep one evening free"] },
+      "Late nights": { why: "It's easy to stay up late when energy is rising in your {phase} phase, and it can catch up with you later.", how: ["Keep a regular bedtime most nights", "Put screens away 30 minutes before bed", "After a late evening, plan a slower morning"] },
+      "Admin work": { why: "Admin-heavy days don't use your {phase} phase strengths. Detail work usually fits better in your Luteal phase.", how: ["Keep admin to one short block", "Move bigger admin tasks to your Luteal phase", "Use the time you free up for conversations or creative work"] },
+      "High stress": { why: "High-pressure days can feel heavier in your {phase} phase.", how: ["Take a 5-minute breathing break", "Protect one calm block in your day", "Pick your top priority and let the rest wait"] },
+      "Energy dips": { why: "Even when energy is high in your {phase} phase, going full speed all day can leave you flat later.", how: ["Eat regular meals with plenty of veg and fibre", "Take a short break every 90 minutes", "Don't fill every free slot"] },
+      "New pitches": { why: "Your {phase} phase tends to favour finishing over starting, so big new pitches can feel harder.", how: ["Move pitches to your Follicular or Ovulatory phase if you can", "If it can't move, prepare well and keep it focused", "Use this time to polish the pitch instead"] },
+      "Skipping carbs": { why: "Steady, grounding meals can help you feel more even in your {phase} phase.", how: ["Include complex carbs like sweet potato, brown rice or chickpeas", "Keep a filling snack at hand, like an apple with walnuts", "Eat regular meals instead of skipping them"] },
+      "Big meetings": { why: "Energy is often at its lowest in your {phase} phase, so high-stakes meetings can feel harder.", how: ["Move big meetings a few days later if you can", "If it can't move, prepare notes in advance", "Plan a quiet break straight after"] },
+      "Intense workouts": { why: "Your body may ask for gentler movement in your {phase} phase.", how: ["Swap HIIT for a walk, yin yoga or gentle Pilates", "Keep intense sessions for your Follicular and Ovulatory phases", "Rest fully if you need to"] },
+      "Packed days": { why: "Back-to-back plans can feel extra tiring in your {phase} phase.", how: ["Keep one or two main tasks for the day", "Leave space between commitments", "Move anything non-urgent to next week"] },
+      "Presenting": { why: "Presenting can take more effort in your {phase} phase. It usually feels easiest in your Ovulatory phase.", how: ["Move it to your Ovulatory phase if you can", "If not, rehearse once and keep your slides simple", "Plan a quiet break afterwards"] },
+      "Networking": { why: "Social events can feel more draining in your {phase} phase. They usually feel easiest in your Ovulatory phase.", how: ["Keep it short or move it to your Ovulatory phase", "Pick one or two people to talk to", "Plan some quiet time afterwards"] },
+      "Meetings": { why: "Lots of meetings can feel heavy in your {phase} phase, when energy is often at its lowest.", how: ["Keep only the meetings that really need you", "Ask for an agenda to keep it short", "Turn some meetings into a quick message"] },
+      "Big ideas": { why: "Brainstorming from scratch can feel harder in your {phase} phase. Ideas tend to flow more easily in your Follicular phase.", how: ["Capture ideas as they come and develop them later", "Refine ideas you already have", "Plan a brainstorm for your Follicular phase"] },
+      "Planning": { why: "Big-picture planning often feels easiest in your Follicular phase.", how: ["Keep planning light: just the next few days", "Note questions to answer in your Follicular phase", "Review last month's plan instead"] },
+      "Wrapping up": { why: "Finishing and polishing usually fit best in your Luteal phase. In your {phase} phase you may feel more like starting than finishing.", how: ["Close the easiest loose ends first", "Keep the final polish for your Luteal phase", "Pair it with something that energises you"] },
+      "Reflection": { why: "Your {phase} phase usually suits action and connection more than looking back. Reflection often fits best in your Menstrual phase.", how: ["Keep reviews short and practical", "Save deeper reflection for your Menstrual phase", "Jot down thoughts to come back to later"] },
+      "High energy": { why: "Hard workouts can feel tougher in your {phase} phase.", how: ["Choose something gentler, like walking, yoga or Pilates", "Keep high intensity for your Follicular and Ovulatory phases", "Listen to your body and stop if it doesn't feel right"] },
+      "Strength": { why: "Heavy strength sessions usually fit best in your Luteal phase.", how: ["Keep it if it feels good, just go lighter", "Mix in cardio or a class for variety", "Save your heaviest sessions for your Luteal phase"] },
+      "Rest": { why: "Rest is never wrong. Your {phase} phase often brings more energy, so this can be a good time for something more active.", how: ["Try a walk or an easy class", "Save longer rest for your Menstrual phase", "Still take breaks whenever you need them"] },
+    },
+  },
+
+  // Cycle Plan hero wheel: average of the daily scores of days with tasks in the shown month.
+  monthRing: {
+    label: "Month Alignment",
+    empty: "No tasks this month",
+  },
+
   // Demo date strip + sheet (only with ?demo=1).
   demo: {
     label: "Demo",

@@ -111,9 +111,14 @@ four cycle phases she's in, it suggests how to **move**, what to **eat**, and wh
   period length (default 5, 2–7 — NHS range). Validate. Note: "For general wellness only. Not medical advice, and not for contraception."
 - **Alignment** (final design): hero card with drawn flower (DAY X / phase + icon / View phase details, score ring
   "78 /100 Cycle Alignment"); recommendation bar; Good for you (3) + Watch-outs (3) side by side;
+  headers open a pop-up (the 3 card items first, then phase strengths/watch-outs + task types that suit/are avoided);
+  every item (card + pop-up) opens a small detail pop-up on top (why + how, `CONTENT.insightDetails`). *(2026-09-25)*
   "Your Calendar This Week" + View Full Calendar, Mon–Sun strip, today's events (time, title, badge, chevron) + add task.
   Pink recovery look when score < 50.
-- **Cycle Plan** (final design): hero card (Day X / phase, cycle bar with today marker, next phase in N days);
+- **Cycle Plan** (final design): hero card (Day X / phase, cycle bar with today marker, next phase in N days;
+  right: "Month Alignment" wheel over the leaves = average of daily scores of days with tasks in the month shown
+  below, empty days skipped, "–" if none; `calculateMonthlyAlignment()`, `buildRing(id)`/`updateRing(id, ...)`);
+  legend items sit level with calendar rows 1–4 (fixed row heights, `--week-h`);
   month calendar with phase bars + phase-start icons + legend; Track Today (Energy/Mood/Focus/Sleep, logs per day);
   Phase Focus (3 tiles from `PHASES[x].focus`). Tap phase → phase detail (Move/Eat/Work).
 - **Coach** (match Praful's AI Coach mockup): real AI coach (Gemini by default, or Claude, via `server/`, streamed), 4 phase-aware
