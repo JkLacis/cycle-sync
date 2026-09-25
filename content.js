@@ -439,6 +439,13 @@ const CONTENT = {
     empty: "No tasks this month",
   },
 
+  // Settings → Appearance. Keys match the saved prefs.theme value.
+  appearance: {
+    title: "Appearance",
+    note: "Match device follows your phone's day and night setting.",
+    options: { system: "Match device", light: "Light", dark: "Dark" },
+  },
+
   // Demo date strip + sheet (only with ?demo=1).
   demo: {
     label: "Demo",

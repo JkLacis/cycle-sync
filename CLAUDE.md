@@ -126,7 +126,9 @@ four cycle phases she's in, it suggests how to **move**, what to **eat**, and wh
   Suggested for You = 4 cards → guided breathing timer. Note names the provider (from `/api/health`); the Gemini note says free-tier messages may be used to improve Google's products.
 - **Settings** (match Praful's Settings mockup): Your Profile card; Integrations (tap = fake Connected/Not connected,
   See All adds Outlook/Garmin/Oura); Weekly insight switch; App Preferences → Cycle settings screen (edit + validate,
-  view-only in demo), Data & privacy screen (privacy note + Reset all data), Appearance (coming soon), Doctor report
+  view-only in demo), Data & privacy screen (privacy note + Reset all data), Appearance sheet (Light / Dark / Match device,
+  default Match device, `prefs.theme`, `applyTheme()` sets `<html data-theme>`; deep navy night palette = `:root[data-theme="dark"]`
+  in style.css — new colours must be tokens), Doctor report
   (.txt download); Support → Help & FAQs screen, Contact us (coming soon). Dock Settings icon = gear.
 - **Demo mode**: URL contains `?demo=1` → "Demo · date · Change date" strip above the dock → sheet to pretend it's
   another date (`&date=YYYY-MM-DD`, page reloads). `today()` returns it; `realToday()` anchors DEFAULT_SETTINGS (real today = Day 14).

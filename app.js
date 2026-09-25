@@ -37,6 +37,7 @@ const ICONS = {
   doc: '<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h6"/>',
   bolt: '<path d="M13 2 4.5 14H11l-1 8 8.5-12H12z"/>',
   moon: '<path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/>',
+  phone: '<rect x="7" y="2.5" width="10" height="19" rx="2.5"/><path d="M11 18.5h2"/>',
   sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
   sunset: '<path d="M3 18h18M7 18a5 5 0 0 1 10 0M12 6v4M5.3 11.3l1.4 1.4M18.7 11.3l-1.4 1.4M6 22h12"/>',
   leaf: '<path d="M5 19C5 11 10 5 20 4c-1 10-7 15-15 15z"/><path d="M5 19l7-7"/>',
@@ -284,6 +285,7 @@ const CHAT_MAX = 50; // messages kept on the device
 
 // weeklyInsight = show the weekly insight under the bell. insightSeenWeek = Monday (ISO) of the last week it was opened.
 const DEFAULT_PREFS = {
+  theme: "system",          // "system" (match device) | "light" | "dark"
   weeklyInsight: true,
   insightSeenWeek: null,
 };
@@ -2015,6 +2017,37 @@ document.getElementById("profile-form").addEventListener("submit", function (e) 
   showToast("Profile saved");
 });
 
+// ----- Appearance (day / night / match device) -----
+
+const darkQuery = window.matchMedia("(prefers-color-scheme: dark)");
+
+// Sets <html data-theme="light|dark">; style.css swaps the colours.
+function applyTheme() {
+  const theme = store.prefs.load().theme;
+  const dark = theme === "dark" || (theme !== "light" && darkQuery.matches);
+  document.documentElement.dataset.theme = dark ? "dark" : "light";
+  document.getElementById("appearance-value").textContent = CONTENT.appearance.options[theme] || CONTENT.appearance.options.system;
+}
+
+// Match device: follow the phone when it switches between day and night.
+darkQuery.addEventListener("change", applyTheme);
+
+function openAppearanceSheet() {
+  const text = CONTENT.appearance;
+  const current = store.prefs.load().theme;
+  openSheet(text.title,
+    '<div class="theme-options" role="radiogroup">' + Object.entries(text.options).map(([key, label]) =>
+      '<button type="button" class="sheet-btn theme-option" role="radio" aria-checked="' + (key === current) + '" data-theme-choice="' + key + '">' +
+        icon(key === "dark" ? "moon" : key === "light" ? "sun" : "phone") + label + "</button>"
+    ).join("") + "</div>" +
+    '<p class="sheet-note">' + text.note + "</p>");
+}
+
+function setTheme(theme) {
+  store.prefs.save({ ...store.prefs.load(), theme });
+  applyTheme();
+}
+
 function renderSettings() {
   renderIntegrations();
   renderFaq();
@@ -2174,12 +2207,16 @@ document.addEventListener("click", function (e) {
   const target = e.target.closest(
     "[data-screen], [data-go], [data-back], [data-sheet], [data-edit], [data-day], [data-add-on], #ring, [data-date], [data-event], [data-delete], [data-phase], [data-month], [data-log], [data-ask], [data-retry], [data-session], " +
       "[data-soon], [data-integration], #add-task-btn, #plan-today-btn, #see-all-btn, #coach-history-btn, " +
-      "[data-confirm-reset], [data-close-sheet], [data-demo-date], #demo-bar, [data-insights], [data-insight], #clear-chat-btn, #int-see-all-btn, #bell-btn, #report-btn, #export-btn, #reset-btn"
+      "[data-confirm-reset], [data-close-sheet], [data-demo-date], #demo-bar, [data-insights], [data-insight], [data-theme-choice], #appearance-btn, #clear-chat-btn, #int-see-all-btn, #bell-btn, #report-btn, #export-btn, #reset-btn"
   );
   if (!target) return;
   // Any action inside an info sheet replaces it (except an item's detail, which opens on top).
   if (infoSheet.open && infoSheet.contains(target) && !target.dataset.insight) infoSheet.close();
-  if (target.dataset.insights) {
+  if (target.id === "appearance-btn") {
+    openAppearanceSheet();
+  } else if (target.dataset.themeChoice) {
+    setTheme(target.dataset.themeChoice);
+  } else if (target.dataset.insights) {
     openInsightsSheet(target.dataset.insights);
   } else if (target.dataset.insight) {
     openInsightDetail(target.dataset.insight, target.dataset.kind);
@@ -2285,6 +2322,7 @@ document.addEventListener("click", function (e) {
 });
 
 migrateStorage();
+applyTheme();
 if (IS_DEMO) seedDemoData();
 renderDemoBar();
 buildRing("ring");
