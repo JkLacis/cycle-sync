@@ -1,6 +1,7 @@
 """HTTP server: serves the app files and the coach API.
 
   GET    /                          the app (index.html + a fixed allowlist of static files)
+  GET    /lang/<code>.js            translation files (known codes only)
   GET    /api/health                {"status", "coach": "ready" | "not_configured", "provider", "model"}
   POST   /api/coach                 streams one reply as server-sent events (see coach.stream_reply)
   DELETE /api/coach/{conversation}  deletes a conversation's stored history
@@ -26,6 +27,7 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name
 
 # Only these files are public — never the repo root (it holds .env, server/, reference/).
 STATIC_FILES = {"index.html", "style.css", "content.js", "app.js"}
+LANG_FILES = {f"{code}.js" for code in ("lv", "lt", "et", "pl", "de", "fr", "es", "it")}
 
 app = FastAPI(title="Cycle Sync", docs_url=None, redoc_url=None, openapi_url=None)
 store = ConversationStore(settings.db_path)
@@ -111,6 +113,14 @@ async def static_file(name: str):
     if name not in STATIC_FILES:
         return api_error(404, "not_found", "Not found.")
     return FileResponse(ROOT / name)
+
+
+# Translations (lang/<code>.js), loaded by app.js for the chosen language. Only the known codes.
+@app.get("/lang/{name}")
+async def language_file(name: str):
+    if name not in LANG_FILES:
+        return api_error(404, "not_found", "Not found.")
+    return FileResponse(ROOT / "lang" / name, media_type="text/javascript")
 
 
 app.mount("/tests", StaticFiles(directory=ROOT / "tests", html=True), name="tests")
